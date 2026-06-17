@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Management | ZTG Heavy Parts</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .section-header {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            margin-top: 16px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 4px;
+        }
+        .suggest-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .suggest-item:hover {
+            background-color: #F1F5F9;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar"></div>
+
+        <!-- Main Workspace -->
+        <div class="main-workspace">
+            <div class="top-bar">
+                <div>
+                    <h1 style="font-size: 20px; margin-bottom: 2px;">Product Management</h1>
+                    <div class="page-description" style="margin-top: 0; font-size: 12px;">Add, edit, restock, and manage all products in your system.</div>
+                </div>
+                <div class="top-bar-actions" style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px;" onclick="openRestockModal()">
+                        <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        Buy / Restock
+                    </button>
+                    <button class="btn btn-primary" style="display: flex; align-items: center; gap: 6px;" onclick="openAddModal()">
+                        <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M12 4v16m-8-8h16"/></svg>
+                        + Add Product
+                    </button>
+                </div>
+            </div>
+
+            <div class="content-body">
+                <!-- Filter Section -->
+                <div style="margin-bottom: 16px;">
+                    <div class="table-filters" style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <input type="text" id="searchBar" class="form-control" style="background: white; border: 1px solid #E2E8F0; padding: 8px 12px; border-radius: 6px; font-size: 13px;" placeholder="🔍 Search by part number or name..." oninput="renderProductsTable()">
+                        </div>
+                        <div style="width: 160px;">
+                            <select id="categoryFilter" class="form-control" style="background: white; border: 1px solid #E2E8F0; padding: 8px 12px; border-radius: 6px; font-size: 13px;" onchange="renderProductsTable()">
+                                <option value="All">All Categories</option>
+                            </select>
+                        </div>
+                        <div style="width: 140px;">
+                            <select id="stockFilter" class="form-control" style="background: white; border: 1px solid #E2E8F0; padding: 8px 12px; border-radius: 6px; font-size: 13px;" onchange="renderProductsTable()">
+                                <option value="All">All Status</option>
+                                <option value="Active">Active</option>
+                                <option value="Low">Low Stock</option>
+                                <option value="No">No Stock</option>
+                            </select>
+                        </div>
+                        <div style="width: 140px;">
+                            <select id="sortFilter" class="form-control" style="background: white; border: 1px solid #E2E8F0; padding: 8px 12px; border-radius: 6px; font-size: 13px;" onchange="renderProductsTable()">
+                                <option value="Default">Sort: Default</option>
+                                <option value="Name">Name (A-Z)</option>
+                                <option value="Sales">Top Sales</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products Table Card -->
+                <div class="card table-card">
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead style="font-size: 11px; text-transform: uppercase; color: #64748B; border-bottom: 1px solid #E2E8F0; background: #F8FAFC;">
+                                <tr>
+                                    <th style="padding: 12px 16px; font-weight: 600;">Product</th>
+                                    <th style="padding: 12px 16px; font-weight: 600;">Part No.</th>
+                                    <th style="padding: 12px 16px; font-weight: 600;">Category</th>
+                                    <th style="padding: 12px 16px; font-weight: 600;">Address</th>
+                                    <th style="padding: 12px 16px; font-weight: 600;">Stock</th>
+                                    <th style="padding: 12px 16px; font-weight: 600;">Price 1</th>
+                                    <th style="padding: 12px 16px; font-weight: 600;">Price 2</th>
+                                    <th style="padding: 12px 16px; font-weight: 600;">Sales</th>
+                                    <th style="padding: 12px 16px; font-weight: 600;">Status</th>
+                                    <th style="padding: 12px 16px; font-weight: 600;">Damaged</th>
+                                    <th style="padding: 12px 16px; font-weight: 600; text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD PRODUCT -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal-card modal-card-lg" style="max-width: 700px; width: 90%;">
+            <form id="addItemForm" onsubmit="handleAddProduct(event)">
+                <div class="modal-header">
+                    <h3 class="modal-title">Add New Product</h3>
+                    <button type="button" class="modal-close" onclick="closeModal('addModal')">
+                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                    <!-- Image Upload -->
+                    <div style="border: 2px dashed var(--border); border-radius: 8px; padding: 20px; text-align: center; color: var(--text-secondary); font-size: 13px; margin-bottom: 16px; background-color: #F8FAFC;">
+                        <svg viewBox="0 0 24 24" style="width: 32px; height: 32px; fill: none; stroke: currentColor; stroke-width: 2; display: block; margin: 0 auto 8px auto; opacity: 0.5;"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        Click to upload product image or drag and drop<br>
+                        <span style="font-size: 11px; opacity: 0.7;">SVG, PNG, JPG or GIF (max. 800x400px)</span>
+                    </div>
+
+                    <!-- Basic Information Section -->
+                    <div class="section-header">Basic Information</div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="addPartNo">Part Number <span style="color: red;">*</span></label>
+                            <input type="text" id="addPartNo" class="form-control" required placeholder="e.g. TRK-003">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="addCategory">Category <span style="color: red;">*</span></label>
+                            <select id="addCategory" class="form-control" required></select>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="addName">English Name <span style="color: red;">*</span></label>
+                            <input type="text" id="addName" class="form-control" required placeholder="e.g. Track Link Assembly">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="addChineseName">Chinese Name <span style="color: red;">*</span></label>
+                            <input type="text" id="addChineseName" class="form-control" required placeholder="e.g. 履带链节总成">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addTags">Product Tags</label>
+                        <input type="text" id="addTags" class="form-control" placeholder="Add tags separated by commas (e.g. Heavy Duty, Excavator)">
+                    </div>
+
+                    <!-- Warehouse Address Section -->
+                    <div class="section-header">Warehouse Address / Location</div>
+                    <div class="grid-3" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label class="form-label" for="addAisle">Aisle</label>
+                            <input type="text" id="addAisle" class="form-control" required placeholder="e.g. A">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="addCarrier">Carrier</label>
+                            <input type="text" id="addCarrier" class="form-control" required placeholder="e.g. 12">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="addHang">Hang</label>
+                            <input type="text" id="addHang" class="form-control" required placeholder="e.g. 3">
+                        </div>
+                    </div>
+
+                    <!-- Pricing & Stock Alert levels -->
+                    <div class="section-header">Pricing & Stock Alerts</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="addPrice1">Price 1 (Regular) <span style="color: red;">*</span></label>
+                            <input type="number" id="addPrice1" class="form-control" required min="0" placeholder="₱0.00">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="addPrice2">Price 2 (VIP)</label>
+                            <input type="number" id="addPrice2" class="form-control" min="0" placeholder="₱0.00">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="addStock">Initial Stock <span style="color: red;">*</span></label>
+                            <input type="number" id="addStock" class="form-control" required min="0" placeholder="0">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="addAlert">Alert Level <span style="color: red;">*</span></label>
+                            <input type="number" id="addAlert" class="form-control" required min="1" value="5">
+                        </div>
+                    </div>
+
+                    <!-- Status & Variants -->
+                    <div class="section-header">Status & Variants</div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="addStatus">Product Status</label>
+                            <select id="addStatus" class="form-control">
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display: flex; flex-direction: column; justify-content: center; padding-top: 24px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-main); cursor: pointer;">
+                                <input type="checkbox" id="addDeadStock" style="width: 16px; height: 16px; accent-color: var(--primary);">
+                                Mark as Dead Stock
+                            </label>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="addVariantType">Variant Type (Optional)</label>
+                            <select id="addVariantType" class="form-control">
+                                <option value="">None</option>
+                                <option value="Size">Size</option>
+                                <option value="Color">Color</option>
+                                <option value="Material">Material</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="addVariantOptions">Variant Options</label>
+                            <input type="text" id="addVariantOptions" class="form-control" placeholder="e.g. Small, Medium, Large">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="addDamaged">Initial Damaged / Scrap Count</label>
+                        <input type="number" id="addDamaged" class="form-control" min="0" value="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="addNotes">Notes / Description</label>
+                        <textarea id="addNotes" class="form-control" rows="2" placeholder="Enter optional notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 12px; color: var(--text-secondary);">Fields marked with <span style="color: red;">*</span> are required.</div>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Product</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: EDIT PRODUCT -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-card modal-card-lg" style="max-width: 700px; width: 90%;">
+            <form id="editItemForm" onsubmit="handleEditProduct(event)">
+                <input type="hidden" id="editId">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="editModalHeaderTitle">Edit Product</h3>
+                    <button type="button" class="modal-close" onclick="closeModal('editModal')">
+                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                    <!-- Image Upload -->
+                    <div style="border: 2px dashed var(--border); border-radius: 8px; padding: 20px; text-align: center; color: var(--text-secondary); font-size: 13px; margin-bottom: 16px; background-color: #F8FAFC;">
+                        <svg viewBox="0 0 24 24" style="width: 32px; height: 32px; fill: none; stroke: currentColor; stroke-width: 2; display: block; margin: 0 auto 8px auto; opacity: 0.5;"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        Click to upload product image or drag and drop<br>
+                        <span style="font-size: 11px; opacity: 0.7;">SVG, PNG, JPG or GIF (max. 800x400px)</span>
+                    </div>
+
+                    <!-- Basic Information Section -->
+                    <div class="section-header">Basic Information</div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="editPartNo">Part Number <span style="color: red;">*</span></label>
+                            <input type="text" id="editPartNo" class="form-control" required readonly style="background-color: var(--bg-canvas);">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editCategory">Category <span style="color: red;">*</span></label>
+                            <select id="editCategory" class="form-control" required></select>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="editName">English Name <span style="color: red;">*</span></label>
+                            <input type="text" id="editName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editChineseName">Chinese Name <span style="color: red;">*</span></label>
+                            <input type="text" id="editChineseName" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editTags">Product Tags</label>
+                        <input type="text" id="editTags" class="form-control" placeholder="Add tags separated by commas (e.g. Heavy Duty, Excavator)">
+                    </div>
+
+                    <!-- Warehouse Address Section -->
+                    <div class="section-header">Warehouse Address / Location</div>
+                    <div class="grid-3" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label class="form-label" for="editAisle">Aisle</label>
+                            <input type="text" id="editAisle" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editCarrier">Carrier</label>
+                            <input type="text" id="editCarrier" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editHang">Hang</label>
+                            <input type="text" id="editHang" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <!-- Pricing & Stock Alert levels -->
+                    <div class="section-header">Pricing & Stock Alerts</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="editPrice1">Price 1 (Regular) <span style="color: red;">*</span></label>
+                            <input type="number" id="editPrice1" class="form-control" required min="0">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="editPrice2">Price 2 (VIP)</label>
+                            <input type="number" id="editPrice2" class="form-control" min="0">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="editStock">Initial Stock <span style="color: red;">*</span></label>
+                            <input type="number" id="editStock" class="form-control" required min="0">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="editAlert">Alert Level <span style="color: red;">*</span></label>
+                            <input type="number" id="editAlert" class="form-control" required min="1">
+                        </div>
+                    </div>
+
+                    <!-- Status & Variants -->
+                    <div class="section-header">Status & Variants</div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="editStatus">Product Status</label>
+                            <select id="editStatus" class="form-control">
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display: flex; flex-direction: column; justify-content: center; padding-top: 24px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-main); cursor: pointer;">
+                                <input type="checkbox" id="editDeadStock" style="width: 16px; height: 16px; accent-color: var(--primary);">
+                                Mark as Dead Stock
+                            </label>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label" for="editVariantType">Variant Type (Optional)</label>
+                            <select id="editVariantType" class="form-control">
+                                <option value="">None</option>
+                                <option value="Size">Size</option>
+                                <option value="Color">Color</option>
+                                <option value="Material">Material</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editVariantOptions">Variant Options</label>
+                            <input type="text" id="editVariantOptions" class="form-control" placeholder="e.g. Small, Medium, Large">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editDamaged">Damaged / Scrap Count</label>
+                        <input type="number" id="editDamaged" class="form-control" min="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="editNotes">Notes / Description</label>
+                        <textarea id="editNotes" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 12px; color: var(--text-secondary);">Fields marked with <span style="color: red;">*</span> are required.</div>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Product</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: DAMAGED LOG -->
+    <div class="modal-overlay" id="damagedModal">
+        <div class="modal-card" style="max-width: 500px;">
+            <form id="damagedForm" onsubmit="handleDamagedSubmit(event)">
+                <input type="hidden" id="damagedId">
+                <div class="modal-header">
+                    <h3 class="modal-title">Record Damaged / Scrap Stock</h3>
+                    <button type="button" class="modal-close" onclick="closeModal('damagedModal')">
+                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="damagedInfo" style="font-size: 13px; margin-bottom: 16px; color: var(--text-secondary);"></p>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="damagedQty">Quantity to Move to Damaged</label>
+                        <input type="number" id="damagedQty" class="form-control" min="1" required placeholder="Enter quantity">
+                        <small style="color: var(--text-secondary); display:block; margin-top: 4px;">This action will deduct stock from the shelf and move it to the damaged/scrap section.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="damagedReason">Reason or Notes</label>
+                        <textarea id="damagedReason" class="form-control" style="height: 80px;" placeholder="e.g. Scratched teeth, oil seal leakage..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('damagedModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Move to Damaged</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: BUY / RESTOCK INVENTORY -->
+    <div class="modal-overlay" id="restockModal">
+        <div class="modal-card modal-card-lg" style="max-width: 800px; width: 90%;">
+            <div class="modal-header" style="background-color: var(--success-light); border-bottom-color: rgba(16, 185, 129, 0.2);">
+                <h3 class="modal-title" style="color: var(--success);">Restock Inventory</h3>
+                <button type="button" class="modal-close" onclick="closeModal('restockModal')">
+                    <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert-banner warning" style="background-color: var(--success-light); border-color: rgba(16, 185, 129, 0.2); color: var(--success); margin-bottom: 16px; padding: 12px 16px; display: flex; gap: 10px;">
+                    <div class="alert-banner-content">
+                        <h4 style="margin: 0; font-size: 13px; color: var(--success);">Add Stock to Inventory</h4>
+                        <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-secondary);">Search for products to restock. Make sure quantities are verified by warehouse supervisors.</p>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" style="font-size: 11px;">Restock Date</label>
+                        <input type="date" id="restockDate" class="form-control form-control-sm">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" style="font-size: 11px;">Restock Time</label>
+                        <input type="time" id="restockTime" class="form-control form-control-sm">
+                    </div>
+                </div>
+
+                <!-- Autocomplete Search -->
+                <div style="position: relative; margin-bottom: 16px; display: flex; gap: 8px;">
+                    <div style="flex: 1; position: relative;">
+                        <input type="text" id="restockProductSearch" class="form-control" placeholder="Search by name or part number..." oninput="showRestockSuggestions()">
+                        <div id="restockSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-canvas); border: 1px solid var(--border); border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000; display: none;"></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="addSearchedItemToRestock()">+ Add Item</button>
+                </div>
+
+                <!-- Restock Items table -->
+                <div style="border: 1px solid var(--border); border-radius: 6px; overflow-y: auto; max-height: 200px; margin-bottom: 16px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead style="background: var(--bg-canvas);">
+                            <tr>
+                                <th style="padding: 8px; font-size: 11px;">Part Number</th>
+                                <th style="padding: 8px; font-size: 11px;">Name</th>
+                                <th style="padding: 8px; font-size: 11px; text-align: center;">Current Stock</th>
+                                <th style="padding: 8px; font-size: 11px; text-align: center; width: 120px;">Restock Qty</th>
+                                <th style="padding: 8px; font-size: 11px; text-align: center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="restockItemsTableBody">
+                            <!-- Items here -->
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 16px; font-size: 12px;">No items added for restocking. Search above to add.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Real-time total products bar -->
+                <div id="restockSummaryBar" style="background-color: #ECFDF5; border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; padding: 10px 16px; font-size: 13px; color: var(--success); font-weight: 700; margin-bottom: 16px; display: none; justify-content: space-between;">
+                    <span>Total products to restock: <span id="restockSummaryItems">0</span></span>
+                    <span>Total units added: <span id="restockSummaryQty">0</span></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" style="font-size: 12px;">Verified By (Checker / Supervisor)</label>
+                    <input type="text" id="restockVerifiedBy" class="form-control" placeholder="Enter full name of verifying inspector">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('restockModal')">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="processRestock()">Process Restock</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        initSidebar('products');
+
+        let restockItems = [];
+        let selectedSuggestionId = null;
+
+        // Populate Category Dropdowns & Filter options
+        function loadCategories() {
+            const categories = db.getCategories();
+            const filterDropdown = document.getElementById('categoryFilter');
+            const addDropdown = document.getElementById('addCategory');
+            const editDropdown = document.getElementById('editCategory');
+
+            filterDropdown.innerHTML = '<option value="All">All Categories</option>';
+            addDropdown.innerHTML = '';
+            editDropdown.innerHTML = '';
+
+            categories.forEach(cat => {
+                filterDropdown.innerHTML += `<option value="${cat}">${cat}</option>`;
+                addDropdown.innerHTML += `<option value="${cat}">${cat}</option>`;
+                editDropdown.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+        }
+
+        // Render products table
+        function renderProductsTable() {
+            const products = db.getProducts();
+            const searchVal = document.getElementById('searchBar').value.toLowerCase();
+            const categoryVal = document.getElementById('categoryFilter').value;
+            const stockVal = document.getElementById('stockFilter').value;
+            const tbody = document.getElementById('productsTableBody');
+
+            tbody.innerHTML = '';
+
+            const filtered = products.filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(searchVal) || 
+                                      p.chineseName.toLowerCase().includes(searchVal) || 
+                                      p.partNo.toLowerCase().includes(searchVal) ||
+                                      p.address.toLowerCase().includes(searchVal);
+
+                const matchesCategory = categoryVal === 'All' || p.category === categoryVal;
+                
+                let matchesStock = true;
+                if (stockVal === 'Low') matchesStock = p.stock > 0 && p.stock <= (p.alertLimit || 5);
+                else if (stockVal === 'No') matchesStock = p.stock === 0;
+                else if (stockVal === 'Active') matchesStock = p.stock > (p.alertLimit || 5);
+
+                return matchesSearch && matchesCategory && matchesStock;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: var(--text-secondary); padding: 20px;">No products found.</td></tr>';
+                return;
+            }
+
+            filtered.forEach(p => {
+                const tr = document.createElement('tr');
+                const alertLevel = p.alertLimit || 5;
+                const isOutOfStock = p.stock === 0;
+                const isLowStock = p.stock > 0 && p.stock <= alertLevel;
+
+                let stockStatusText = 'Active';
+                let statusBg = '#DCFCE7';
+                let statusText = '#22C55E';
+                let stockColor = '#1F2937';
+
+                if (isOutOfStock) {
+                    stockStatusText = 'No Stock';
+                    statusBg = '#FEE2E2';
+                    statusText = '#EF4444';
+                    stockColor = '#EF4444';
+                } else if (isLowStock) {
+                    stockStatusText = 'Low Stock';
+                    statusBg = '#FEF3C7';
+                    statusText = '#F59E0B';
+                    stockColor = '#F59E0B';
+                }
+
+                tr.innerHTML = `
+                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9;">
+                        <strong style="color: #0F172A; font-size: 13px; display: block;">${p.name}</strong>
+                        <span style="font-size: 11px; color: #94A3B8; margin-top: 2px; display: block;">${p.chineseName || ''}</span>
+                    </td>
+                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #334155;">${p.partNo}</td>
+                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #334155;">${p.category}</td>
+                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #475569;">${p.address}</td>
+                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: ${stockColor}; font-weight: 600;">
+                        ${p.stock}
+                    </td>
+                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #334155; font-weight: 500;">₱${p.price1.toLocaleString()}</td>
+                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #334155; font-weight: 500;">₱${p.price2.toLocaleString()}</td>
+                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #475569;">${p.salesCount}</td>
+                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9;">
+                        <span style="background-color: ${statusBg}; color: ${statusText}; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600;">${stockStatusText}</span>
+                    </td>
+                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #475569;">
+                        ${p.damaged || 0}
+                    </td>
+                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; text-align: center;">
+                        <div class="btn-group" style="display: flex; gap: 8px; justify-content: center;">
+                            <button class="btn btn-sm" style="background: #F1F5F9; border: 1px solid #E2E8F0; color: #334155; border-radius: 4px; padding: 4px 12px;" onclick="openEditModal(${p.id})">Edit</button>
+                            <button class="btn btn-sm" style="background: #F1F5F9; border: 1px solid #E2E8F0; color: #334155; border-radius: 4px; padding: 4px 8px; display: flex; align-items: center; justify-content: center;" onclick="openDamagedModal(${p.id})">
+                                <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Add Product Modal trigger
+        function openAddModal() {
+            document.getElementById('addItemForm').reset();
+            openModal('addModal');
+        }
+
+        // Edit Product Modal trigger
+        function openEditModal(id) {
+            const products = db.getProducts();
+            const p = products.find(x => x.id === id);
+            if (!p) return;
+
+            document.getElementById('editId').value = p.id;
+            document.getElementById('editPartNo').value = p.partNo;
+            document.getElementById('editCategory').value = p.category;
+            document.getElementById('editName').value = p.name;
+            document.getElementById('editChineseName').value = p.chineseName;
+            document.getElementById('editTags').value = p.tags || '';
+            
+            // Address splitted
+            const parts = (p.address || '').split('-');
+            document.getElementById('editAisle').value = parts[0] || '';
+            document.getElementById('editCarrier').value = parts[1] || '';
+            document.getElementById('editHang').value = parts[2] || '';
+
+            document.getElementById('editStock').value = p.stock;
+            document.getElementById('editPrice1').value = p.price1;
+            document.getElementById('editPrice2').value = p.price2 || '';
+            document.getElementById('editAlert').value = p.alertLimit || 5;
+            document.getElementById('editStatus').value = p.status || 'Active';
+            document.getElementById('editDeadStock').checked = !!p.isDeadStock;
+            document.getElementById('editVariantType').value = p.variantType || '';
+            document.getElementById('editVariantOptions').value = p.variantOptions || '';
+            document.getElementById('editDamaged').value = p.damaged || 0;
+            document.getElementById('editNotes').value = p.notes || '';
+
+            document.getElementById('editModalHeaderTitle').innerText = `Edit Product Details (${p.partNo})`;
+
+            openModal('editModal');
+        }
+
+        // Damaged Modal trigger
+        function openDamagedModal(id) {
+            const products = db.getProducts();
+            const p = products.find(x => x.id === id);
+            if (!p) return;
+
+            document.getElementById('damagedId').value = p.id;
+            document.getElementById('damagedInfo').innerText = `Item: ${p.name} (${p.partNo}) | Current Stock on hand: ${p.stock}`;
+            document.getElementById('damagedQty').max = p.stock;
+            document.getElementById('damagedQty').value = '';
+            document.getElementById('damagedReason').value = '';
+
+            openModal('damagedModal');
+        }
+
+        // Save handlers
+        function handleAddProduct(event) {
+            event.preventDefault();
+            const products = db.getProducts();
+            
+            const aisle = document.getElementById('addAisle').value.trim();
+            const carrier = document.getElementById('addCarrier').value.trim();
+            const hang = document.getElementById('addHang').value.trim();
+            const addressJoined = `${aisle}-${carrier}-${hang}`;
+
+            const newProduct = {
+                id: Date.now(),
+                partNo: document.getElementById('addPartNo').value.trim(),
+                category: document.getElementById('addCategory').value,
+                name: document.getElementById('addName').value.trim(),
+                chineseName: document.getElementById('addChineseName').value.trim(),
+                tags: document.getElementById('addTags').value.trim(),
+                address: addressJoined,
+                stock: parseInt(document.getElementById('addStock').value),
+                alertLimit: parseInt(document.getElementById('addAlert').value),
+                price1: parseFloat(document.getElementById('addPrice1').value),
+                price2: parseFloat(document.getElementById('addPrice2').value) || 0,
+                salesCount: 0,
+                status: document.getElementById('addStatus').value,
+                isDeadStock: document.getElementById('addDeadStock').checked,
+                variantType: document.getElementById('addVariantType').value,
+                variantOptions: document.getElementById('addVariantOptions').value.trim(),
+                damaged: parseInt(document.getElementById('addDamaged').value) || 0,
+                notes: document.getElementById('addNotes').value.trim()
+            };
+
+            products.push(newProduct);
+            db.saveProducts(products);
+            closeModal('addModal');
+            renderProductsTable();
+        }
+
+        function handleEditProduct(event) {
+            event.preventDefault();
+            const products = db.getProducts();
+            const id = parseInt(document.getElementById('editId').value);
+            
+            const pIndex = products.findIndex(x => x.id === id);
+            if (pIndex === -1) return;
+
+            const aisle = document.getElementById('editAisle').value.trim();
+            const carrier = document.getElementById('editCarrier').value.trim();
+            const hang = document.getElementById('editHang').value.trim();
+            const addressJoined = `${aisle}-${carrier}-${hang}`;
+
+            products[pIndex].category = document.getElementById('editCategory').value;
+            products[pIndex].name = document.getElementById('editName').value.trim();
+            products[pIndex].chineseName = document.getElementById('editChineseName').value.trim();
+            products[pIndex].tags = document.getElementById('editTags').value.trim();
+            products[pIndex].address = addressJoined;
+            products[pIndex].stock = parseInt(document.getElementById('editStock').value);
+            products[pIndex].alertLimit = parseInt(document.getElementById('editAlert').value);
+            products[pIndex].price1 = parseFloat(document.getElementById('editPrice1').value);
+            products[pIndex].price2 = parseFloat(document.getElementById('editPrice2').value) || 0;
+            products[pIndex].status = document.getElementById('editStatus').value;
+            products[pIndex].isDeadStock = document.getElementById('editDeadStock').checked;
+            products[pIndex].variantType = document.getElementById('editVariantType').value;
+            products[pIndex].variantOptions = document.getElementById('editVariantOptions').value.trim();
+            products[pIndex].damaged = parseInt(document.getElementById('editDamaged').value) || 0;
+            products[pIndex].notes = document.getElementById('editNotes').value.trim();
+
+            db.saveProducts(products);
+            closeModal('editModal');
+            renderProductsTable();
+        }
+
+        function handleDamagedSubmit(event) {
+            event.preventDefault();
+            const products = db.getProducts();
+            const id = parseInt(document.getElementById('damagedId').value);
+            const qty = parseInt(document.getElementById('damagedQty').value);
+            const reason = document.getElementById('damagedReason').value.trim();
+
+            const pIndex = products.findIndex(x => x.id === id);
+            if (pIndex === -1) return;
+
+            if (qty > products[pIndex].stock) {
+                alert('Damaged quantity cannot exceed current shelf stock!');
+                return;
+            }
+
+            products[pIndex].stock -= qty;
+            products[pIndex].damaged = (products[pIndex].damaged || 0) + qty;
+            db.saveProducts(products);
+
+            // Log this action
+            const transactions = db.getTransactions();
+            const newTx = {
+                siNo: 'CI-DAMAGED-' + Math.floor(Math.random() * 900 + 100),
+                date: 'Jun 14, 2026',
+                itemName: products[pIndex].name,
+                customer: 'SCRAP LOG',
+                qty: qty,
+                amount: 0,
+                payment: 'N/A',
+                cashier: getCurrentUser().name,
+                status: 'Refund',
+                phone: 'N/A',
+                refundReason: `Scrapped: ${reason}`
+            };
+            transactions.unshift(newTx);
+            db.saveTransactions(transactions);
+
+            closeModal('damagedModal');
+            renderProductsTable();
+        }
+
+        // ================== RESTOCK MODAL WORKFLOW ==================
+        function openRestockModal() {
+            restockItems = [];
+            document.getElementById('restockDate').value = '2026-06-14';
+            document.getElementById('restockTime').value = '14:30';
+            document.getElementById('restockProductSearch').value = '';
+            document.getElementById('restockVerifiedBy').value = '';
+            document.getElementById('restockSuggestions').style.display = 'none';
+            selectedSuggestionId = null;
+
+            renderRestockItemsTable();
+            openModal('restockModal');
+        }
+
+        function showRestockSuggestions() {
+            const products = db.getProducts();
+            const val = document.getElementById('restockProductSearch').value.toLowerCase();
+            const suggestions = document.getElementById('restockSuggestions');
+
+            suggestions.innerHTML = '';
+            if (!val) {
+                suggestions.style.display = 'none';
+                return;
+            }
+
+            const filtered = products.filter(p => p.name.toLowerCase().includes(val) || p.partNo.toLowerCase().includes(val));
+            if (filtered.length === 0) {
+                suggestions.innerHTML = '<div style="padding: 8px 12px; color: var(--text-secondary); font-size: 13px;">No matching items found.</div>';
+                suggestions.style.display = 'block';
+                return;
+            }
+
+            filtered.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'suggest-item';
+                item.innerHTML = `<strong>${p.partNo}</strong> - ${p.name}`;
+                item.onclick = () => {
+                    document.getElementById('restockProductSearch').value = `${p.partNo} - ${p.name}`;
+                    selectedSuggestionId = p.id;
+                    suggestions.style.display = 'none';
+                };
+                suggestions.appendChild(item);
+            });
+            suggestions.style.display = 'block';
+        }
+
+        function addSearchedItemToRestock() {
+            if (!selectedSuggestionId) {
+                alert('Please select a product from suggestion autocomplete first!');
+                return;
+            }
+
+            const products = db.getProducts();
+            const product = products.find(p => p.id === selectedSuggestionId);
+            if (!product) return;
+
+            // Check if already in restock list
+            if (restockItems.some(i => i.id === product.id)) {
+                alert('This product is already added to the restock checklist table.');
+                return;
+            }
+
+            restockItems.push({
+                id: product.id,
+                partNo: product.partNo,
+                name: product.name,
+                currentStock: product.stock,
+                qty: 10
+            });
+
+            document.getElementById('restockProductSearch').value = '';
+            selectedSuggestionId = null;
+            renderRestockItemsTable();
+        }
+
+        function updateRestockQty(id, qty) {
+            const item = restockItems.find(i => i.id === id);
+            if (item) {
+                item.qty = parseInt(qty) || 0;
+            }
+            updateRestockSummary();
+        }
+
+        function removeRestockItem(id) {
+            restockItems = restockItems.filter(i => i.id !== id);
+            renderRestockItemsTable();
+        }
+
+        function updateRestockSummary() {
+            const bar = document.getElementById('restockSummaryBar');
+            if (restockItems.length === 0) {
+                bar.style.display = 'none';
+                return;
+            }
+
+            bar.style.display = 'flex';
+            document.getElementById('restockSummaryItems').innerText = restockItems.length;
+            document.getElementById('restockSummaryQty').innerText = restockItems.reduce((sum, i) => sum + i.qty, 0);
+        }
+
+        function renderRestockItemsTable() {
+            const tbody = document.getElementById('restockItemsTableBody');
+            tbody.innerHTML = '';
+
+            if (restockItems.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 16px; font-size: 12px;">No items added for restocking. Search above to add.</td></tr>';
+                updateRestockSummary();
+                return;
+            }
+
+            restockItems.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="padding: 8px; font-size: 13px; font-weight: 700;">${item.partNo}</td>
+                    <td style="padding: 8px; font-size: 13px;">${item.name}</td>
+                    <td style="padding: 8px; font-size: 13px; text-align: center;">${item.currentStock} units</td>
+                    <td style="padding: 8px; font-size: 13px; text-align: center;">
+                        <input type="number" class="form-control form-control-sm" style="width: 80px; text-align: center; margin: 0 auto;" value="${item.qty}" min="1" oninput="updateRestockQty(${item.id}, this.value)">
+                    </td>
+                    <td style="padding: 8px; font-size: 13px; text-align: center;">
+                        <button class="btn btn-secondary btn-sm" style="color: var(--danger); padding: 2px 8px;" onclick="removeRestockItem(${item.id})">Remove</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            updateRestockSummary();
+        }
+
+        function processRestock() {
+            const products = db.getProducts();
+            const verifiedBy = document.getElementById('restockVerifiedBy').value.trim();
+            if (!verifiedBy) {
+                alert('Please enter who verified this restocking.');
+                return;
+            }
+            if (restockItems.length === 0) {
+                alert('Please add at least one item to restock.');
+                return;
+            }
+
+            restockItems.forEach(item => {
+                const pIndex = products.findIndex(p => p.id === item.id);
+                if (pIndex !== -1) {
+                    products[pIndex].stock += item.qty;
+                }
+            });
+
+            db.saveProducts(products);
+            
+            // Log this action to archives / transactions
+            const transactions = db.getTransactions();
+            const newTx = {
+                siNo: 'RESTOCK-' + Date.now().toString().slice(-4),
+                date: document.getElementById('restockDate').value,
+                itemName: restockItems.map(i => `${i.partNo} (+${i.qty} units)`).join(', '),
+                customer: 'SUPPLIER RESTOCK',
+                qty: restockItems.reduce((sum, i) => sum + i.qty, 0),
+                amount: 0,
+                payment: 'N/A',
+                cashier: verifiedBy,
+                status: 'Completed',
+                phone: 'N/A',
+                internalNotes: 'Inventory restocked'
+            };
+            transactions.unshift(newTx);
+            db.saveTransactions(transactions);
+
+            restockItems = [];
+            closeModal('restockModal');
+            renderProductsTable();
+            alert('Inventory successfully restocked!');
+        }
+
+        // Close autocomplete when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.id !== 'restockProductSearch') {
+                document.getElementById('restockSuggestions').style.display = 'none';
+            }
+        });
+
+        // Init loads
+        loadCategories();
+        renderProductsTable();
+    </script>
+</body>
+</html>

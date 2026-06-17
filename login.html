@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log In | HeavyParts Pro</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="login-body">
+    <div class="login-card">
+        <div class="login-logo">Heavy<span>Parts</span> Pro</div>
+        <p class="login-subtitle">Select your role and sign in to continue</p>
+        
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="role-selector">
+                <div class="role-card active" onclick="selectRole('Admin', this)">
+                    <div class="role-icon">💼</div>
+                    <div class="role-name">Admin</div>
+                    <div class="role-desc">Full system access</div>
+                </div>
+                <div class="role-card" onclick="selectRole('Cashier', this)">
+                    <div class="role-icon">💻</div>
+                    <div class="role-name">Cashier</div>
+                    <div class="role-desc">POS & Sales only</div>
+                </div>
+            </div>
+
+            <input type="hidden" id="selectedRole" value="Admin">
+
+            <div class="form-group">
+                <label class="form-label" for="username">Employee ID or Username</label>
+                <input type="text" id="username" class="form-control" placeholder="Enter your employee ID or username" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="rememberMe">
+                <label class="form-label" for="rememberMe" style="margin-bottom: 0; cursor: pointer; user-select: none;">Remember me on this device</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 10px;">Sign In</button>
+        </form>
+    </div>
+
+    <script>
+        // Set selected role on click
+        function selectRole(role, element) {
+            document.getElementById('selectedRole').value = role;
+            document.querySelectorAll('.role-card').forEach(card => card.classList.remove('active'));
+            element.classList.add('active');
+            
+            // Prefill mock usernames for easier testing
+            const userField = document.getElementById('username');
+            if (role === 'Admin') {
+                userField.value = 'admin';
+            } else {
+                userField.value = 'EMP-001';
+            }
+        }
+
+        // Initialize with default admin values
+        selectRole('Admin', document.querySelector('.role-card'));
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const role = document.getElementById('selectedRole').value;
+            const username = document.getElementById('username').value.trim();
+            
+            // Set user profile
+            let name = 'Administrator';
+            let empId = 'EMP-000';
+            
+            if (role === 'Cashier') {
+                // Find or mock cashier details
+                const employees = JSON.parse(localStorage.getItem('ztg_employees')) || [];
+                const found = employees.find(e => e.id.toLowerCase() === username.toLowerCase() || e.name.toLowerCase().includes(username.toLowerCase()));
+                if (found) {
+                    name = found.name;
+                    empId = found.id;
+                } else {
+                    name = 'Maria Santos';
+                    empId = 'EMP-001';
+                }
+            }
+
+            const userSession = {
+                name: name,
+                role: role,
+                id: empId
+            };
+
+            localStorage.setItem('ztg_current_user', JSON.stringify(userSession));
+            
+            // Redirect based on role
+            if (role === 'Admin') {
+                window.location.href = 'index.html';
+            } else {
+                window.location.href = 'cashier-inventory.html';
+            }
+        }
+    </script>
+</body>
+</html>

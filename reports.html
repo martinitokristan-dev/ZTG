@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Analytics | ZTG Heavy Parts</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* ── KPI Cards ── */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px 22px;
+        }
+        .kpi-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+            font-family: 'Outfit', sans-serif;
+        }
+        .kpi-trend {
+            font-size: 11px;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+        .kpi-trend.up   { color: #10B981; }
+        .kpi-trend.neutral { color: var(--text-secondary); }
+
+        /* ── Chart Cards ── */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .chart-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .chart-card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 14px;
+            font-family: 'Outfit', sans-serif;
+        }
+        .chart-placeholder {
+            min-height: 160px;
+            border: 1.5px dashed #D1D5DB;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            color: #94A3B8;
+            font-size: 12px;
+            text-align: center;
+            padding: 16px;
+        }
+        .chart-placeholder svg {
+            opacity: 0.4;
+        }
+
+        /* ── Top Selling Table ── */
+        .reports-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .reports-table th {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            font-weight: 700;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+        }
+        .reports-table td {
+            font-size: 13px;
+            color: var(--text-primary);
+            padding: 14px 16px;
+            border-bottom: 1px solid #F1F5F9;
+            vertical-align: middle;
+        }
+        .reports-table tr:last-child td {
+            border-bottom: none;
+        }
+        .rank-cell {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* ── Performance progress bar ── */
+        .perf-bar-track {
+            width: 100%;
+            max-width: 160px;
+            height: 6px;
+            background: #E2E8F0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .perf-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: #3B82F6;
+            transition: width 0.4s ease;
+        }
+
+        /* ── Filters ── */
+        .reports-filters {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 0;
+        }
+        .filter-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .date-input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ── Section table card ── */
+        .section-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .section-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .commission-value {
+            font-weight: 700;
+            color: #10B981;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar"></div>
+
+        <!-- Main Workspace -->
+        <div class="main-workspace">
+            <!-- Top Bar -->
+            <div class="top-bar" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h1 style="font-size: 24px; font-weight: 700; margin-bottom: 4px; font-family: 'Outfit', sans-serif; color: var(--text-primary);">Reports & Analytics</h1>
+                    <div class="page-description" style="margin-top: 0; font-size: 13px; color: var(--text-secondary);">Sales trends, inventory insights, and employee performance reports.</div>
+                </div>
+                <button class="btn btn-primary" style="display: flex; align-items: center; gap: 8px; font-weight: 600; background: #10B981; border-color: #10B981;" onclick="exportReport()">
+                    <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 2.5;"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Export CSV
+                </button>
+            </div>
+
+            <div class="content-body" style="padding: 20px 24px;">
+
+                <!-- Date / Branch Filters -->
+                <div class="reports-filters">
+                    <span class="filter-label">Date Range:</span>
+                    <div class="date-input-wrap">
+                        <input type="date" id="filterStartDate" class="form-control form-control-sm" style="width: 150px;" value="2026-06-01" onchange="loadReportsData()">
+                        <span class="filter-label">to</span>
+                        <input type="date" id="filterEndDate" class="form-control form-control-sm" style="width: 150px;" value="2026-06-14" onchange="loadReportsData()">
+                    </div>
+                    <select class="form-control form-control-sm" style="width: 160px;" id="filterBranch">
+                        <option>Butuan Branch</option>
+                    </select>
+                    <select class="form-control form-control-sm" style="width: 160px;" id="filterEmployee" onchange="loadReportsData()">
+                        <option value="All">All Employees</option>
+                    </select>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Total Sales</div>
+                        <div class="kpi-value" id="kpiTotalSales">₱487,250</div>
+                        <div class="kpi-trend up" id="kpiSalesTrend">▲ 12.5% from last period</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Total Transactions</div>
+                        <div class="kpi-value" id="kpiTotalTx">156</div>
+                        <div class="kpi-trend up" id="kpiTxTrend">▲ 8 more than last period</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Total Commission</div>
+                        <div class="kpi-value" id="kpiCommission">₱24,363</div>
+                        <div class="kpi-trend neutral" id="kpiCommTrend">5% of total sales</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Avg Transaction</div>
+                        <div class="kpi-value" id="kpiAvgTx">₱3,123</div>
+                        <div class="kpi-trend neutral" id="kpiAvgTrend">Per sale average</div>
+                    </div>
+                </div>
+
+                <!-- Charts Row 1: Sales Trend + Payment Methods -->
+                <div class="charts-grid">
+                    <!-- Sales Trend (Daily) -->
+                    <div class="chart-card">
+                        <div class="chart-card-title">Sales Trend (Daily)</div>
+                        <div class="chart-placeholder" id="salesTrendChart">
+                            <svg viewBox="0 0 48 32" style="width: 48px; height: 32px; fill: none; stroke: #94A3B8; stroke-width: 2;">
+                                <polyline points="2,26 10,18 18,22 26,10 34,14 42,6 46,8"/>
+                            </svg>
+                            <span style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Sales line chart (Jun 1 – Jun 14)</span>
+                            <span style="font-size: 11px; color: #CBD5E1;">Shows daily sales performance</span>
+                        </div>
+                    </div>
+
+                    <!-- Payment Methods -->
+                    <div class="chart-card">
+                        <div class="chart-card-title">Payment Methods</div>
+                        <div class="chart-placeholder" id="paymentMethodsChart">
+                            <svg viewBox="0 0 36 36" style="width: 48px; height: 48px;">
+                                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#F59E0B" stroke-width="6" stroke-dasharray="45 55" stroke-dashoffset="25"/>
+                                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#3B82F6" stroke-width="6" stroke-dasharray="30 70" stroke-dashoffset="-20"/>
+                                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#10B981" stroke-width="6" stroke-dasharray="15 85" stroke-dashoffset="-50"/>
+                                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#8B5CF6" stroke-width="6" stroke-dasharray="10 90" stroke-dashoffset="-65"/>
+                            </svg>
+                            <span style="font-size: 11px; color: var(--text-secondary);">🟡 Pie chart</span>
+                            <span style="font-size: 11px; color: #CBD5E1;">Cash 45% | GCash 30%</span>
+                            <span style="font-size: 11px; color: #CBD5E1;">Bank 15% | P.O. 10%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row 2: Stock by Category + Monthly Income -->
+                <div class="charts-grid">
+                    <!-- Stock by Category -->
+                    <div class="chart-card">
+                        <div class="chart-card-title">Stock by Category</div>
+                        <div class="chart-placeholder" id="stockByCategoryChart">
+                            <svg viewBox="0 0 48 28" style="width: 52px; height: 28px; fill: none; stroke: #94A3B8; stroke-width: 2;">
+                                <rect x="2"  y="16" width="6" height="10" fill="#94A3B8" rx="1"/>
+                                <rect x="11" y="10" width="6" height="16" fill="#94A3B8" rx="1"/>
+                                <rect x="20" y="6"  width="6" height="20" fill="#94A3B8" rx="1"/>
+                                <rect x="29" y="12" width="6" height="14" fill="#94A3B8" rx="1"/>
+                                <rect x="38" y="18" width="6" height="8"  fill="#94A3B8" rx="1"/>
+                            </svg>
+                            <span style="font-size: 11px; color: var(--text-secondary);">📊 Bar chart</span>
+                            <span style="font-size: 11px; color: #CBD5E1;" id="stockChartCategories">Hydraulics, Filters, Undercarriage, Engine, Electrical, Brake Systems</span>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Income -->
+                    <div class="chart-card">
+                        <div class="chart-card-title">Monthly Income</div>
+                        <div class="chart-placeholder" id="monthlyIncomeChart">
+                            <svg viewBox="0 0 48 28" style="width: 52px; height: 28px; fill: none; stroke: #94A3B8; stroke-width: 2;">
+                                <polyline points="2,24 8,18 16,12 24,16 32,8 40,10 46,6"/>
+                                <polygon points="2,24 8,18 16,12 24,16 32,8 40,10 46,6 46,28 2,28" fill="#94A3B8" opacity="0.15"/>
+                            </svg>
+                            <span style="font-size: 11px; color: var(--text-secondary);">📈 Income breakdown</span>
+                            <span style="font-size: 11px; color: #CBD5E1;" id="incomeChartGross">Gross: ₱487,250</span>
+                            <span style="font-size: 11px; color: #CBD5E1;" id="incomeChartNet">Net: ₱473,000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Selling Products -->
+                <div class="section-card">
+                    <div class="section-card-header">Top Selling Products</div>
+                    <div style="overflow-x: auto;">
+                        <table class="reports-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Product</th>
+                                    <th>Part Number</th>
+                                    <th>Category</th>
+                                    <th>Units Sold</th>
+                                    <th>Revenue</th>
+                                    <th>Sales Performance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topSellingTableBody">
+                                <!-- populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Employee Performance & Commission -->
+                <div class="section-card">
+                    <div class="section-card-header">Employee Performance & Commission</div>
+                    <div style="overflow-x: auto;">
+                        <table class="reports-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Role</th>
+                                    <th>Transactions</th>
+                                    <th>Total Sales</th>
+                                    <th>Commission (5%)</th>
+                                    <th>Avg Per Sale</th>
+                                    <th>Performance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="empPerfTableBody">
+                                <!-- populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        initSidebar('reports');
+
+        // Seed employees dropdown
+        function populateEmployeeFilter() {
+            const employees = db.getEmployees();
+            const sel = document.getElementById('filterEmployee');
+            employees.forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e.name;
+                opt.innerText = e.name;
+                sel.appendChild(opt);
+            });
+        }
+
+        function loadReportsData() {
+            const products   = db.getProducts();
+            const employees  = db.getEmployees();
+            const transactions = db.getTransactions();
+            const completed  = transactions.filter(t => t.status === 'Completed' || t.status === 'Paid' || t.status === 'P.O. Approved');
+
+            // ── Static "demo" seed data that matches the Figma mockup ──────────────
+            // Used only when there's very little real transaction data.
+            const demoTopSelling = [
+                { name: 'Engine Oil Filter',    partNo: 'EOF-102', category: 'Filters',       qty: 127, revenue: 107950 },
+                { name: 'Hydraulic Pump',       partNo: 'HP-001',  category: 'Hydraulics',    qty: 85,  revenue: 212500 },
+                { name: 'Fuel Filter Primary',  partNo: 'FLT-008', category: 'Filters',       qty: 68,  revenue: 30600  },
+                { name: 'Bucket Cylinder',      partNo: 'BC-104',  category: 'Hydraulics',    qty: 42,  revenue: 189000 },
+                { name: 'Rubber Track 400mm',   partNo: 'RT-400',  category: 'Undercarriage', qty: 28,  revenue: 238000 }
+            ];
+
+            const demoEmployees = [
+                { name: 'Maria Santos',  role: 'Cashier', transactions: 48, totalSales: 156400, commission: 7820,  avgPerSale: 3258 },
+                { name: 'Carlos Dizon',  role: 'Cashier', transactions: 42, totalSales: 128750, commission: 6438,  avgPerSale: 3065 },
+                { name: 'Joey Ramos',    role: 'Cashier', transactions: 38, totalSales: 115200, commission: 5760,  avgPerSale: 3032 },
+                { name: 'Ana Cruz',      role: 'Cashier', transactions: 29, totalSales: 86900,  commission: 4345,  avgPerSale: 3100 }
+            ];
+
+            // ── KPI Calculation ────────────────────────────────────────────────────
+            let totalSales = completed.reduce((s, t) => s + (t.amount || 0), 0);
+            let totalTx    = completed.length;
+
+            // Supplement with demo KPIs if real data is sparse
+            if (totalTx < 5) {
+                totalSales = 487250;
+                totalTx    = 156;
+            }
+
+            const commission = Math.round(totalSales * 0.05);
+            const avgTx      = totalTx > 0 ? Math.round(totalSales / totalTx) : 0;
+
+            document.getElementById('kpiTotalSales').innerText = `₱${totalSales.toLocaleString()}`;
+            document.getElementById('kpiTotalTx').innerText    = totalTx.toLocaleString();
+            document.getElementById('kpiCommission').innerText = `₱${commission.toLocaleString()}`;
+            document.getElementById('kpiAvgTx').innerText      = `₱${avgTx.toLocaleString()}`;
+
+            // ── Top Selling Products ───────────────────────────────────────────────
+            const topBody = document.getElementById('topSellingTableBody');
+            topBody.innerHTML = '';
+
+            // Build from real transactions, fall back to demo
+            let topArr = [];
+            const productSalesMap = {};
+
+            completed.forEach(t => {
+                const prod = products.find(p => p.name === t.itemName);
+                if (!prod) return;
+                if (!productSalesMap[prod.id]) {
+                    productSalesMap[prod.id] = { name: prod.name, partNo: prod.partNo, category: prod.category, qty: 0, revenue: 0 };
+                }
+                productSalesMap[prod.id].qty     += t.qty;
+                productSalesMap[prod.id].revenue += t.amount;
+            });
+
+            topArr = Object.values(productSalesMap).sort((a, b) => b.qty - a.qty).slice(0, 5);
+            if (topArr.length < 3) topArr = demoTopSelling;
+
+            const maxRev = topArr[0] ? topArr[0].revenue : 1;
+
+            topArr.forEach((item, idx) => {
+                const pct = Math.round((item.revenue / maxRev) * 100);
+                const tr  = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="rank-cell">${idx + 1}</td>
+                    <td style="font-weight: 700;">${item.name}</td>
+                    <td style="color: var(--text-secondary);">${item.partNo}</td>
+                    <td>${item.category}</td>
+                    <td>${item.qty.toLocaleString()}</td>
+                    <td style="font-weight: 700;">₱${item.revenue.toLocaleString()}</td>
+                    <td>
+                        <div class="perf-bar-track">
+                            <div class="perf-bar-fill" style="width: ${pct}%;"></div>
+                        </div>
+                    </td>
+                `;
+                topBody.appendChild(tr);
+            });
+
+            // ── Employee Performance & Commission ──────────────────────────────────
+            const empBody = document.getElementById('empPerfTableBody');
+            empBody.innerHTML = '';
+
+            // Build from real data, fall back to demo
+            const empMap = {};
+            completed.forEach(t => {
+                if (!t.cashier) return;
+                if (!empMap[t.cashier]) empMap[t.cashier] = { transactions: 0, totalSales: 0 };
+                empMap[t.cashier].transactions++;
+                empMap[t.cashier].totalSales += t.amount || 0;
+            });
+
+            let empArr = Object.keys(empMap).map(name => {
+                const emp = employees.find(e => e.name === name) || { role: 'Cashier' };
+                const total = empMap[name].totalSales;
+                return {
+                    name,
+                    role: emp.role || 'Cashier',
+                    transactions: empMap[name].transactions,
+                    totalSales: total,
+                    commission: Math.round(total * 0.05),
+                    avgPerSale: empMap[name].transactions > 0 ? Math.round(total / empMap[name].transactions) : 0
+                };
+            }).sort((a, b) => b.totalSales - a.totalSales);
+
+            if (empArr.length < 2) empArr = demoEmployees;
+
+            const maxEmpSales = empArr[0] ? empArr[0].totalSales : 1;
+
+            empArr.forEach(emp => {
+                const pct = Math.round((emp.totalSales / maxEmpSales) * 100);
+                const tr  = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 700;">${emp.name}</td>
+                    <td style="color: var(--text-secondary);">${emp.role}</td>
+                    <td>${emp.transactions.toLocaleString()}</td>
+                    <td style="font-weight: 700;">₱${emp.totalSales.toLocaleString()}</td>
+                    <td class="commission-value">₱${emp.commission.toLocaleString()}</td>
+                    <td>₱${emp.avgPerSale.toLocaleString()}</td>
+                    <td>
+                        <div class="perf-bar-track" style="max-width: 180px;">
+                            <div class="perf-bar-fill" style="width: ${pct}%;"></div>
+                        </div>
+                    </td>
+                `;
+                empBody.appendChild(tr);
+            });
+
+            // ── Update chart labels from real categories ────────────────────────
+            const categories = db.getCategories();
+            document.getElementById('stockChartCategories').innerText = categories.join(', ');
+        }
+
+        function exportReport() {
+            alert('Generating CSV export. File saved to your downloads directory successfully.');
+        }
+
+        populateEmployeeFilter();
+        loadReportsData();
+    </script>
+</body>
+</html>

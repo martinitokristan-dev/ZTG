@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management | ZTG Heavy Parts</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar"></div>
+
+        <!-- Main Workspace -->
+        <div class="main-workspace">
+            <div class="top-bar">
+                <div>
+                    <h1 style="font-size: 20px; margin-bottom: 2px;">Inventory Management</h1>
+                    <div class="page-description" id="inventoryHeaderStats" style="margin-top: 0; font-size: 12px; color: var(--text-secondary);">
+                        Loading inventory summary...
+                    </div>
+                </div>
+                <div class="top-bar-actions">
+                    <span class="badge badge-success" style="font-size: 11px; padding: 6px 12px;">Read-Only View</span>
+                </div>
+            </div>
+
+            <div class="content-body">
+                <!-- Filters -->
+                <div class="card" style="margin-bottom: 16px;">
+                    <div class="table-filters" style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <input type="text" id="searchBar" class="form-control form-control-sm" placeholder="Search product description, part number, category, or address..." oninput="renderInventoryTable()">
+                        </div>
+                        <div style="width: 180px;">
+                            <select id="categoryFilter" class="form-control form-control-sm" onchange="renderInventoryTable()">
+                                <option value="All">All Categories</option>
+                            </select>
+                        </div>
+                        <div style="width: 180px;">
+                            <select id="stockFilter" class="form-control form-control-sm" onchange="renderInventoryTable()">
+                                <option value="All">All Stock Levels</option>
+                                <option value="Active">Active / Healthy</option>
+                                <option value="Low">Low Stock</option>
+                                <option value="No">No Stock</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Catalog Table Card -->
+                <div class="card table-card">
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Part No.</th>
+                                    <th>Category</th>
+                                    <th>Address</th>
+                                    <th>Stock</th>
+                                    <th>Price 1</th>
+                                    <th>Price 2</th>
+                                    <th>Sales</th>
+                                    <th>Status</th>
+                                    <th>Damaged</th>
+                                    <th style="text-align: center;">View</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: VIEW DETAILS -->
+    <div class="modal-overlay" id="viewItemModal">
+        <div class="modal-card" style="max-width: 550px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="viewTitle">Product Details</h3>
+                <button type="button" class="modal-close" onclick="closeModal('viewItemModal')">
+                    <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="background-color: var(--bg-canvas); border: 1px solid var(--border); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
+                        <span style="color: var(--text-secondary); font-size: 13px;">English Description</span>
+                        <strong id="detName" style="font-size: 13px;">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
+                        <span style="color: var(--text-secondary); font-size: 13px;">Chinese Description</span>
+                        <strong id="detChinese" style="font-size: 13px;">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
+                        <span style="color: var(--text-secondary); font-size: 13px;">Part Number</span>
+                        <strong id="detPartNo" style="font-size: 13px;">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
+                        <span style="color: var(--text-secondary); font-size: 13px;">Category</span>
+                        <strong id="detCategory" style="font-size: 13px;">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
+                        <span style="color: var(--text-secondary); font-size: 13px;">Warehouse Location</span>
+                        <strong id="detAddress" style="font-size: 13px;">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
+                        <span style="color: var(--text-secondary); font-size: 13px;">Shelf Stock Level</span>
+                        <strong id="detStock" style="font-size: 13px;">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
+                        <span style="color: var(--text-secondary); font-size: 13px;">Regular Price (Price 1)</span>
+                        <strong id="detPrice1" style="font-size: 13px; color: var(--text-primary);">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
+                        <span style="color: var(--text-secondary); font-size: 13px;">VIP Price (Price 2)</span>
+                        <strong id="detPrice2" style="font-size: 13px; color: var(--primary);">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
+                        <span style="color: var(--text-secondary); font-size: 13px;">Sales Counter</span>
+                        <strong id="detSales" style="font-size: 13px;">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary); font-size: 13px;">Damaged / Scrap Quantity</span>
+                        <strong id="detDamaged" style="font-size: 13px; color: var(--danger);">-</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('viewItemModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        initSidebar('inventory');
+
+        // Populate Category Dropdowns & Filter options
+        function loadCategories() {
+            const categories = db.getCategories();
+            const filterDropdown = document.getElementById('categoryFilter');
+
+            filterDropdown.innerHTML = '<option value="All">All Categories</option>';
+            categories.forEach(cat => {
+                filterDropdown.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+        }
+
+        // Calculate and render stats dynamically in header subtext
+        function updateHeaderSummary(products) {
+            const totalCount = products.length;
+            const categoriesCount = db.getCategories().length;
+            
+            const lowStockCount = products.filter(p => p.stock > 0 && p.stock <= (p.alertLimit || 5)).length;
+            const noStockCount = products.filter(p => p.stock === 0).length;
+
+            document.getElementById('inventoryHeaderStats').innerText = 
+                `${totalCount} total items across ${categoriesCount} categories · ${noStockCount} out of stock · ${lowStockCount} low stock`;
+        }
+
+        // Render inventory table
+        function renderInventoryTable() {
+            const products = db.getProducts();
+            updateHeaderSummary(products);
+
+            const searchVal = document.getElementById('searchBar').value.toLowerCase();
+            const categoryVal = document.getElementById('categoryFilter').value;
+            const stockVal = document.getElementById('stockFilter').value;
+            const tbody = document.getElementById('inventoryTableBody');
+
+            tbody.innerHTML = '';
+
+            const filtered = products.filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(searchVal) || 
+                                      p.chineseName.toLowerCase().includes(searchVal) || 
+                                      p.partNo.toLowerCase().includes(searchVal) ||
+                                      p.address.toLowerCase().includes(searchVal);
+
+                const matchesCategory = categoryVal === 'All' || p.category === categoryVal;
+                
+                let matchesStock = true;
+                if (stockVal === 'Low') matchesStock = p.stock > 0 && p.stock <= (p.alertLimit || 5);
+                else if (stockVal === 'No') matchesStock = p.stock === 0;
+                else if (stockVal === 'Active') matchesStock = p.stock > (p.alertLimit || 5);
+
+                return matchesSearch && matchesCategory && matchesStock;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: var(--text-secondary); padding: 20px;">No inventory items found.</td></tr>';
+                return;
+            }
+
+            filtered.forEach(p => {
+                const tr = document.createElement('tr');
+                const alertLevel = p.alertLimit || 5;
+                const isOutOfStock = p.stock === 0;
+                const isLowStock = p.stock > 0 && p.stock <= alertLevel;
+
+                let stockStatusText = 'Active';
+                let stockStatusClass = 'badge-success';
+
+                if (isOutOfStock) {
+                    stockStatusText = 'No Stock';
+                    stockStatusClass = 'badge-danger';
+                } else if (isLowStock) {
+                    stockStatusText = 'Low Stock';
+                    stockStatusClass = 'badge-warning';
+                }
+
+                tr.innerHTML = `
+                    <td>
+                        <strong style="color: var(--text-primary); font-size: 13px; display: block;">${p.name}</strong>
+                        <span class="chinese-subtitle" style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${p.chineseName || ''}</span>
+                    </td>
+                    <td class="font-bold">${p.partNo}</td>
+                    <td>${p.category}</td>
+                    <td><code>${p.address}</code></td>
+                    <td>
+                        <span class="badge ${stockStatusClass}">${p.stock} units</span>
+                    </td>
+                    <td class="font-bold">₱${p.price1.toLocaleString()}</td>
+                    <td class="font-bold" style="color: var(--primary);">₱${p.price2.toLocaleString()}</td>
+                    <td>${p.salesCount || 0} sold</td>
+                    <td>
+                        <span class="badge ${stockStatusClass}">${stockStatusText}</span>
+                    </td>
+                    <td>
+                        <span class="badge badge-secondary" style="background-color: var(--danger-light); color: var(--danger);">${p.damaged || 0} damaged</span>
+                    </td>
+                    <td style="text-align: center;">
+                        <button class="btn btn-secondary btn-sm" style="padding: 4px;" onclick="viewItem(${p.id})">
+                            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // View single product details
+        function viewItem(id) {
+            const products = db.getProducts();
+            const p = products.find(x => x.id === id);
+            if (!p) return;
+
+            document.getElementById('viewTitle').innerText = `Product Specs (${p.partNo})`;
+            document.getElementById('detName').innerText = p.name;
+            document.getElementById('detChinese').innerText = p.chineseName || 'N/A';
+            document.getElementById('detPartNo').innerText = p.partNo;
+            document.getElementById('detCategory').innerText = p.category;
+            document.getElementById('detAddress').innerText = p.address;
+            document.getElementById('detStock').innerText = `${p.stock} units (Alert at <= ${p.alertLimit || 5})`;
+            document.getElementById('detPrice1').innerText = `₱${p.price1.toLocaleString()}`;
+            document.getElementById('detPrice2').innerText = `₱${p.price2.toLocaleString()}`;
+            document.getElementById('detSales').innerText = `${p.salesCount || 0} units sold`;
+            document.getElementById('detDamaged').innerText = `${p.damaged || 0} units damaged`;
+
+            openModal('viewItemModal');
+        }
+
+        // Init loads
+        loadCategories();
+        renderInventoryTable();
+    </script>
+</body>
+</html>

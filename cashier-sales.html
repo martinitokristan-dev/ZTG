@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Sales | HeavyParts Pro</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar"></div>
+
+        <!-- Main Workspace -->
+        <div class="main-workspace">
+            <div class="top-bar">
+                <div class="top-bar-title">My Personal Sales Ledger</div>
+                <div class="top-bar-actions">
+                    <span class="page-description">Real-time ledger tracking of completed orders and accrued commissions.</span>
+                </div>
+            </div>
+
+            <div class="content-body">
+                <!-- Stat Cards Row -->
+                <div class="grid-3" style="grid-template-columns: 1fr 1fr; margin-bottom: 24px;">
+                    <div class="card stat-box">
+                        <div>
+                            <span class="stat-label">My Gross Sales Revenue</span>
+                            <div class="stat-value" id="cashierGrossSales">₱0</div>
+                        </div>
+                    </div>
+                    <div class="card stat-box">
+                        <div>
+                            <span class="stat-label">Accrued Commission (5%)</span>
+                            <div class="stat-value" id="cashierCommission" style="color: var(--primary);">₱0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Sales Ledger Table -->
+                <div class="card table-card">
+                    <div class="table-header-bar">
+                        <h3 style="font-size: 16px; font-weight: 700;">My Fulfilled Sales Invoices</h3>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Invoice Number</th>
+                                    <th>Product Details</th>
+                                    <th>Qty</th>
+                                    <th>Payment Mode</th>
+                                    <th>Total Amount</th>
+                                    <th>Commission Eager (5%)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mySalesTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        initSidebar('cashier-sales');
+
+        function renderMySales() {
+            const user = getCurrentUser();
+            const transactions = db.getTransactions();
+            const tbody = document.getElementById('mySalesTableBody');
+
+            tbody.innerHTML = '';
+
+            // Filter only Completed or PO Approved sales served by this specific cashier
+            const myCompletedSales = transactions.filter(t => 
+                (t.status === 'Completed' || t.status === 'P.O. Approved') && 
+                t.cashier.toLowerCase() === user.name.toLowerCase()
+            );
+
+            let gross = 0;
+            let commission = 0;
+
+            myCompletedSales.forEach(t => {
+                gross += t.amount;
+                const comm = t.amount * 0.05;
+                commission += comm;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${t.date}</td>
+                    <td class="font-bold">${t.siNo}</td>
+                    <td>${t.itemName}</td>
+                    <td>${t.qty}</td>
+                    <td>${t.payment}</td>
+                    <td class="font-bold">₱${t.amount.toLocaleString()}</td>
+                    <td class="font-bold" style="color: var(--primary);">₱${comm.toLocaleString()}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('cashierGrossSales').innerText = `₱${gross.toLocaleString()}`;
+            document.getElementById('cashierCommission').innerText = `₱${commission.toLocaleString()}`;
+
+            if (myCompletedSales.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 24px 0;">You have not processed any completed transactions yet.</td></tr>';
+            }
+        }
+
+        renderMySales();
+    </script>
+</body>
+</html>

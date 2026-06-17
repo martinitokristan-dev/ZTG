@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | HeavyParts Pro</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar"></div>
+
+        <!-- Main Workspace -->
+        <div class="main-workspace">
+            <div class="top-bar">
+                <div class="top-bar-title">Dashboard Overview</div>
+                <div class="top-bar-actions">
+                    <span class="page-description">Welcome back, <strong id="adminName">Administrator</strong>. Here is your store at a glance.</span>
+                </div>
+            </div>
+
+            <div class="content-body">
+                <!-- Out of Stock / Low Stock Alert Banners -->
+                <div id="alertsContainer">
+                    <div class="alert-banner danger">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 11-12.73 0M12 2v10m0 4h.01"/></svg>
+                        <div class="alert-banner-content">
+                            <h4>2 items are out of stock</h4>
+                            <p>Track Link Assembly (TRK-003), Alternator 24V (ELE-006).</p>
+                        </div>
+                    </div>
+                    <div class="alert-banner warning">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <div class="alert-banner-content">
+                            <h4>2 items are running low</h4>
+                            <p>Engine Gasket Set (ENG-005 · Qty 3), Fuel Filter Primary (FLT-008 · Qty 1).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date Filter Selector Row -->
+                <div class="header-row" style="margin-top: 24px;">
+                    <div></div>
+                    <div class="table-filters">
+                        <button class="filter-pill active">Today</button>
+                        <button class="filter-pill">This Week</button>
+                        <button class="filter-pill">This Month</button>
+                        <button class="filter-pill">This Year</button>
+                    </div>
+                </div>
+
+                <!-- 4 Stat Cards Row -->
+                <div class="grid-4">
+                    <div class="card stat-box">
+                        <div>
+                            <span class="stat-label">Total Items</span>
+                            <div class="stat-value">248</div>
+                        </div>
+                        <span class="stat-trend trend-up">▲ 12 added this week</span>
+                    </div>
+                    <div class="card stat-box">
+                        <div>
+                            <span class="stat-label">Today's Revenue</span>
+                            <div class="stat-value">₱34,400</div>
+                        </div>
+                        <span class="stat-trend trend-up">▲ 12.5% vs yesterday</span>
+                    </div>
+                    <div class="card stat-box">
+                        <div>
+                            <span class="stat-label">Employees</span>
+                            <div class="stat-value">7</div>
+                        </div>
+                        <span class="stat-trend">4 on shift today</span>
+                    </div>
+                    <div class="card stat-box">
+                        <div>
+                            <span class="stat-label">Top Product</span>
+                            <div class="stat-value" style="font-size: 20px; line-height: 1.4; margin-top: 16px;">Engine Oil Filter</div>
+                        </div>
+                        <span class="stat-trend trend-up">103 units sold</span>
+                    </div>
+                </div>
+
+                <!-- Row of Graphs and Stock Warning list -->
+                <div class="grid-3" style="grid-template-columns: 2fr 1fr;">
+                    <!-- Col 1: Sales Trend Line Chart -->
+                    <div class="card">
+                        <div class="justify-between align-center" style="display: flex;">
+                            <h3 style="font-size: 16px; font-weight: 700;">Sales Trend — Last 7 Days</h3>
+                            <span style="font-size: 12px; color: var(--text-secondary);">Jun 8 - Jun 14</span>
+                        </div>
+                        <div class="chart-container" style="height: 200px;">
+                            <!-- SVG Polyline chart -->
+                            <svg viewBox="0 0 500 150" style="width: 100%; height: 100%;">
+                                <!-- Grid Lines -->
+                                <line x1="0" y1="30" x2="500" y2="30" stroke="#E2E8F0" stroke-dasharray="4" />
+                                <line x1="0" y1="75" x2="500" y2="75" stroke="#E2E8F0" stroke-dasharray="4" />
+                                <line x1="0" y1="120" x2="500" y2="120" stroke="#E2E8F0" stroke-dasharray="4" />
+                                
+                                <!-- Polyline graph -->
+                                <polyline fill="none" stroke="#3B82F6" stroke-width="3" 
+                                    points="0,110 80,95 160,120 240,60 320,80 400,45 480,35" />
+                                
+                                <!-- Scatter points -->
+                                <circle cx="0" cy="110" r="4" fill="#3B82F6" />
+                                <circle cx="80" cy="95" r="4" fill="#3B82F6" />
+                                <circle cx="160" cy="120" r="4" fill="#3B82F6" />
+                                <circle cx="240" cy="60" r="4" fill="#3B82F6" />
+                                <circle cx="320" cy="80" r="4" fill="#3B82F6" />
+                                <circle cx="400" cy="45" r="4" fill="#3B82F6" />
+                                <circle cx="480" cy="35" r="4" fill="#3B82F6" />
+
+                                <!-- Label texts -->
+                                <text x="0" y="145" font-size="10" fill="#64748B">Mon</text>
+                                <text x="80" y="145" font-size="10" fill="#64748B">Tue</text>
+                                <text x="160" y="145" font-size="10" fill="#64748B">Wed</text>
+                                <text x="240" y="145" font-size="10" fill="#64748B">Thu</text>
+                                <text x="320" y="145" font-size="10" fill="#64748B">Fri</text>
+                                <text x="400" y="145" font-size="10" fill="#64748B">Sat</text>
+                                <text x="480" y="145" font-size="10" fill="#64748B">Sun</text>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Col 2: Low / No stock list -->
+                    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">Critical Stock Alerts</h3>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <span style="font-size: 13px; font-weight: 600;">Track Link Assembly</span>
+                                        <span style="display:block; font-size: 11px; color: var(--text-secondary);">TRK-003</span>
+                                    </div>
+                                    <span class="badge badge-danger">Out of stock</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <span style="font-size: 13px; font-weight: 600;">Alternator 24V</span>
+                                        <span style="display:block; font-size: 11px; color: var(--text-secondary);">ELE-006</span>
+                                    </div>
+                                    <span class="badge badge-danger">Out of stock</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <span style="font-size: 13px; font-weight: 600;">Engine Gasket Set</span>
+                                        <span style="display:block; font-size: 11px; color: var(--text-secondary);">ENG-005</span>
+                                    </div>
+                                    <span class="badge badge-warning">Qty: 3</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <span style="font-size: 13px; font-weight: 600;">Fuel Filter Primary</span>
+                                        <span style="display:block; font-size: 11px; color: var(--text-secondary);">FLT-008</span>
+                                    </div>
+                                    <span class="badge badge-warning">Qty: 1</span>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="product-management.html" class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 16px;">Manage Stock</a>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions Table Card -->
+                <div class="card table-card" style="margin-top: 24px;">
+                    <div class="table-header-bar">
+                        <h3 style="font-size: 16px; font-weight: 700;">Recent Transactions</h3>
+                        <a href="transaction-log.html" class="btn btn-secondary btn-sm">View All Invoices</a>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>S.I. / C.I.</th>
+                                    <th>Part Name</th>
+                                    <th>Customer</th>
+                                    <th>Qty</th>
+                                    <th>Amount</th>
+                                    <th>Payment</th>
+                                    <th>Served By</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentTransactionsTableBody">
+                                <!-- Populated dynamically from app.js -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal to show detailed transaction summary -->
+    <div class="modal-overlay" id="txDetailModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title" id="mTxTitle">Transaction Details</h3>
+                <button class="modal-close" onclick="closeModal('txDetailModal')">
+                    <svg viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-body" id="mTxBody">
+                <!-- Populated by JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('txDetailModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Set user info on top bar
+        const currentUser = getCurrentUser();
+        document.getElementById('adminName').innerText = currentUser.name;
+
+        // Load sidebar active link
+        initSidebar('dashboard');
+
+        // Populate recent transactions
+        const transactions = db.getTransactions();
+        const tbody = document.getElementById('recentTransactionsTableBody');
+
+        transactions.forEach(tx => {
+            const tr = document.createElement('tr');
+            tr.style.cursor = 'pointer';
+            tr.onclick = () => showTransactionDetails(tx);
+            
+            let badgeClass = 'badge-secondary';
+            if (tx.status === 'Completed') badgeClass = 'badge-success';
+            if (tx.status === 'Refund') badgeClass = 'badge-danger';
+            if (tx.status === 'Return') badgeClass = 'badge-warning';
+
+            tr.innerHTML = `
+                <td class="font-bold">${tx.siNo}</td>
+                <td>${tx.itemName}</td>
+                <td>${tx.customer}</td>
+                <td>${tx.qty}</td>
+                <td class="font-bold">₱${tx.amount.toLocaleString()}</td>
+                <td>${tx.payment}</td>
+                <td>${tx.cashier}</td>
+                <td><span class="badge ${badgeClass}">${tx.status}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        function showTransactionDetails(tx) {
+            const mTitle = document.getElementById('mTxTitle');
+            const mBody = document.getElementById('mTxBody');
+            
+            mTitle.innerText = `Invoice ${tx.siNo}`;
+            
+            let statusBadge = `<span class="badge badge-secondary">${tx.status}</span>`;
+            if (tx.status === 'Completed') statusBadge = `<span class="badge badge-success">${tx.status}</span>`;
+            if (tx.status === 'Refund') statusBadge = `<span class="badge badge-danger">${tx.status}</span>`;
+            if (tx.status === 'Return') statusBadge = `<span class="badge badge-warning">${tx.status}</span>`;
+
+            let refundMeta = '';
+            if (tx.refundReason) {
+                refundMeta = `
+                    <div style="margin-top: 16px; padding: 12px; background-color: var(--danger-light); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.1);">
+                        <strong style="color: var(--danger); font-size: 13px; display: block; margin-bottom: 4px;">Refund Details</strong>
+                        <p style="font-size: 13px; color: var(--text-secondary);">Reason: ${tx.refundReason}</p>
+                        <p style="font-size: 13px; color: var(--text-secondary);">Action Taken: ${tx.actionType}</p>
+                        <p style="font-size: 13px; color: var(--text-secondary);">Inventory: ${tx.invAction}</p>
+                    </div>
+                `;
+            }
+
+            mBody.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                    <div>
+                        <span style="font-size: 12px; color: var(--text-secondary); display: block;">Date</span>
+                        <strong>${tx.date}</strong>
+                    </div>
+                    <div>
+                        <span style="font-size: 12px; color: var(--text-secondary); display: block; text-align: right;">Status</span>
+                        <div style="text-align: right;">${statusBadge}</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
+                    <span style="font-size: 12px; color: var(--text-secondary); display: block;">Customer Info</span>
+                    <strong>${tx.customer}</strong>
+                    <span style="display: block; font-size: 13px; color: var(--text-secondary);">${tx.phone || 'No phone provided'}</span>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div>
+                        <strong>${tx.itemName}</strong>
+                        <span style="display: block; font-size: 12px; color: var(--text-secondary);">Qty: ${tx.qty}</span>
+                    </div>
+                    <strong style="font-size: 16px; color: var(--primary);">₱${tx.amount.toLocaleString()}</strong>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 12px;">
+                    <span style="color: var(--text-secondary);">Payment Mode:</span>
+                    <strong>${tx.payment}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 6px;">
+                    <span style="color: var(--text-secondary);">Served By:</span>
+                    <strong>${tx.cashier}</strong>
+                </div>
+
+                ${refundMeta}
+            `;
+            openModal('txDetailModal');
+        }
+    </script>
+</body>
+</html>

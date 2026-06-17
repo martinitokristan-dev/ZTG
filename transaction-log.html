@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Log | ZTG Heavy Parts</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .reason-item {
+            display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+            border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
+            font-size: 12px; background-color: var(--bg-canvas);
+        }
+        .reason-item.active {
+            border-color: var(--primary); background-color: var(--primary-light);
+        }
+        .status-tab {
+            padding: 6px 16px; border-radius: 6px; border: 1px solid var(--border);
+            background: #FFFFFF; color: var(--text-secondary); font-size: 13px;
+            font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .status-tab:hover { background: #F8FAFC; }
+        .status-tab.active { background: var(--primary); color: #FFFFFF; border-color: var(--primary); }
+        .action-btn {
+            padding: 4px 16px; background: #F1F5F9; border: 1px solid var(--border);
+            border-radius: 4px; font-size: 12px; font-weight: 600; color: var(--text-secondary);
+            cursor: pointer; transition: all 0.2s;
+        }
+        .action-btn:hover { background: #E2E8F0; }
+        .btn-refund-return {
+            background: #FEE2E2; color: var(--danger); border: none; font-weight: 600;
+            padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;
+            transition: background 0.2s;
+        }
+        .btn-refund-return:hover { background: #FECACA; }
+        .status-text { font-weight: 600; font-size: 12px; }
+        .status-text.completed { color: var(--success); }
+        .status-text.refund { color: var(--danger); }
+        .status-text.return { color: #F59E0B; }
+        .status-text.pending { color: #94A3B8; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar"></div>
+
+        <!-- Main Workspace -->
+        <div class="main-workspace">
+            <div class="top-bar">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div>
+                        <h1 style="font-size: 20px; margin-bottom: 2px;">Transaction Log</h1>
+                        <div class="page-description" style="margin-top: 0; font-size: 12px;">Review completed sales, refunds, returns, and update P.O.s.</div>
+                    </div>
+                    <button class="btn" style="background: #FFFFFF; border: 1px solid var(--border); color: var(--text-primary); font-size: 12px; padding: 8px 16px; border-radius: 6px; display: flex; align-items: center; gap: 6px; font-weight: 600;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                        Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <div class="content-body">
+                <!-- Filters -->
+                <div style="margin-bottom: 16px;">
+                    <div class="table-filters" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; background: #FFFFFF; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div style="flex: 1; min-width: 250px; position: relative;">
+                            <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">🔍</span>
+                            <input type="text" id="txSearch" class="form-control form-control-sm" placeholder="Search by S.I./C.I., customer, or product..." style="padding-left: 30px;" oninput="renderTransactions()">
+                        </div>
+                        <div style="width: 150px;">
+                            <select id="paymentFilter" class="form-control form-control-sm" onchange="renderTransactions()">
+                                <option value="All">All Payment</option>
+                                <option value="Cash">Cash</option>
+                                <option value="GCash">GCash</option>
+                                <option value="Bank">Bank</option>
+                                <option value="P.O.">P.O.</option>
+                            </select>
+                        </div>
+                        <div style="width: 150px;">
+                            <select id="employeeFilter" class="form-control form-control-sm" onchange="renderTransactions()">
+                                <option value="All">All Employees</option>
+                            </select>
+                        </div>
+                        <div style="width: 150px;">
+                            <select id="typeFilter" class="form-control form-control-sm" onchange="renderTransactions()">
+                                <option value="All">All Types</option>
+                            </select>
+                        </div>
+                        <button class="btn-refund-return" onclick="openEmptyRefundModal()">Refund / Return</button>
+                    </div>
+                    
+                    <!-- Tabs -->
+                    <div style="display: flex; gap: 8px; margin-top: 16px;">
+                        <button class="status-tab active" data-status="All" onclick="setTab('All')">All</button>
+                        <button class="status-tab" data-status="Refund" onclick="setTab('Refund')">Refund</button>
+                        <button class="status-tab" data-status="Return" onclick="setTab('Return')">Return</button>
+                        <button class="status-tab" data-status="Pending P.O." onclick="setTab('Pending P.O.')">Pending P.O.</button>
+                    </div>
+                </div>
+
+                <!-- Transaction Log Table -->
+                <div class="card table-card">
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                            <thead style="border-bottom: 1px solid var(--border); font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">
+                                <tr>
+                                    <th style="padding: 16px; font-weight: 700;">DATE</th>
+                                    <th style="padding: 16px; font-weight: 700;">S.I./C.I./D.R.</th>
+                                    <th style="padding: 16px; font-weight: 700;">PART NO.</th>
+                                    <th style="padding: 16px; font-weight: 700;">PRODUCT</th>
+                                    <th style="padding: 16px; font-weight: 700;">QTY</th>
+                                    <th style="padding: 16px; font-weight: 700;">PRICE 1</th>
+                                    <th style="padding: 16px; font-weight: 700;">CUSTOMER</th>
+                                    <th style="padding: 16px; font-weight: 700;">PAYMENT</th>
+                                    <th style="padding: 16px; font-weight: 700;">SERVED BY</th>
+                                    <th style="padding: 16px; font-weight: 700;">STATUS</th>
+                                    <th style="padding: 16px; font-weight: 700;">REASON</th>
+                                    <th style="padding: 16px; font-weight: 700; text-align: center;">ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionsTableBody" style="font-size: 13px;">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Return or Refund Processor (Redesigned) -->
+    <div class="modal-overlay" id="refundModal">
+        <div class="modal-card modal-card-lg" style="max-width: 1000px; width: 95%; background-color: #FFFFFF; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);">
+            <form id="refundForm" onsubmit="submitRefund(event)">
+                <input type="hidden" id="refundTxIndex">
+                
+                <!-- Red Header -->
+                <div class="modal-header" style="background-color: #FEE2E2; border-bottom: none; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 class="modal-title" id="refundModalTitle" style="color: #DC2626; font-size: 16px; font-weight: 700; margin: 0;">Process Refund / Return</h3>
+                    <button type="button" class="modal-close" style="color: #9CA3AF; background: none; border: none; cursor: pointer; padding: 4px;" onclick="closeModal('refundModal')">
+                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+
+                <div class="modal-body" style="padding: 24px; max-height: 80vh; overflow-y: auto;">
+                    <div class="refund-grid" style="display: grid; grid-template-columns: 1fr 1.1fr; gap: 32px;">
+                        <!-- Left Column -->
+                        <div class="refund-column" style="display: flex; flex-direction: column; gap: 24px;">
+                            
+                            <!-- Yellow Info Banner -->
+                            <div style="background-color: #FEF3C7; border: 1px solid #FDE68A; border-radius: 6px; padding: 16px;">
+                                <h4 style="color: #B45309; font-size: 12px; font-weight: 700; margin: 0 0 4px 0;">Stock Will Be Restored</h4>
+                                <p style="color: #B45309; font-size: 11px; margin: 0; line-height: 1.4;">Processing this refund/return will automatically return items to inventory and update transaction records.</p>
+                            </div>
+
+                            <!-- Original Transaction -->
+                            <div>
+                                <h4 style="font-size: 11px; font-weight: 600; color: #6B7280; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Original Transaction</h4>
+                                
+                                <div class="form-group" style="margin-bottom: 16px;">
+                                    <label class="form-label" style="font-size: 12px; font-weight: 500; color: #374151; margin-bottom: 6px;">Search Transaction <span style="color: #DC2626;">*</span></label>
+                                    <div style="position: relative; display: flex; align-items: center;">
+                                        <input type="text" id="infoReceiptNoInput" class="form-control" style="border-radius: 6px; border: 1px solid #D1D5DB; padding: 10px 12px; padding-right: 36px; font-size: 13px; width: 100%; box-sizing: border-box;" placeholder="Enter S.I. / C.I. Number..." onkeydown="if(event.key === 'Enter') { event.preventDefault(); searchTransactionForRefund(this.value); }">
+                                        <button type="button" onclick="searchTransactionForRefund(document.getElementById('infoReceiptNoInput').value)" style="position: absolute; right: 8px; background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center;">
+                                            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; stroke: #6B7280; fill: none; stroke-width: 2;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="info-box" style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 0;">
+                                    <div style="display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #F3F4F6; font-size: 13px;">
+                                        <span style="color: #6B7280;">Receipt Number</span>
+                                        <span style="font-weight: 600; color: #111827;" id="infoReceiptNoDisplay">-</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #F3F4F6; font-size: 13px;">
+                                        <span style="color: #6B7280;">Transaction Date</span>
+                                        <span style="font-weight: 600; color: #111827;" id="infoTxDate">-</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #F3F4F6; font-size: 13px;">
+                                        <span style="color: #6B7280;">Customer</span>
+                                        <span style="font-weight: 600; color: #111827;" id="infoCustomerName">-</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #F3F4F6; font-size: 13px;">
+                                        <span style="color: #6B7280;">Served By</span>
+                                        <span style="font-weight: 600; color: #111827;" id="infoCashier">-</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #F3F4F6; font-size: 13px;">
+                                        <span style="color: #6B7280;">Original Amount</span>
+                                        <span style="font-weight: 600; color: #111827;" id="infoAmount">-</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 12px 16px; font-size: 13px;">
+                                        <span style="color: #6B7280;">Payment Method</span>
+                                        <span style="font-weight: 600; color: #111827;" id="infoPaymentMode">-</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Select Type -->
+                            <div>
+                                <h4 style="font-size: 11px; font-weight: 600; color: #6B7280; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Select Type</h4>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <!-- Refund Button -->
+                                    <label id="cardTypeRefund" style="border: 2px solid #3B82F6; background-color: #EFF6FF; border-radius: 6px; padding: 16px; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;" onclick="selectRefundType('Refund')">
+                                        <input type="radio" name="refundType" value="Refund" checked style="display:none;">
+                                        <span style="font-size: 20px; margin-bottom: 8px;">💰</span>
+                                        <span style="font-weight: 600; font-size: 14px; color: #111827; margin-bottom: 4px;">Refund</span>
+                                        <span style="font-size: 12px; color: #6B7280;">Full money back</span>
+                                    </label>
+                                    
+                                    <!-- Return Button -->
+                                    <label id="cardTypeReturn" style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 16px; cursor: pointer; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;" onclick="selectRefundType('Return')">
+                                        <input type="radio" name="refundType" value="Return" style="display:none;">
+                                        <span style="font-size: 20px; margin-bottom: 8px;">🔄</span>
+                                        <span style="font-weight: 600; font-size: 14px; color: #111827; margin-bottom: 4px;">Return</span>
+                                        <span style="font-size: 12px; color: #6B7280;">Exchange or credit</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Reason -->
+                            <div>
+                                <h4 style="font-size: 11px; font-weight: 600; color: #6B7280; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Refund/Return Reason <span style="color: #DC2626;">*</span></h4>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="reason-radio-label" style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 13px; color: #374151;">
+                                        <input type="radio" name="refundReason" value="Item Damaged / Defective" checked style="accent-color: #3B82F6; width: 16px; height: 16px; margin: 0;">
+                                        <span>Item Damaged / Defective</span>
+                                    </label>
+                                    <label class="reason-radio-label" style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 13px; color: #374151;">
+                                        <input type="radio" name="refundReason" value="Wrong Item Given" style="accent-color: #3B82F6; width: 16px; height: 16px; margin: 0;">
+                                        <span>Wrong Item Given</span>
+                                    </label>
+                                    <label class="reason-radio-label" style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 13px; color: #374151;">
+                                        <input type="radio" name="refundReason" value="Item Not Compatible" style="accent-color: #3B82F6; width: 16px; height: 16px; margin: 0;">
+                                        <span>Item Not Compatible</span>
+                                    </label>
+                                    <label class="reason-radio-label" style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 13px; color: #374151;">
+                                        <input type="radio" name="refundReason" value="Customer Changed Mind" style="accent-color: #3B82F6; width: 16px; height: 16px; margin: 0;">
+                                        <span>Customer Changed Mind</span>
+                                    </label>
+                                    <label class="reason-radio-label" style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 13px; color: #374151;">
+                                        <input type="radio" name="refundReason" value="Duplicate Order" style="accent-color: #3B82F6; width: 16px; height: 16px; margin: 0;">
+                                        <span>Duplicate Order</span>
+                                    </label>
+                                    <label class="reason-radio-label" style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 13px; color: #374151;">
+                                        <input type="radio" name="refundReason" value="Other" style="accent-color: #3B82F6; width: 16px; height: 16px; margin: 0;">
+                                        <span>Other (Specify Below)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Additional Details -->
+                            <div>
+                                <label style="font-size: 12px; font-weight: 600; color: #111827; margin-bottom: 8px; display: block;">Additional Details <span style="color: #DC2626;">*</span></label>
+                                <textarea id="refundNotes" class="form-control" rows="3" placeholder="Provide detailed explanation for this refund/return..." style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px; font-size: 13px; width: 100%; resize: none;"></textarea>
+                            </div>
+
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="refund-column" style="display: flex; flex-direction: column; gap: 24px;">
+                            
+                            <!-- Items -->
+                            <div>
+                                <h4 style="font-size: 11px; font-weight: 600; color: #6B7280; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Items To Refund/Return</h4>
+                                <div style="border-top: 1px solid #E5E7EB; border-bottom: 1px solid #E5E7EB; max-height: 200px; overflow-y: auto;">
+                                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                        <thead>
+                                            <tr>
+                                                <th style="padding: 12px 8px; font-size: 11px; color: #6B7280; font-weight: 600; width: 60px;">SELECT</th>
+                                                <th style="padding: 12px 8px; font-size: 11px; color: #6B7280; font-weight: 600;">ITEM</th>
+                                                <th style="padding: 12px 8px; font-size: 11px; color: #6B7280; font-weight: 600; text-align: center; width: 60px;">QTY</th>
+                                                <th style="padding: 12px 8px; font-size: 11px; color: #6B7280; font-weight: 600; text-align: right; width: 80px;">PRICE</th>
+                                                <th style="padding: 12px 8px; font-size: 11px; color: #6B7280; font-weight: 600; text-align: right; width: 80px;">TOTAL</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="refundItemsTableBody">
+                                            <!-- Populated dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Stock Restoration -->
+                            <div>
+                                <h4 style="font-size: 11px; font-weight: 600; color: #6B7280; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Stock Restoration</h4>
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <label style="display: flex; align-items: flex-start; gap: 12px; font-size: 13px; cursor: pointer; color: #374151;">
+                                        <input type="checkbox" id="checkRestoreStock" checked style="margin-top: 3px; accent-color: #3B82F6; width: 16px; height: 16px;">
+                                        <span>Restore items to inventory (add back to stock)</span>
+                                    </label>
+                                    <label style="display: flex; align-items: flex-start; gap: 12px; font-size: 13px; cursor: pointer; color: #374151;">
+                                        <input type="checkbox" id="checkMarkDamaged" style="margin-top: 3px; accent-color: #3B82F6; width: 16px; height: 16px;">
+                                        <span>Mark items as damaged (add to damaged count, not available for sale)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Refund Amount -->
+                            <div>
+                                <h4 style="font-size: 11px; font-weight: 600; color: #6B7280; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Refund Amount</h4>
+                                <div style="background-color: #FEE2E2; border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 13px; color: #DC2626;">
+                                        <span>Items Total</span>
+                                        <span id="txtItemsSubtotal">₱0.00</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 13px; color: #DC2626;">
+                                        <span>Tax Refund (12%)</span>
+                                        <span id="txtTaxRefund">₱0.00</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; color: #DC2626; border-top: 1px solid rgba(220, 38, 38, 0.2); padding-top: 12px; margin-top: 4px;">
+                                        <span>Total Refund Amount</span>
+                                        <span id="txtTotalRefund">₱0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Admin Form Fields -->
+                            <div style="display: flex; flex-direction: column; gap: 16px;">
+                                <div>
+                                    <label style="font-size: 12px; color: #4B5563; margin-bottom: 4px; display: block;">Refund Method</label>
+                                    <select id="refundMethod" class="form-control" style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 10px 12px; font-size: 13px; width: 100%;">
+                                        <option value="Cash">Cash Return</option>
+                                        <option value="GCash">GCash (Same as original payment)</option>
+                                        <option value="Bank Transfer">Bank Transfer</option>
+                                        <option value="Store Credit">Store Credit / Exchange</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size: 12px; color: #4B5563; margin-bottom: 4px; display: block;">Processed By</label>
+                                    <select id="refundApprover" class="form-control" style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 10px 12px; font-size: 13px; width: 100%;">
+                                        <option value="Manager">Carlos Dizon (Current User)</option>
+                                        <option value="Supervisor">Supervisor</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size: 12px; color: #4B5563; margin-bottom: 4px; display: block;">Approval Code (Optional)</label>
+                                    <input type="text" id="refundApprovalCode" class="form-control" placeholder="Enter supervisor approval code if required" style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 10px 12px; font-size: 13px; width: 100%;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 12px; color: #4B5563; margin-bottom: 4px; display: block;">Internal Notes</label>
+                                    <textarea id="refundInternalNotes" class="form-control" rows="2" placeholder="Notes for admin/records..." style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 10px 12px; font-size: 13px; width: 100%; resize: none;"></textarea>
+                                </div>
+                                <input type="hidden" id="refundCustomerName" value="">
+                                <input type="hidden" id="refundCustomerPhone" value="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #E5E7EB; background-color: #FFFFFF;">
+                    <button type="button" class="btn" onclick="closeModal('refundModal')" style="background-color: #F3F4F6; color: #374151; border: none; padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer;">Cancel</button>
+                    <button type="submit" class="btn" style="background-color: #DC2626; color: #FFFFFF; border: none; padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer;">Process Refund</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: View Audit details of Refunded Transaction -->
+    <div class="modal-overlay" id="auditDetailModal">
+        <div class="modal-card" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Transaction Audit Summary</h3>
+                <button type="button" class="modal-close" onclick="closeModal('auditDetailModal')">
+                    <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-body" id="auditDetailBody">
+                <!-- Loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('auditDetailModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Success Toast -->
+    <div class="modal-overlay" id="successModal" style="display: none; align-items: center; justify-content: center; z-index: 9999; background: rgba(0,0,0,0.5);">
+        <div style="background: white; border-radius: 12px; padding: 32px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+            <div style="width: 64px; height: 64px; background: #DEF7EC; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                <svg viewBox="0 0 24 24" style="width: 32px; height: 32px; stroke: #046C4E; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <h3 style="font-size: 20px; font-weight: 700; color: #111827; margin-bottom: 8px;">Refund Processed</h3>
+            <p style="font-size: 14px; color: #6B7280; margin-bottom: 24px; line-height: 1.5;">The refund has been processed and stock has been restored to inventory.</p>
+            
+            <div style="background: #F9FAFB; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+                <div style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 4px;">Refund Amount: <span id="successRefundAmount">₱0</span></div>
+                <div style="font-size: 13px; color: #6B7280;" id="successRefundStatus">Items returned to stock</div>
+            </div>
+
+            <button onclick="closeSuccessModal()" style="background: #057A55; color: white; border: none; border-radius: 6px; padding: 10px 32px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s;">Done</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        initSidebar('transactions');
+
+        let currentTab = 'All';
+
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        function setTab(status) {
+            currentTab = status;
+            document.querySelectorAll('.status-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.status === status) {
+                    tab.classList.add('active');
+                }
+            });
+            renderTransactions();
+        }
+
+        function loadEmployees() {
+            const employees = db.getEmployees();
+            const filterDropdown = document.getElementById('employeeFilter');
+            filterDropdown.innerHTML = '<option value="All">All Employees</option>';
+            employees.forEach(e => {
+                filterDropdown.innerHTML += `<option value="${e.name}">${e.name.split(' ')[0]}</option>`;
+            });
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').style.display = 'none';
+        }
+
+        function openEmptyRefundModal() {
+            document.getElementById('refundTxIndex').value = '';
+            document.getElementById('refundForm').reset();
+            
+            document.getElementById('infoReceiptNoDisplay').innerText = '-';
+            document.getElementById('infoReceiptNoInput').value = '';
+            document.getElementById('infoTxDate').innerText = '-';
+            document.getElementById('infoCustomerName').innerText = '-';
+            document.getElementById('infoCashier').innerText = '-';
+            document.getElementById('infoAmount').innerText = '-';
+            document.getElementById('infoPaymentMode').innerText = '-';
+
+            document.getElementById('refundModalTitle').innerText = `Process Refund / Return`;
+            selectRefundType('Refund');
+
+            document.querySelectorAll('input[name="refundReason"]').forEach((el, i) => {
+                if (i === 0) el.checked = true;
+            });
+
+            document.getElementById('refundItemsTableBody').innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 24px; color: #6B7280; font-size: 13px;">Enter a transaction number to load items</td></tr>';
+            
+            document.getElementById('txtItemsSubtotal').innerText = '₱0.00';
+            document.getElementById('txtTaxRefund').innerText = '₱0.00';
+            document.getElementById('txtTotalRefund').innerText = '₱0.00';
+
+            openModal('refundModal');
+            setTimeout(() => {
+                document.getElementById('infoReceiptNoInput').focus();
+            }, 100);
+        }
+
+        function searchTransactionForRefund(siNo) {
+            if (!siNo || !siNo.trim()) return;
+            
+            const transactions = db.getTransactions();
+            const idx = transactions.findIndex(t => t.siNo.toLowerCase() === siNo.trim().toLowerCase());
+            
+            if (idx === -1) {
+                alert("Transaction not found. Please check the document number and try again.");
+                return;
+            }
+            if (transactions[idx].status === 'Refund' || transactions[idx].status === 'Return') {
+                alert("This transaction has already been refunded or returned.");
+                return;
+            }
+            
+            openRefundModal(idx);
+        }
+
+        function viewTransaction(idx) {
+            // For now, view audit details
+            openAuditModal(idx);
+        }
+
+        function renderTransactions() {
+            const transactions = db.getTransactions();
+            const products = db.getProducts();
+            const searchVal = document.getElementById('txSearch').value.trim().toLowerCase();
+            const paymentVal = document.getElementById('paymentFilter').value;
+            const employeeVal = document.getElementById('employeeFilter').value;
+            const tbody = document.getElementById('transactionsTableBody');
+
+            tbody.innerHTML = '';
+
+            const filtered = transactions.filter(tx => {
+                const matchesSearch = tx.siNo.toLowerCase().includes(searchVal) || (tx.customer || '').toLowerCase().includes(searchVal) || (tx.itemName || '').toLowerCase().includes(searchVal);
+                const matchesPayment = paymentVal === 'All' || tx.payment.includes(paymentVal);
+                const matchesEmployee = employeeVal === 'All' || tx.cashier.includes(employeeVal);
+                
+                let isTabMatch = false;
+                const statusGrp = (tx.status === 'Completed' || tx.status === 'Paid') ? 'Completed' :
+                                  (tx.status === 'Refund' || tx.status === 'Return') ? tx.status : 
+                                  (tx.payment && tx.payment.includes('P.O.') && tx.status !== 'Completed') ? 'Pending P.O.' : tx.status;
+
+                if (currentTab === 'All') isTabMatch = true;
+                else if (currentTab === statusGrp) isTabMatch = true;
+
+                return matchesSearch && matchesPayment && matchesEmployee && isTabMatch;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; color: var(--text-secondary); padding: 20px;">No transactions found.</td></tr>';
+                return;
+            }
+
+            filtered.forEach((tx, idx) => {
+                const statusGrp = (tx.status === 'Completed' || tx.status === 'Paid') ? 'Completed' :
+                                  (tx.status === 'Refund') ? 'Refund' : 
+                                  (tx.status === 'Return') ? 'Return' : 
+                                  (tx.payment && tx.payment.includes('P.O.') && tx.status !== 'Completed') ? 'Pending' : tx.status;
+
+                let textClass = 'status-text ';
+                if (statusGrp === 'Completed') textClass += 'completed';
+                else if (statusGrp === 'Refund') textClass += 'refund';
+                else if (statusGrp === 'Return') textClass += 'return';
+                else if (statusGrp === 'Pending' || statusGrp === 'Pending P.O.') textClass += 'pending';
+
+                const isRefundedOrReturned = (statusGrp === 'Refund' || statusGrp === 'Return');
+                const displayName = tx.customer && tx.customer.length > 0 && !tx.customer.includes('Anonymous') ? tx.customer : (isRefundedOrReturned ? tx.customer : '—');
+                
+                // Look up part number
+                let partNo = 'N/A';
+                const mainProd = products.find(p => p.name === tx.itemName || tx.itemName.startsWith(p.name));
+                if (mainProd) partNo = mainProd.partNo;
+
+                // Format Date & Time
+                let datePart = tx.date;
+                let timePart = '09:00 AM';
+                if (tx.date.includes('ago') || tx.date.includes('Yesterday') || tx.date.includes('Just now')) {
+                    datePart = tx.date;
+                    timePart = '';
+                }
+
+                const price1 = tx.amount / (tx.qty || 1);
+                
+                const actionBtn = statusGrp === 'Pending' ? 'Update' : 'View';
+
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--border)';
+                tr.innerHTML = `
+                    <td style="padding: 16px;">
+                        <span style="display: block; color: var(--text-primary); font-size: 13px;">${datePart}</span>
+                        ${timePart ? `<span style="display: block; font-size: 11px; color: var(--text-secondary);">${timePart}</span>` : ''}
+                    </td>
+                    <td style="padding: 16px; font-weight: 700; color: var(--text-primary);">${tx.siNo}</td>
+                    <td style="padding: 16px; color: var(--text-secondary);">${partNo}</td>
+                    <td style="padding: 16px;">
+                        <strong style="color: var(--text-primary); font-size: 13px; display: block;">${tx.itemName}</strong>
+                        ${mainProd && mainProd.chineseName ? `<span style="font-size: 11px; color: var(--text-secondary); display: block;">${mainProd.chineseName}</span>` : ''}
+                    </td>
+                    <td style="padding: 16px; color: var(--text-secondary);">${tx.qty}</td>
+                    <td style="padding: 16px; color: var(--text-primary); font-weight: 500;">₱${price1.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
+                    <td style="padding: 16px; color: var(--text-secondary);">${displayName}</td>
+                    <td style="padding: 16px; color: var(--text-secondary);">${tx.payment}</td>
+                    <td style="padding: 16px; color: var(--text-secondary);">${tx.cashier.split(' ')[0]}</td>
+                    <td style="padding: 16px;">
+                        <span class="${textClass}">${statusGrp}</span>
+                    </td>
+                    <td style="padding: 16px; color: var(--text-secondary); font-size: 12px;">${tx.refundReason || '—'}</td>
+                    <td style="padding: 16px; text-align: center;">
+                        <button class="action-btn" onclick="viewTransaction(${transactions.indexOf(tx)})">${actionBtn}</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function getTransactionItems(tx) {
+            const products = db.getProducts();
+            
+            if (tx.items && tx.items.length > 0) {
+                return tx.items.map(item => {
+                    const prod = products.find(p => p.id === item.id) || { name: 'Unknown Part', partNo: 'N/A', price1: item.price };
+                    return {
+                        id: item.id,
+                        name: prod.name,
+                        partNo: prod.partNo,
+                        qty: item.qty,
+                        price: item.price,
+                        total: item.qty * item.price
+                    };
+                });
+            }
+
+            const items = [];
+            const mainProd = products.find(p => p.name === tx.itemName || tx.itemName.startsWith(p.name));
+            
+            if (mainProd) {
+                const price = tx.amount / tx.qty;
+                items.push({
+                    id: mainProd.id,
+                    name: mainProd.name,
+                    partNo: mainProd.partNo,
+                    qty: tx.qty,
+                    price: price,
+                    total: tx.amount
+                });
+            } else {
+                items.push({
+                    id: 999,
+                    name: tx.itemName || 'Engine Replacement Part',
+                    partNo: 'PART-GEN',
+                    qty: tx.qty || 1,
+                    price: tx.amount / (tx.qty || 1),
+                    total: tx.amount
+                });
+            }
+
+            return items;
+        }
+
+        function selectRefundType(type) {
+            const cardRefund = document.getElementById('cardTypeRefund');
+            const cardReturn = document.getElementById('cardTypeReturn');
+            const typeInputRefund = cardRefund.querySelector('input[type="radio"]');
+            const typeInputReturn = cardReturn.querySelector('input[type="radio"]');
+            
+            if (type === 'Refund') {
+                cardRefund.style.border = '2px solid #3B82F6';
+                cardRefund.style.backgroundColor = '#EFF6FF';
+                cardReturn.style.border = '1px solid #E5E7EB';
+                cardReturn.style.backgroundColor = 'transparent';
+                typeInputRefund.checked = true;
+                document.getElementById('checkRestoreStock').checked = true;
+                document.getElementById('checkMarkDamaged').checked = false;
+            } else {
+                cardReturn.style.border = '2px solid #3B82F6';
+                cardReturn.style.backgroundColor = '#EFF6FF';
+                cardRefund.style.border = '1px solid #E5E7EB';
+                cardRefund.style.backgroundColor = 'transparent';
+                typeInputReturn.checked = true;
+                document.getElementById('checkRestoreStock').checked = false;
+                document.getElementById('checkMarkDamaged').checked = true;
+            }
+        }
+
+        function toggleSelectAllItems(master) {
+            document.querySelectorAll('.refund-item-checkbox').forEach(chk => {
+                chk.checked = master.checked;
+            });
+            calculateRefundTotals();
+        }
+
+        function calculateRefundTotals() {
+            let subtotal = 0;
+            document.querySelectorAll('.refund-item-row').forEach(row => {
+                const chk = row.querySelector('.refund-item-checkbox');
+                const qtyInput = row.querySelector('.refund-item-qty');
+                const qty = parseInt(qtyInput.value) || 0;
+                const price = parseFloat(row.querySelector('.refund-item-price').dataset.price) || 0;
+                
+                if (chk.checked) {
+                    const total = qty * price;
+                    row.querySelector('.refund-item-total span').innerText = '₱' + total.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2});
+                    subtotal += total;
+                } else {
+                    row.querySelector('.refund-item-total span').innerText = '₱0';
+                }
+            });
+            
+            const tax = subtotal * 0.12;
+            const totalRefund = subtotal + tax;
+            
+            document.getElementById('txtItemsSubtotal').innerText = '₱' + subtotal.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2});
+            document.getElementById('txtTaxRefund').innerText = '₱' + tax.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2});
+            document.getElementById('txtTotalRefund').innerText = '₱' + totalRefund.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2});
+        }
+
+        function openRefundModal(idx) {
+            const transactions = db.getTransactions();
+            const tx = transactions[idx];
+
+            document.getElementById('refundTxIndex').value = idx;
+            document.getElementById('refundForm').reset();
+            
+            document.getElementById('infoReceiptNoDisplay').innerText = tx.siNo;
+            document.getElementById('infoReceiptNoInput').value = tx.siNo;
+            document.getElementById('infoTxDate').innerText = tx.date;
+            document.getElementById('infoCustomerName').innerText = tx.customer || 'Anonymous';
+            document.getElementById('infoCashier').innerText = tx.cashier;
+            document.getElementById('infoAmount').innerText = '₱' + tx.amount.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('infoPaymentMode').innerText = tx.payment;
+
+            document.getElementById('refundModalTitle').innerText = `Process Refund / Return`;
+            
+            selectRefundType('Refund');
+
+            document.querySelectorAll('input[name="refundReason"]').forEach((el, i) => {
+                if (i === 0) el.checked = true;
+            });
+
+            const items = getTransactionItems(tx);
+            const tbody = document.getElementById('refundItemsTableBody');
+            tbody.innerHTML = '';
+            
+            items.forEach((item, i) => {
+                const tr = document.createElement('tr');
+                tr.className = 'refund-item-row';
+                tr.style.borderBottom = '1px solid #F3F4F6';
+                tr.innerHTML = `
+                    <td style="padding: 12px 8px; vertical-align: middle;">
+                        <input type="checkbox" class="refund-item-checkbox" data-prod-id="${item.id}" checked onchange="calculateRefundTotals()" style="accent-color: #3B82F6; width: 16px; height: 16px; margin: 0;">
+                    </td>
+                    <td style="padding: 12px 8px;">
+                        <strong style="color: #111827; font-size: 13px;">${item.name}</strong>
+                        <div style="font-size:11px; color:#6B7280; margin-top: 2px;">Part #: ${item.partNo}</div>
+                    </td>
+                    <td style="padding: 12px 8px; text-align: center; vertical-align: middle;">
+                        <span style="font-size: 13px; font-weight: 600; color: #111827;">${item.qty}</span>
+                        <input type="hidden" class="refund-item-qty" value="${item.qty}">
+                    </td>
+                    <td style="text-align: right; padding: 12px 8px; vertical-align: middle;" class="refund-item-price" data-price="${item.price}">
+                        <span style="font-size: 13px; font-weight: 600; color: #111827;">₱${item.price.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}</span>
+                    </td>
+                    <td style="text-align: right; padding: 12px 8px; vertical-align: middle;" class="refund-item-total">
+                        <span style="font-size: 13px; font-weight: 600; color: #111827;">₱${item.total.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            calculateRefundTotals();
+            openModal('refundModal');
+        }
+
+        function submitRefund(event) {
+            event.preventDefault();
+            const idx = parseInt(document.getElementById('refundTxIndex').value);
+            const customerName = document.getElementById('refundCustomerName').value.trim();
+            const customerPhone = document.getElementById('refundCustomerPhone').value.trim();
+            const refundType = document.querySelector('input[name="refundType"]:checked').value;
+            const refundReason = document.querySelector('input[name="refundReason"]:checked').value;
+            const notes = document.getElementById('refundNotes').value.trim();
+            const method = document.getElementById('refundMethod').value;
+            const approver = document.getElementById('refundApprover').value;
+            const approvalCode = document.getElementById('refundApprovalCode').value;
+            const restoreStock = document.getElementById('checkRestoreStock').checked;
+            const markDamaged = document.getElementById('checkMarkDamaged').checked;
+
+            const transactions = db.getTransactions();
+            const products = db.getProducts();
+            const tx = transactions[idx];
+
+            const checkedRows = document.querySelectorAll('.refund-item-row');
+            let anyItemChecked = false;
+            
+            checkedRows.forEach(row => {
+                const chk = row.querySelector('.refund-item-checkbox');
+                if (chk.checked) {
+                    anyItemChecked = true;
+                    const prodId = parseInt(chk.dataset.prodId);
+                    const refundQty = parseInt(row.querySelector('.refund-item-qty').value);
+                    
+                    const product = products.find(p => p.id === prodId);
+                    if (product) {
+                        if (restoreStock) {
+                            product.stock += refundQty;
+                        }
+                        if (markDamaged) {
+                            product.damaged = (product.damaged || 0) + refundQty;
+                        }
+                    }
+                }
+            });
+
+            if (!anyItemChecked) {
+                alert('Please select at least one item to refund/return.');
+                return;
+            }
+
+            db.saveProducts(products);
+
+            tx.status = refundType; 
+            tx.customer = customerName;
+            tx.phone = customerPhone;
+            tx.refundReason = refundReason;
+            tx.actionType = refundType === 'Refund' ? `Refunded via ${method}` : `Exchange / Store Credit`;
+            tx.invAction = (restoreStock ? 'Restocked to Shelf' : '') + (restoreStock && markDamaged ? ' & ' : '') + (markDamaged ? 'Moved to Scrap/Damaged' : '');
+            tx.approver = approver;
+            tx.approvalCode = approvalCode;
+            tx.notes = notes;
+
+            let totalRefunded = 0;
+            checkedRows.forEach(row => {
+                const chk = row.querySelector('.refund-item-checkbox');
+                if (chk.checked) {
+                    const qty = parseInt(row.querySelector('.refund-item-qty').value);
+                    const price = parseFloat(row.querySelector('.refund-item-price').dataset.price);
+                    totalRefunded += qty * price;
+                }
+            });
+            tx.amount = totalRefunded * 1.12;
+
+            db.saveTransactions(transactions);
+
+            closeModal('refundModal');
+            renderTransactions();
+            
+            // Show Success modal
+            document.getElementById('successRefundAmount').innerText = '₱' + (totalRefunded * 1.12).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2});
+            document.getElementById('successRefundStatus').innerText = restoreStock ? 'Items returned to stock' : 'Refund processed successfully';
+            document.getElementById('successModal').style.display = 'flex';
+        }
+
+        function openAuditModal(idx) {
+            const transactions = db.getTransactions();
+            const tx = transactions[idx];
+            const body = document.getElementById('auditDetailBody');
+
+            body.innerHTML = `
+                <div style="margin-bottom: 16px;">
+                    <span style="font-size:12px; color: var(--text-secondary); display:block;">Invoice No</span>
+                    <strong>${tx.siNo}</strong>
+                </div>
+                <div class="grid-2" style="margin-bottom: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <span style="font-size:12px; color: var(--text-secondary); display:block;">Audit Customer Name</span>
+                        <strong>${tx.customer}</strong>
+                    </div>
+                    <div>
+                        <span style="font-size:12px; color: var(--text-secondary); display:block;">Audit Contact Phone</span>
+                        <strong>${tx.phone}</strong>
+                    </div>
+                </div>
+                <div class="grid-2" style="margin-bottom: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <span style="font-size:12px; color: var(--text-secondary); display:block;">Refund Type</span>
+                        <strong style="color: var(--danger);">${tx.status}</strong>
+                    </div>
+                    <div>
+                        <span style="font-size:12px; color: var(--text-secondary); display:block;">Inventory Correction</span>
+                        <strong>${tx.invAction || 'None'}</strong>
+                    </div>
+                </div>
+                <div class="grid-2" style="margin-bottom: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <span style="font-size:12px; color: var(--text-secondary); display:block;">Processed By</span>
+                        <strong>${tx.approver || 'Manager'}</strong>
+                    </div>
+                    <div>
+                        <span style="font-size:12px; color: var(--text-secondary); display:block;">Approval Code</span>
+                        <strong>${tx.approvalCode || 'N/A'}</strong>
+                    </div>
+                </div>
+                <div style="padding: 12px; background-color: var(--bg-canvas); border-radius: 6px; border: 1px solid var(--border); margin-bottom: 16px;">
+                    <span style="font-size:12px; color: var(--text-secondary); display:block; margin-bottom: 4px;">Reason filed</span>
+                    <p style="font-size: 13px; margin: 0; line-height: 1.4;"><strong>${tx.refundReason}</strong></p>
+                </div>
+                ${tx.notes ? `
+                <div style="padding: 12px; background-color: var(--bg-canvas); border-radius: 6px; border: 1px solid var(--border);">
+                    <span style="font-size:12px; color: var(--text-secondary); display:block; margin-bottom: 4px;">Internal Notes</span>
+                    <p style="font-size: 13px; margin: 0; line-height: 1.4;">${tx.notes}</p>
+                </div>
+                ` : ''}
+            `;
+
+            openModal('auditDetailModal');
+        }
+
+        loadEmployees();
+        renderTransactions();
+    </script>
+</body>
+</html>

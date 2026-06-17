@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions | ZTG Parts</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .radio-group { display: flex; gap: 16px; margin-top: 8px; }
+        .radio-option { flex: 1; position: relative; }
+        .radio-option input[type="radio"] { display: none; }
+        .radio-label { display: block; padding: 12px; text-align: center; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; font-size: 14px; font-weight: 500; }
+        .radio-option input[type="radio"]:checked + .radio-label { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); color: #FECACA; }
+        .radio-option input[type="radio"].blue-radio:checked + .radio-label { background: rgba(59, 130, 246, 0.1); border-color: var(--primary); color: #BFDBFE; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="brand">ZTG <span>Parts</span></div>
+        <ul class="nav-links">
+            <li><a href="index.html">Dashboard</a></li>
+            <li><a href="pos.html">Point of Sale (POS)</a></li>
+            <li><a href="inventory.html">Inventory Management</a></li>
+            <li><a href="transactions.html">Transactions & Refunds</a></li>
+            <li><a href="settings.html">Settings</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Transaction Log</h1>
+            <button class="btn btn-danger" onclick="openModal('refundModal')">Process Refund / Return</button>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 24px;">All Transactions</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Receipt No</th>
+                            <th>Date</th>
+                            <th>Customer Info</th>
+                            <th>Total Amount</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="font-weight: 600;">SI-2026-001</td>
+                            <td>Today, 10:00 AM</td>
+                            <td>
+                                <div style="font-weight: 500; color: white;">John Construction Corp</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">0917-123-4567</div>
+                            </td>
+                            <td>₱15,000.00</td>
+                            <td><span class="badge badge-success">Completed</span></td>
+                            <td><button class="btn" style="background: transparent; border: 1px solid var(--border); color: white;" onclick="openModal('refundModal')">Refund</button></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 600;">SI-2026-002</td>
+                            <td>Today, 11:30 AM</td>
+                            <td>
+                                <div style="font-weight: 500; color: white;">Walk-in</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">-</div>
+                            </td>
+                            <td>₱2,500.00</td>
+                            <td><span class="badge badge-success">Completed</span></td>
+                            <td><button class="btn" style="background: transparent; border: 1px solid var(--border); color: white;" onclick="openModal('refundModal')">Refund</button></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 600;">REF-2026-001</td>
+                            <td>Yesterday</td>
+                            <td>
+                                <div style="font-weight: 500; color: white;">Alice Smith</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">0922-987-6543</div>
+                            </td>
+                            <td>-₱8,500.00</td>
+                            <td><span class="badge badge-danger">Refunded</span></td>
+                            <td>-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Refund Modal -->
+    <div class="modal-overlay" id="refundModal">
+        <div class="modal-card" style="border-top: 4px solid var(--danger);">
+            <div style="margin-bottom: 24px;">
+                <h2 style="font-size: 24px; font-weight: 700; color: #FECACA;">Process Refund / Return</h2>
+                <p style="font-size: 14px; color: var(--text-secondary); margin-top: 4px;">Customer data is strictly required to process this action.</p>
+            </div>
+
+            <form onsubmit="event.preventDefault(); closeModal('refundModal');">
+                <div style="display: flex; gap: 16px; margin-bottom: 20px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Customer Name *</label>
+                        <input type="text" placeholder="Required for Audit" required style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 8px; color: white;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Phone Number *</label>
+                        <input type="text" placeholder="Required for Audit" required style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 8px; color: white;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Item to Refund/Return</label>
+                    <select id="itemSelect" onchange="calculateRefund()" style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 8px; color: white;">
+                        <option value="15000">Hydraulic Pump CAT-320 (Paid: ₱15,000.00)</option>
+                        <option value="8500">Excavator Tracks KOM-200 (Paid: ₱8,500.00)</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 16px; margin-bottom: 20px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Action Type</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="actionType" value="Refund" checked>
+                                <span class="radio-label">Refund Money</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="actionType" value="Return">
+                                <span class="radio-label">Item Swap</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Quantity</label>
+                        <input type="number" id="qtyInput" value="1" min="1" onchange="calculateRefund()" onkeyup="calculateRefund()" required style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 8px; color: white; height: 42px; margin-top: 8px;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Inventory Action</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="stockAction" value="Restore" class="blue-radio" checked>
+                            <span class="radio-label">Restore to Stock</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="stockAction" value="Damaged">
+                            <span class="radio-label">Mark Damaged</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Reason</label>
+                    <textarea placeholder="Reason for return..." required style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 8px; color: white; resize: vertical; min-height: 80px;"></textarea>
+                </div>
+
+                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+                    <span style="font-size: 14px; font-weight: 600; color: #FCA5A5;">Total Refund Amount</span>
+                    <span style="font-size: 24px; font-weight: 700; color: white;" id="refundTotal">₱15,000.00</span>
+                </div>
+
+                <div style="display: flex; gap: 12px;">
+                    <button type="button" class="btn" style="flex: 1; background: transparent; color: white; border: 1px solid var(--border);" onclick="closeModal('refundModal')">Cancel</button>
+                    <button type="submit" class="btn" style="flex: 1; background: var(--danger); color: white;">Authorize Refund</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        function calculateRefund() {
+            const price = parseFloat(document.getElementById('itemSelect').value);
+            const qty = parseInt(document.getElementById('qtyInput').value) || 0;
+            const total = price * qty;
+            document.getElementById('refundTotal').innerText = '₱' + total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+    </script>
+</body>
+</html>

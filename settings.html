@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Settings | ZTG Heavy Parts</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .tabs-header {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+            padding-bottom: 4px;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background-color: var(--border);
+        }
+        .tab-btn.active {
+            color: var(--primary);
+            background-color: var(--primary-light);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .checkbox-group input[type="checkbox"] {
+            accent-color: var(--primary);
+        }
+        .alert-banner.info {
+            background-color: var(--primary-light);
+            border: 1px solid var(--primary);
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .alert-banner.warning {
+            background-color: var(--warning-light);
+            border: 1px solid var(--warning);
+            border-left: 4px solid var(--warning);
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar"></div>
+
+        <!-- Main Workspace -->
+        <div class="main-workspace">
+            <div class="top-bar">
+                <div>
+                    <h1 style="font-size: 20px; margin-bottom: 2px;">System Settings</h1>
+                    <div class="page-description" style="margin-top: 0; font-size: 12px;">Configure inventory thresholds, categories, alerts, and employee access.</div>
+                </div>
+            </div>
+
+            <div class="content-body" style="display: flex; flex-direction: column; justify-content: space-between; min-height: calc(100% - 10px);">
+                <div>
+                    <div class="tabs-header">
+                        <button class="tab-btn active" onclick="switchTab('general')">General</button>
+                        <button class="tab-btn" onclick="switchTab('products')">Products Settings</button>
+                        <button class="tab-btn" onclick="switchTab('alerts')">Alerts</button>
+                        <button class="tab-btn" onclick="switchTab('employees')">Employees</button>
+                    </div>
+
+                    <!-- Tab 1: General (General Settings & Inventory Config) -->
+                    <div class="tab-content active" id="tab-general">
+                        <div class="card" style="margin-bottom: 16px;">
+                            <div class="settings-section">
+                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">General Settings</h3>
+                                <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" for="businessName">Business Name</label>
+                                        <input type="text" id="businessName" class="form-control" value="HeavyParts Pro">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" for="branchLocation">Branch Location</label>
+                                        <input type="text" id="branchLocation" class="form-control" value="Butuan City">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" for="contactNumber">Contact Number</label>
+                                        <input type="text" id="contactNumber" class="form-control" value="09XX-XXX-XXXX">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" for="emailAddress">Email Address</label>
+                                        <input type="email" id="emailAddress" class="form-control" value="info@heavypartspro.com">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" for="taxRate">Tax Rate (%)</label>
+                                        <input type="number" id="taxRate" class="form-control" value="12">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" for="currency">Currency</label>
+                                        <input type="text" id="currency" class="form-control" value="PHP (Philippine Peso)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
+                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Inventory Configuration</h3>
+                                <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" for="lowStockThreshold">Default Low Stock Threshold</label>
+                                        <input type="number" id="lowStockThreshold" class="form-control" value="5">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" for="deadStockPeriod">Dead Stock Period (Days)</label>
+                                        <input type="number" id="deadStockPeriod" class="form-control" value="90">
+                                    </div>
+                                </div>
+                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="autoDeductStock" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Automatically deduct stock after completed sales
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="trackDamaged" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Track damaged products counts separately
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="enableStockAlerts" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Enable low-stock and out-of-stock alerts
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Products Settings (Categories) -->
+                    <div class="tab-content" id="tab-products">
+                        <div class="card" style="margin-bottom: 16px; padding: 24px;">
+                            <!-- Section 1: Product Information Settings -->
+                            <div class="settings-section">
+                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Product Information Settings</h3>
+                                
+                                <!-- Blue Alert Banner -->
+                                <div class="alert-banner info">
+                                    <strong style="color: var(--primary-hover); font-size: 13px;">Product Configuration</strong>
+                                    <span style="color: var(--text-secondary); font-size: 12px;">Configure how products are displayed and managed in the inventory system.</span>
+                                </div>
+
+                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="displayChineseNames" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Display Chinese names for products
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="enableVariants" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Enable product variants (Size, Color, Weight, Height)
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="enableDualPricing" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Enable dual pricing (Price 1 and Price 2)
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="trackWarehouseLocations" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Track product warehouse locations (Aisle-Center-Hang)
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Section 2: Product Variants Configuration -->
+                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
+                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Product Variants Configuration</h3>
+                                <div style="overflow-x: auto; margin-bottom: 16px;">
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        <thead>
+                                            <tr>
+                                                <th>Variant Type</th>
+                                                <th>Status</th>
+                                                <th>Example Values</th>
+                                                <th style="text-align: center;">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="variantsTableBody">
+                                            <!-- Dynamic variant rows: Size, Color, Weight, Height -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Section 3: Pricing Configuration -->
+                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
+                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Pricing Configuration</h3>
+                                <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" for="price1Label">Price 1 Label</label>
+                                        <input type="text" id="price1Label" class="form-control" value="Regular Price">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" for="price2Label">Price 2 Label</label>
+                                        <input type="text" id="price2Label" class="form-control" value="Wholesale Price">
+                                    </div>
+                                </div>
+                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="autoCalcPrice2" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Automatically calculate Price 2 based on percentage markup
+                                    </label>
+                                </div>
+                                <div class="form-group" style="max-width: 50%;" id="markupGroup">
+                                    <label class="form-label" for="price2Markup">Price 2 Markup Percentage (%)</label>
+                                    <input type="number" id="price2Markup" class="form-control" value="10">
+                                </div>
+                            </div>
+
+                            <!-- Section 4: Warehouse Location Format -->
+                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
+                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Warehouse Location Format</h3>
+                                <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 0;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" for="locationFormat">Location Format</label>
+                                        <input type="text" id="locationFormat" class="form-control" value="Aisle-Center-Hang (A-12-3)">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" for="numAisles">Number of Aisles</label>
+                                        <input type="number" id="numAisles" class="form-control" value="15">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section 5: Product Display Options -->
+                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
+                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Product Display Options</h3>
+                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alwaysDisplayPartNumbers" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Always display part numbers
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="showStockLevelsPos" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Show stock levels in POS
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="hideOutofStockPos" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Hide out-of-stock products from POS
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Notification & Alert Settings -->
+                    <div class="tab-content" id="tab-alerts">
+                        <div class="card" style="margin-bottom: 16px; padding: 24px;">
+                            <!-- Header & Banner -->
+                            <div class="settings-section">
+                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Notification & Alert Settings</h3>
+                                
+                                <!-- Alert Configuration Banner -->
+                                <div class="alert-banner warning">
+                                    <strong style="color: var(--warning-hover); font-size: 13px;">Alert Configuration</strong>
+                                    <span style="color: var(--text-secondary); font-size: 12px;">Choose which notifications you want to receive and how you want to be notified.</span>
+                                </div>
+                            </div>
+
+                            <!-- Section 1: Inventory Alerts -->
+                            <div class="settings-section">
+                                <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 6px; margin-bottom: 12px; color: var(--text-primary);">Inventory Alerts</h4>
+                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alertLowStock" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Send alerts for low stock items
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alertOutOfStock" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Send alerts for out-of-stock items
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alertDeadStock" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Send alerts for dead stock (no sales in 90+ days)
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alertDamaged" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Send alerts when damaged items are recorded
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alertShowDashboard" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Show inventory alerts on admin dashboard
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Section 2: Transaction Alerts -->
+                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
+                                <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 6px; margin-bottom: 12px; color: var(--text-primary);">Transaction Alerts</h4>
+                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alertPOApproval" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Notify admin when new P.O. order awaits approval
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alertPOApproved" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Notify cashier when their P.O. order is approved
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alertPORejected" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Notify cashier when their P.O. order is rejected
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alertRefunds" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Send alerts when refunds are processed
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alertLargeSales" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Send alerts for large sales (above threshold)
+                                    </label>
+                                </div>
+                                <div class="form-group" style="max-width: 50%; margin-top: 12px;" id="largeSaleGroup">
+                                    <label class="form-label" for="alertLargeSaleThreshold">Large Sale Threshold (₱)</label>
+                                    <input type="number" id="alertLargeSaleThreshold" class="form-control" value="50000">
+                                </div>
+                            </div>
+
+                            <!-- Section 3: Reservation Alerts -->
+                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
+                                <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 6px; margin-bottom: 12px; color: var(--text-primary);">Reservation Alerts</h4>
+                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alertResExpiring" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Send alerts for reservations expiring soon (24 hours before)
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alertResExpired" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Send alerts when reservations expire
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Section 4: Email Notification Settings -->
+                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
+                                <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 6px; margin-bottom: 12px; color: var(--text-primary);">Email Notification Settings</h4>
+                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alertEnableEmail" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Enable email notifications
+                                    </label>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 16px;">
+                                    <label class="form-label" for="alertAdminEmail">Admin Email Address</label>
+                                    <input type="email" id="alertAdminEmail" class="form-control" value="admin@heavypartspro.com">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label class="form-label" for="alertAdditionalRecipients">Additional Email Recipients (comma separated)</label>
+                                    <input type="text" id="alertAdditionalRecipients" class="form-control" placeholder="email1@example.com, email2@example.com">
+                                </div>
+                            </div>
+
+                            <!-- Section 5: Daily & Weekly Reports -->
+                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
+                                <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 6px; margin-bottom: 12px; color: var(--text-primary);">Daily & Weekly Reports</h4>
+                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 0;">
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alertReportDailySales" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Send daily sales summary report (end of day)
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alertReportWeeklyInventory" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Send weekly inventory summary report (every Monday)
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
+                                        <input type="checkbox" id="alertReportMonthlyPerformance" style="width: 16px; height: 16px; cursor: pointer;">
+                                        Send monthly performance report (first day of month)
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Section 6: Active Alert Rules -->
+                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
+                                <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 16px; color: var(--text-primary);">Active Alert Rules</h4>
+                                <div style="overflow-x: auto; margin-bottom: 16px;">
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        <thead>
+                                            <tr>
+                                                <th>Alert Type</th>
+                                                <th>Trigger Condition</th>
+                                                <th>Recipients</th>
+                                                <th>Status</th>
+                                                <th style="text-align: center;">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="alertRulesTableBody">
+                                            <!-- Dynamic alert rule rows -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="openAlertRuleModal(-1)">+ Add New Alert Rule</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 4: Employee Management -->
+                    <div class="tab-content" id="tab-employees">
+                        <div class="card table-card">
+                            <div style="padding: 24px;">
+                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Employee Management</h3>
+                                
+                                <div style="overflow-x: auto; margin-bottom: 16px;">
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        <thead>
+                                            <tr>
+                                                <th>Employee Name</th>
+                                                <th>Role</th>
+                                                <th>Employee ID</th>
+                                                <th>Status</th>
+                                                <th>Commission Rate</th>
+                                                <th style="text-align: center;">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="employeeTableBody">
+                                            <!-- Dynamic employees list -->
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <button class="btn btn-primary" onclick="openAddEmpModal()">+ Add New Employee</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Global Action Buttons -->
+                <div class="settings-actions-bar" style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); margin-bottom: 16px;">
+                    <button class="btn btn-secondary" onclick="cancelChanges()">Cancel Changes</button>
+                    <button class="btn btn-primary" onclick="saveAllSettings()">Save Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Configure Alert Rule -->
+    <div class="modal-overlay" id="configureAlertRuleModal">
+        <div class="modal-card" style="max-width: 450px;">
+            <form id="configureAlertRuleForm" onsubmit="handleSaveAlertRule(event)">
+                <input type="hidden" id="configAlertRuleIndex">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="configureAlertRuleModalTitle">Configure Alert Rule</h3>
+                    <button type="button" class="modal-close" onclick="closeModal('configureAlertRuleModal')">
+                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label class="form-label" for="configAlertRuleType">Alert Type</label>
+                        <select id="configAlertRuleType" class="form-control" required style="width: 100%; height: 38px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background-color: var(--bg-card); color: var(--text-primary); font-size: 13px;">
+                            <option value="Inventory - Low Stock">Inventory - Low Stock</option>
+                            <option value="Inventory - Out of Stock">Inventory - Out of Stock</option>
+                            <option value="Inventory - Damaged Item">Inventory - Damaged Item</option>
+                            <option value="Transaction - Large Sale">Transaction - Large Sale</option>
+                            <option value="Transaction - Refund Processed">Transaction - Refund Processed</option>
+                            <option value="P.O. - Awaiting Approval">P.O. - Awaiting Approval</option>
+                            <option value="Reservation - Expiring Soon">Reservation - Expiring Soon</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label class="form-label" for="configAlertRuleCondition">Trigger Condition</label>
+                        <input type="text" id="configAlertRuleCondition" class="form-control" required placeholder="e.g. Below 15 units, Above ₱50k">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label class="form-label" for="configAlertRuleRecipients">Recipients</label>
+                        <input type="text" id="configAlertRuleRecipients" class="form-control" required placeholder="e.g. admin@heavypartspro.com">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" for="configAlertRuleStatus">Status</label>
+                        <select id="configAlertRuleStatus" class="form-control" style="width: 100%; height: 38px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background-color: var(--bg-card); color: var(--text-primary); font-size: 13px;">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 12px 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('configureAlertRuleModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Rule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add Employee -->
+    <div class="modal-overlay" id="addEmpModal">
+        <div class="modal-card" style="max-width: 450px;">
+            <form id="addEmpForm" onsubmit="handleAddEmployee(event)">
+                <div class="modal-header">
+                    <h3 class="modal-title">Register Access Credentials</h3>
+                    <button type="button" class="modal-close" onclick="closeModal('addEmpModal')">
+                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="empIdInput">Employee Access ID</label>
+                        <input type="text" id="empIdInput" class="form-control" required placeholder="e.g. EMP-006">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="empNameInput">Full Name</label>
+                        <input type="text" id="empNameInput" class="form-control" required placeholder="e.g. Ferdinand Marcos Jr">
+                    </div>
+                    <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label class="form-label" for="empRoleInput">Assigned Role</label>
+                            <select id="empRoleInput" class="form-control" required onchange="toggleCommissionField()">
+                                <option value="Cashier">Cashier</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Checker">Checker</option>
+                                <option value="Supervisor">Supervisor</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="empCommInput">Commission Rate (%)</label>
+                            <input type="text" id="empCommInput" class="form-control" value="5%" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 12px 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addEmpModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Employee -->
+    <div class="modal-overlay" id="editEmpModal">
+        <div class="modal-card" style="max-width: 450px;">
+            <form id="editEmpForm" onsubmit="handleEditEmployee(event)">
+                <input type="hidden" id="editEmpIdInput">
+                <div class="modal-header">
+                    <h3 class="modal-title">Edit Employee Access</h3>
+                    <button type="button" class="modal-close" onclick="closeModal('editEmpModal')">
+                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Employee Access ID</label>
+                        <input type="text" id="editEmpIdDisplay" class="form-control" readonly style="background-color: var(--bg-canvas);">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editEmpNameInput">Full Name</label>
+                        <input type="text" id="editEmpNameInput" class="form-control" required placeholder="e.g. Ferdinand Marcos Jr">
+                    </div>
+                    <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label class="form-label" for="editEmpRoleInput">Assigned Role</label>
+                            <select id="editEmpRoleInput" class="form-control" required onchange="toggleEditCommissionField()">
+                                <option value="Cashier">Cashier</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Checker">Checker</option>
+                                <option value="Supervisor">Supervisor</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="editEmpCommInput">Commission Rate (%)</label>
+                            <input type="text" id="editEmpCommInput" class="form-control" value="5%" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 12px 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editEmpModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Configure Variant -->
+    <div class="modal-overlay" id="configureVariantModal">
+        <div class="modal-card" style="max-width: 450px;">
+            <form id="configureVariantForm" onsubmit="handleConfigureVariant(event)">
+                <input type="hidden" id="configVariantType">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="configureVariantModalTitle">Configure Variant</h3>
+                    <button type="button" class="modal-close" onclick="closeModal('configureVariantModal')">
+                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="configVariantStatus">Status</label>
+                        <select id="configVariantStatus" class="form-control" style="width: 100%; height: 38px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background-color: var(--bg-card); color: var(--text-primary); font-size: 13px;">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label class="form-label" for="configVariantValues">Example Values (comma-separated)</label>
+                        <input type="text" id="configVariantValues" class="form-control" required placeholder="e.g. Small, Medium, Large">
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 12px 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('configureVariantModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Configuration</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        initSidebar('settings');
+
+        // Tab Switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            const event = window.event;
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            } else {
+                // Fallback finder
+                const buttons = document.querySelectorAll('.tab-btn');
+                buttons.forEach(b => {
+                    if (b.innerText.toLowerCase().includes(tabName)) {
+                        b.classList.add('active');
+                    }
+                });
+            }
+
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+
+            if (tabName === 'products') {
+                renderVariants();
+            } else if (tabName === 'employees') {
+                renderEmployees();
+            } else if (tabName === 'alerts') {
+                renderAlertRules();
+            }
+        }
+
+        // ================== PRODUCT VARIANTS CONFIGURATION ==================
+        let tempVariantsData = [];
+
+        function initVariants() {
+            const stored = localStorage.getItem('ztg_config_variants_data');
+            if (stored) {
+                try {
+                    tempVariantsData = JSON.parse(stored);
+                } catch(e) {
+                    tempVariantsData = getDefaultVariants();
+                }
+            } else {
+                tempVariantsData = getDefaultVariants();
+            }
+        }
+
+        function getDefaultVariants() {
+            return [
+                { type: 'Size', status: 'Active', values: 'Small, Medium, Large' },
+                { type: 'Color', status: 'Active', values: 'Red, Blue, Green, Black' },
+                { type: 'Weight', status: 'Inactive', values: '1kg, 5kg, 10kg' },
+                { type: 'Height', status: 'Inactive', values: '10cm, 20cm, 50cm' }
+            ];
+        }
+
+        function renderVariants() {
+            const tbody = document.getElementById('variantsTableBody');
+            tbody.innerHTML = '';
+            tempVariantsData.forEach(v => {
+                const tr = document.createElement('tr');
+                const statusBadge = v.status === 'Active' 
+                    ? '<span class="badge badge-success">Active</span>' 
+                    : '<span class="badge badge-secondary">Inactive</span>';
+                tr.innerHTML = `
+                    <td style="font-weight: 600; color: var(--text-primary);">${v.type}</td>
+                    <td>${statusBadge}</td>
+                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${v.values}</td>
+                    <td style="text-align: center;">
+                        <button class="btn btn-secondary btn-sm" onclick="openConfigureVariantModal('${v.type}')">Configure</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openConfigureVariantModal(type) {
+            const variant = tempVariantsData.find(v => v.type === type);
+            if (!variant) return;
+            document.getElementById('configVariantType').value = type;
+            document.getElementById('configureVariantModalTitle').innerText = `Configure Variant: ${type}`;
+            document.getElementById('configVariantStatus').value = variant.status;
+            document.getElementById('configVariantValues').value = variant.values;
+            openModal('configureVariantModal');
+        }
+
+        function handleConfigureVariant(event) {
+            event.preventDefault();
+            const type = document.getElementById('configVariantType').value;
+            const status = document.getElementById('configVariantStatus').value;
+            const values = document.getElementById('configVariantValues').value.trim();
+            if (!values) {
+                alert('Example values cannot be empty.');
+                return;
+            }
+            const variantIndex = tempVariantsData.findIndex(v => v.type === type);
+            if (variantIndex !== -1) {
+                tempVariantsData[variantIndex].status = status;
+                tempVariantsData[variantIndex].values = values;
+            }
+            renderVariants();
+            closeModal('configureVariantModal');
+        }
+
+        // ================== ALERT RULES CONFIGURATION ==================
+        let tempAlertRulesData = [];
+
+        function initAlertRules() {
+            const stored = localStorage.getItem('ztg_config_alert_rules_data');
+            if (stored) {
+                try {
+                    tempAlertRulesData = JSON.parse(stored);
+                } catch(e) {
+                    tempAlertRulesData = getDefaultAlertRules();
+                }
+            } else {
+                tempAlertRulesData = getDefaultAlertRules();
+            }
+        }
+
+        function getDefaultAlertRules() {
+            return [
+                { type: 'Inventory - Low Stock', condition: 'Below 5 units', recipients: 'admin@heavypartspro.com', status: 'Active' },
+                { type: 'Transaction - Large Sale', condition: 'Above ₱50,000', recipients: 'finance@heavypartspro.com', status: 'Active' },
+                { type: 'P.O. - Awaiting Approval', condition: 'Pending admin approval', recipients: 'admin@heavypartspro.com', status: 'Active' }
+            ];
+        }
+
+        function renderAlertRules() {
+            const tbody = document.getElementById('alertRulesTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            tempAlertRulesData.forEach((rule, idx) => {
+                const tr = document.createElement('tr');
+                const statusBadge = rule.status === 'Active' 
+                    ? '<span class="badge badge-success">Active</span>' 
+                    : '<span class="badge badge-secondary">Inactive</span>';
+                tr.innerHTML = `
+                    <td style="font-weight: 600; color: var(--text-primary);">${rule.type}</td>
+                    <td>${rule.condition}</td>
+                    <td>${rule.recipients}</td>
+                    <td>${statusBadge}</td>
+                    <td style="text-align: center;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="openAlertRuleModal(${idx})">Edit</button>
+                        <button type="button" class="btn btn-secondary btn-sm" style="color: var(--danger);" onclick="deleteAlertRule(${idx})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openAlertRuleModal(index) {
+            document.getElementById('configureAlertRuleForm').reset();
+            document.getElementById('configAlertRuleIndex').value = index;
+            if (index >= 0) {
+                // Edit mode
+                document.getElementById('configureAlertRuleModalTitle').innerText = 'Edit Alert Rule';
+                const rule = tempAlertRulesData[index];
+                document.getElementById('configAlertRuleType').value = rule.type;
+                document.getElementById('configAlertRuleCondition').value = rule.condition;
+                document.getElementById('configAlertRuleRecipients').value = rule.recipients;
+                document.getElementById('configAlertRuleStatus').value = rule.status;
+            } else {
+                // Add mode
+                document.getElementById('configureAlertRuleModalTitle').innerText = 'Add New Alert Rule';
+            }
+            openModal('configureAlertRuleModal');
+        }
+
+        function handleSaveAlertRule(event) {
+            event.preventDefault();
+            const index = parseInt(document.getElementById('configAlertRuleIndex').value);
+            const type = document.getElementById('configAlertRuleType').value;
+            const condition = document.getElementById('configAlertRuleCondition').value.trim();
+            const recipients = document.getElementById('configAlertRuleRecipients').value.trim();
+            const status = document.getElementById('configAlertRuleStatus').value;
+
+            if (!condition || !recipients) {
+                alert('Condition and Recipients cannot be empty.');
+                return;
+            }
+
+            const newRule = { type, condition, recipients, status };
+            if (index >= 0) {
+                tempAlertRulesData[index] = newRule;
+            } else {
+                tempAlertRulesData.push(newRule);
+            }
+            renderAlertRules();
+            closeModal('configureAlertRuleModal');
+        }
+
+        function deleteAlertRule(index) {
+            if (confirm('Are you sure you want to delete this alert rule?')) {
+                tempAlertRulesData.splice(index, 1);
+                renderAlertRules();
+            }
+        }
+
+        // ================== EMPLOYEE ACCESS ==================
+        function renderEmployees() {
+            const employees = db.getEmployees();
+            const tbody = document.getElementById('employeeTableBody');
+
+            tbody.innerHTML = '';
+
+            employees.forEach(emp => {
+                const isInactive = emp.status === 'Inactive';
+                const statusClass = isInactive ? 'badge-secondary' : 'badge-success';
+                const toggleBtnText = isInactive ? 'Activate' : 'Deactivate';
+                const toggleBtnStyle = isInactive ? 'color: var(--success);' : 'color: var(--danger);';
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 600; color: var(--text-primary);">${emp.name}</td>
+                    <td><span class="badge badge-secondary">${emp.role}</span></td>
+                    <td class="font-bold">${emp.id}</td>
+                    <td><span class="badge ${statusClass}">${emp.status}</span></td>
+                    <td>${emp.commissionRate}</td>
+                    <td style="text-align: center;">
+                        <button class="btn btn-secondary btn-sm" onclick="openEditEmpModal('${emp.id}')">Edit</button>
+                        <button class="btn btn-secondary btn-sm" style="${toggleBtnStyle}" onclick="toggleEmployeeStatus('${emp.id}')">${toggleBtnText}</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleCommissionField() {
+            const role = document.getElementById('empRoleInput').value;
+            const comm = document.getElementById('empCommInput');
+            if (role === 'Cashier') {
+                comm.value = '5%';
+                comm.readOnly = false;
+            } else {
+                comm.value = 'N/A';
+                comm.readOnly = true;
+            }
+        }
+
+        function toggleEditCommissionField() {
+            const role = document.getElementById('editEmpRoleInput').value;
+            const comm = document.getElementById('editEmpCommInput');
+            if (role === 'Cashier') {
+                if (comm.value === 'N/A') comm.value = '5%';
+                comm.readOnly = false;
+            } else {
+                comm.value = 'N/A';
+                comm.readOnly = true;
+            }
+        }
+
+        // Load custom styles for checking checkboxes styling
+        const checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
+        checkboxes.forEach(chk => {
+            chk.style.accentColor = 'var(--primary)';
+        });
+
+        function openAddEmpModal() {
+            document.getElementById('addEmpForm').reset();
+            toggleCommissionField();
+            openModal('addEmpModal');
+        }
+
+        function openEditEmpModal(id) {
+            const employees = db.getEmployees();
+            const emp = employees.find(x => x.id === id);
+            if (!emp) return;
+
+            document.getElementById('editEmpIdInput').value = emp.id;
+            document.getElementById('editEmpIdDisplay').value = emp.id;
+            document.getElementById('editEmpNameInput').value = emp.name;
+            document.getElementById('editEmpRoleInput').value = emp.role;
+            document.getElementById('editEmpCommInput').value = emp.commissionRate;
+            
+            toggleEditCommissionField();
+            openModal('editEmpModal');
+        }
+
+        function handleAddEmployee(event) {
+            event.preventDefault();
+            const employees = db.getEmployees();
+
+            const newEmp = {
+                id: document.getElementById('empIdInput').value.trim(),
+                name: document.getElementById('empNameInput').value.trim(),
+                role: document.getElementById('empRoleInput').value,
+                status: 'Active',
+                commissionRate: document.getElementById('empCommInput').value.trim()
+            };
+
+            // Check duplicate ID
+            if (employees.some(e => e.id === newEmp.id)) {
+                alert('An employee with this ID is already registered.');
+                return;
+            }
+
+            employees.push(newEmp);
+            db.saveEmployees(employees);
+            closeModal('addEmpModal');
+            renderEmployees();
+            alert('Employee registered successfully.');
+        }
+
+        function handleEditEmployee(event) {
+            event.preventDefault();
+            const id = document.getElementById('editEmpIdInput').value;
+            const employees = db.getEmployees();
+            const emp = employees.find(x => x.id === id);
+            if (!emp) return;
+
+            emp.name = document.getElementById('editEmpNameInput').value.trim();
+            emp.role = document.getElementById('editEmpRoleInput').value;
+            emp.commissionRate = document.getElementById('editEmpCommInput').value.trim();
+
+            db.saveEmployees(employees);
+            closeModal('editEmpModal');
+            renderEmployees();
+            alert('Employee profile updated successfully.');
+        }
+
+        function toggleEmployeeStatus(id) {
+            const employees = db.getEmployees();
+            const emp = employees.find(x => x.id === id);
+            if (!emp) return;
+
+            emp.status = (emp.status === 'Active') ? 'Inactive' : 'Active';
+            db.saveEmployees(employees);
+            renderEmployees();
+            alert(`Employee ${emp.name} is now ${emp.status}.`);
+        }
+
+        // ================== OUTLET SETTINGS ==================
+        function toggleMarkupField() {
+            const isChecked = document.getElementById('autoCalcPrice2').checked;
+            document.getElementById('markupGroup').style.display = isChecked ? 'block' : 'none';
+        }
+
+        function loadAllSettings() {
+            // General Settings
+            document.getElementById('businessName').value = localStorage.getItem('ztg_config_business_name') || 'HeavyParts Pro';
+            document.getElementById('branchLocation').value = localStorage.getItem('ztg_config_branch_location') || 'Butuan City';
+            document.getElementById('contactNumber').value = localStorage.getItem('ztg_config_contact_number') || '09XX-XXX-XXXX';
+            document.getElementById('emailAddress').value = localStorage.getItem('ztg_config_email_address') || 'info@heavypartspro.com';
+            document.getElementById('taxRate').value = localStorage.getItem('ztg_config_tax_rate') || '12';
+            document.getElementById('currency').value = localStorage.getItem('ztg_config_currency') || 'PHP (Philippine Peso)';
+
+            // Inventory Configuration
+            document.getElementById('lowStockThreshold').value = localStorage.getItem('ztg_config_low_stock') || '5';
+            document.getElementById('deadStockPeriod').value = localStorage.getItem('ztg_config_dead_stock_period') || '90';
+
+            // Checkboxes
+            document.getElementById('autoDeductStock').checked = (localStorage.getItem('ztg_config_auto_deduct') !== 'false');
+            document.getElementById('trackDamaged').checked = (localStorage.getItem('ztg_config_track_damaged') !== 'false');
+            document.getElementById('enableStockAlerts').checked = (localStorage.getItem('ztg_config_enable_stock_alerts') !== 'false');
+
+            // Alerts Settings
+            document.getElementById('alertLowStock').checked = (localStorage.getItem('ztg_config_alert_low_stock') !== 'false');
+            document.getElementById('alertOutOfStock').checked = (localStorage.getItem('ztg_config_alert_out_of_stock') !== 'false');
+            document.getElementById('alertDeadStock').checked = (localStorage.getItem('ztg_config_alert_dead_stock') !== 'false');
+            document.getElementById('alertDamaged').checked = (localStorage.getItem('ztg_config_alert_damaged') !== 'false');
+            document.getElementById('alertShowDashboard').checked = (localStorage.getItem('ztg_config_alert_show_dashboard') !== 'false');
+
+            document.getElementById('alertPOApproval').checked = (localStorage.getItem('ztg_config_alert_po_approval') !== 'false');
+            document.getElementById('alertPOApproved').checked = (localStorage.getItem('ztg_config_alert_po_approved') !== 'false');
+            document.getElementById('alertPORejected').checked = (localStorage.getItem('ztg_config_alert_po_rejected') !== 'false');
+            document.getElementById('alertRefunds').checked = (localStorage.getItem('ztg_config_alert_refunds') !== 'false');
+            document.getElementById('alertLargeSales').checked = (localStorage.getItem('ztg_config_alert_large_sales') === 'true');
+            document.getElementById('alertLargeSaleThreshold').value = localStorage.getItem('ztg_config_alert_large_sale_threshold') || '50000';
+            toggleLargeSaleGroup();
+
+            document.getElementById('alertResExpiring').checked = (localStorage.getItem('ztg_config_alert_res_expiring') !== 'false');
+            document.getElementById('alertResExpired').checked = (localStorage.getItem('ztg_config_alert_res_expired') !== 'false');
+
+            document.getElementById('alertEnableEmail').checked = (localStorage.getItem('ztg_config_alert_enable_email') !== 'false');
+            document.getElementById('alertAdminEmail').value = localStorage.getItem('ztg_config_alert_admin_email') || 'admin@heavypartspro.com';
+            document.getElementById('alertAdditionalRecipients').value = localStorage.getItem('ztg_config_alert_additional_recipients') || '';
+
+            document.getElementById('alertReportDailySales').checked = (localStorage.getItem('ztg_config_alert_report_daily_sales') === 'true');
+            document.getElementById('alertReportWeeklyInventory').checked = (localStorage.getItem('ztg_config_alert_report_weekly_inventory') === 'true');
+            document.getElementById('alertReportMonthlyPerformance').checked = (localStorage.getItem('ztg_config_alert_report_monthly_performance') === 'true');
+
+            // Load Alert Rules
+            initAlertRules();
+            renderAlertRules();
+
+            // Tab 2: Products Settings
+            // Product Information Settings
+            document.getElementById('displayChineseNames').checked = (localStorage.getItem('ztg_config_display_chinese_names') === 'true');
+            document.getElementById('enableVariants').checked = (localStorage.getItem('ztg_config_enable_variants') !== 'false');
+            document.getElementById('enableDualPricing').checked = (localStorage.getItem('ztg_config_enable_dual_pricing') !== 'false');
+            document.getElementById('trackWarehouseLocations').checked = (localStorage.getItem('ztg_config_track_locations') !== 'false');
+
+            // Pricing Configuration
+            document.getElementById('price1Label').value = localStorage.getItem('ztg_config_price1_label') || 'Regular Price';
+            document.getElementById('price2Label').value = localStorage.getItem('ztg_config_price2_label') || 'Wholesale Price';
+            document.getElementById('autoCalcPrice2').checked = (localStorage.getItem('ztg_config_auto_calc_price2') !== 'false');
+            document.getElementById('price2Markup').value = localStorage.getItem('ztg_config_price2_markup') || '10';
+            toggleMarkupField();
+
+            // Warehouse Location Format
+            document.getElementById('locationFormat').value = localStorage.getItem('ztg_config_location_format') || 'Aisle-Center-Hang (A-12-3)';
+            document.getElementById('numAisles').value = localStorage.getItem('ztg_config_num_aisles') || '15';
+
+            // Product Display Options
+            document.getElementById('alwaysDisplayPartNumbers').checked = (localStorage.getItem('ztg_config_always_display_part_numbers') === 'true');
+            document.getElementById('showStockLevelsPos').checked = (localStorage.getItem('ztg_config_show_stock_levels_pos') !== 'false');
+            document.getElementById('hideOutofStockPos').checked = (localStorage.getItem('ztg_config_hide_outof_stock_pos') === 'true');
+
+            // Load Variants
+            initVariants();
+            renderVariants();
+        }
+
+        function saveAllSettings() {
+            // General Settings
+            localStorage.setItem('ztg_config_business_name', document.getElementById('businessName').value.trim());
+            localStorage.setItem('ztg_config_branch_location', document.getElementById('branchLocation').value.trim());
+            localStorage.setItem('ztg_config_contact_number', document.getElementById('contactNumber').value.trim());
+            localStorage.setItem('ztg_config_email_address', document.getElementById('emailAddress').value.trim());
+            localStorage.setItem('ztg_config_tax_rate', document.getElementById('taxRate').value.trim());
+            localStorage.setItem('ztg_config_currency', document.getElementById('currency').value.trim());
+
+            // Inventory Configuration
+            localStorage.setItem('ztg_config_low_stock', document.getElementById('lowStockThreshold').value);
+            localStorage.setItem('ztg_config_dead_stock_period', document.getElementById('deadStockPeriod').value);
+
+            // Checkboxes
+            localStorage.setItem('ztg_config_auto_deduct', document.getElementById('autoDeductStock').checked);
+            localStorage.setItem('ztg_config_track_damaged', document.getElementById('trackDamaged').checked);
+            localStorage.setItem('ztg_config_enable_stock_alerts', document.getElementById('enableStockAlerts').checked);
+
+            // Save Alerts Configuration
+            localStorage.setItem('ztg_config_alert_low_stock', document.getElementById('alertLowStock').checked);
+            localStorage.setItem('ztg_config_alert_out_of_stock', document.getElementById('alertOutOfStock').checked);
+            localStorage.setItem('ztg_config_alert_dead_stock', document.getElementById('alertDeadStock').checked);
+            localStorage.setItem('ztg_config_alert_damaged', document.getElementById('alertDamaged').checked);
+            localStorage.setItem('ztg_config_alert_show_dashboard', document.getElementById('alertShowDashboard').checked);
+
+            localStorage.setItem('ztg_config_alert_po_approval', document.getElementById('alertPOApproval').checked);
+            localStorage.setItem('ztg_config_alert_po_approved', document.getElementById('alertPOApproved').checked);
+            localStorage.setItem('ztg_config_alert_po_rejected', document.getElementById('alertPORejected').checked);
+            localStorage.setItem('ztg_config_alert_refunds', document.getElementById('alertRefunds').checked);
+            localStorage.setItem('ztg_config_alert_large_sales', document.getElementById('alertLargeSales').checked);
+            localStorage.setItem('ztg_config_alert_large_sale_threshold', document.getElementById('alertLargeSaleThreshold').value.trim());
+
+            localStorage.setItem('ztg_config_alert_res_expiring', document.getElementById('alertResExpiring').checked);
+            localStorage.setItem('ztg_config_alert_res_expired', document.getElementById('alertResExpired').checked);
+
+            localStorage.setItem('ztg_config_alert_enable_email', document.getElementById('alertEnableEmail').checked);
+            localStorage.setItem('ztg_config_alert_admin_email', document.getElementById('alertAdminEmail').value.trim());
+            localStorage.setItem('ztg_config_alert_additional_recipients', document.getElementById('alertAdditionalRecipients').value.trim());
+
+            localStorage.setItem('ztg_config_alert_report_daily_sales', document.getElementById('alertReportDailySales').checked);
+            localStorage.setItem('ztg_config_alert_report_weekly_inventory', document.getElementById('alertReportWeeklyInventory').checked);
+            localStorage.setItem('ztg_config_alert_report_monthly_performance', document.getElementById('alertReportMonthlyPerformance').checked);
+
+            // Save Alert Rules
+            localStorage.setItem('ztg_config_alert_rules_data', JSON.stringify(tempAlertRulesData));
+
+            // Tab 2: Products Settings
+            // Product Information Settings
+            localStorage.setItem('ztg_config_display_chinese_names', document.getElementById('displayChineseNames').checked);
+            localStorage.setItem('ztg_config_enable_variants', document.getElementById('enableVariants').checked);
+            localStorage.setItem('ztg_config_enable_dual_pricing', document.getElementById('enableDualPricing').checked);
+            localStorage.setItem('ztg_config_track_locations', document.getElementById('trackWarehouseLocations').checked);
+
+            // Pricing Configuration
+            localStorage.setItem('ztg_config_price1_label', document.getElementById('price1Label').value.trim());
+            localStorage.setItem('ztg_config_price2_label', document.getElementById('price2Label').value.trim());
+            localStorage.setItem('ztg_config_auto_calc_price2', document.getElementById('autoCalcPrice2').checked);
+            localStorage.setItem('ztg_config_price2_markup', document.getElementById('price2Markup').value);
+
+            // Warehouse Location Format
+            localStorage.setItem('ztg_config_location_format', document.getElementById('locationFormat').value.trim());
+            localStorage.setItem('ztg_config_num_aisles', document.getElementById('numAisles').value);
+
+            // Product Display Options
+            localStorage.setItem('ztg_config_always_display_part_numbers', document.getElementById('alwaysDisplayPartNumbers').checked);
+            localStorage.setItem('ztg_config_show_stock_levels_pos', document.getElementById('showStockLevelsPos').checked);
+            localStorage.setItem('ztg_config_hide_outof_stock_pos', document.getElementById('hideOutofStockPos').checked);
+
+            // Save Variants Configuration
+            localStorage.setItem('ztg_config_variants_data', JSON.stringify(tempVariantsData));
+
+            alert('Settings saved successfully!');
+        }
+
+        function cancelChanges() {
+            loadAllSettings();
+            alert('Changes discarded. Restored saved settings.');
+        }
+
+        document.getElementById('autoCalcPrice2').addEventListener('change', toggleMarkupField);
+        document.getElementById('alertLargeSales').addEventListener('change', toggleLargeSaleGroup);
+        loadAllSettings();
+    </script>
+</body>
+</html>

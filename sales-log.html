@@ -160,15 +160,16 @@
                         <table style="width: 100%; border-collapse: collapse; text-align: left;">
                             <thead style="border-bottom: 1px solid var(--border); font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">
                                 <tr>
-                                    <th style="padding: 12px 16px; font-weight: 700;">RECEIPT #</th>
-                                    <th style="padding: 12px 16px; font-weight: 700;">DATE & TIME</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">DATE</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">S.I./C.I./D.R.</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">PART NO.</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">PRODUCT</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">QTY</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">PRICE 1</th>
                                     <th style="padding: 12px 16px; font-weight: 700;">CUSTOMER</th>
-                                    <th style="padding: 12px 16px; font-weight: 700;">CASHIER</th>
-                                    <th style="padding: 12px 16px; font-weight: 700;">ITEMS</th>
-                                    <th style="padding: 12px 16px; font-weight: 700;">TOTAL</th>
                                     <th style="padding: 12px 16px; font-weight: 700;">PAYMENT</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">SERVED BY</th>
                                     <th style="padding: 12px 16px; font-weight: 700;">STATUS</th>
-                                    <th style="padding: 12px 16px; font-weight: 700;">ACTION</th>
                                 </tr>
                             </thead>
                             <tbody id="salesTableBody" style="font-size: 13px;">
@@ -234,6 +235,7 @@
 
         function renderSalesTable() {
             const transactions = db.getTransactions();
+            const products = db.getProducts();
             const searchVal = document.getElementById('salesSearch').value.toLowerCase();
             const cashierVal = document.getElementById('cashierFilter').value;
             const paymentVal = document.getElementById('paymentFilter').value;
@@ -289,7 +291,7 @@
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid var(--border)';
                 
-                // Format Date & Time (Mocked splitting since original data is just 'Jun 14, 2026')
+                // Format Date & Time
                 let datePart = t.date;
                 let timePart = '09:00 AM'; // Default mock time if missing
                 if (t.date.includes('ago') || t.date.includes('Yesterday') || t.date.includes('Just now')) {
@@ -297,30 +299,45 @@
                     timePart = '';
                 }
 
+                // Extract base name to match with products
+                let baseName = t.itemName;
+                if (baseName.includes(' & ')) {
+                    baseName = baseName.split(' & ')[0];
+                }
+                baseName = baseName.replace(' (Order Release)', '').trim();
+                
+                const product = products.find(p => p.name === baseName) || {};
+                const partNo = product.partNo || 'N/A';
+                const chineseName = product.chineseName || '';
+                
+                let displayName = `<span style="font-weight: 600; color: var(--text-primary);">${t.itemName}</span>`;
+                if (chineseName) {
+                    displayName += `<br><span style="font-size: 12px; color: var(--text-secondary);">${chineseName}</span>`;
+                }
+
+                // Format payment method to include details if present (e.g. "Cash / Deposit (P1000 applied, P1500 paid)")
+                let paymentDisplay = t.payment;
+                if (t.payment.includes('Deposit')) {
+                    paymentDisplay = `<span style="color: var(--text-secondary);">${t.payment}</span>`;
+                }
+
                 const statusGrp = (t.status === 'Completed' || t.status === 'Paid' || t.status === 'P.O. Approved') ? 'Completed' :
                                   (t.status === 'Refund' || t.status === 'Return') ? 'Refund' : 'Pending';
 
-                const actionText = statusGrp === 'Pending' ? 'Update' : 'View';
-
                 tr.innerHTML = `
-                    <td style="padding: 16px; font-weight: 700; color: var(--text-primary);">${t.siNo}</td>
-                    <td style="padding: 16px;">
+                    <td style="padding: 16px; font-size: 13px;">
                         <span style="display: block; color: var(--text-primary);">${datePart}</span>
                         ${timePart ? `<span style="display: block; font-size: 11px; color: var(--text-secondary);">${timePart}</span>` : ''}
                     </td>
-                    <td style="padding: 16px; color: var(--text-secondary);">${t.customer}</td>
-                    <td style="padding: 16px; color: var(--text-secondary);">${t.cashier.split(' ')[0]}</td>
-                    <td style="padding: 16px; color: var(--text-secondary);">${t.qty}</td>
-                    <td style="padding: 16px; font-weight: 700; color: var(--text-primary);">₱${t.amount.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>
-                    <td style="padding: 16px;">
-                        <span class="payment-label">${getPaymentEmoji(t.payment)} ${t.payment}</span>
-                    </td>
-                    <td style="padding: 16px;">
-                        ${getStatusHtml(t.status)}
-                    </td>
-                    <td style="padding: 16px;">
-                        <button class="action-btn ${statusGrp === 'Pending' ? 'update-btn' : ''}">${actionText}</button>
-                    </td>
+                    <td style="padding: 16px; font-size: 14px; font-weight: 700; color: var(--text-primary);">${t.siNo}</td>
+                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${partNo}</td>
+                    <td style="padding: 16px;">${displayName}</td>
+                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.qty}</td>
+                    <td style="padding: 16px; font-size: 14px; font-weight: 700;">₱${t.amount.toLocaleString(undefined, {minimumFractionDigits: 0})}</td>
+                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.customer || 'Guest'}</td>
+                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${paymentDisplay}</td>
+                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.cashier.split(' ')[0]}</td>
+                    <td style="padding: 16px;">${getStatusHtml(t.status)}</td>
                 `;
                 tbody.appendChild(tr);
             });

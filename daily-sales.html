@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Sales | ZTG Heavy Parts</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar"></div>
+
+        <!-- Main Workspace -->
+        <div class="main-workspace">
+            <div class="top-bar">
+                <div class="top-bar-title">Daily Sales Ledger</div>
+                <div class="top-bar-actions">
+                    <span class="page-description">Real-time ledger tracking of completed orders and accrued commissions.</span>
+                </div>
+            </div>
+
+            <div class="content-body">
+                <!-- Stat Cards Row -->
+                <div class="grid-3" style="grid-template-columns: 1fr 1fr; margin-bottom: 24px;">
+                    <div class="card stat-box">
+                        <div>
+                            <span class="stat-label">My Gross Sales Revenue</span>
+                            <div class="stat-value" id="cashierGrossSales">₱0</div>
+                        </div>
+                    </div>
+                    <div class="card stat-box">
+                        <div>
+                            <span class="stat-label">Accrued Commission (5%)</span>
+                            <div class="stat-value" id="cashierCommission" style="color: var(--primary);">₱0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Sales Ledger Table -->
+                <div class="card table-card">
+                    <div class="table-header-bar">
+                        <h3 style="font-size: 16px; font-weight: 700;">My Fulfilled Sales Invoices</h3>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead style="border-bottom: 1px solid var(--border); font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">
+                                <tr>
+                                    <th style="padding: 12px 16px; font-weight: 700;">DATE</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">S.I./C.I./D.R.</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">PART NO.</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">PRODUCT</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">QTY</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">PRICE 1</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">CUSTOMER</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">PAYMENT</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">SERVED BY</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mySalesTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        initSidebar('daily-sales');
+
+        function renderMySales() {
+            const user = getCurrentUser();
+            const transactions = db.getTransactions();
+            const tbody = document.getElementById('mySalesTableBody');
+
+            tbody.innerHTML = '';
+
+            // Filter only Completed or PO Approved sales served by this specific cashier
+            const myCompletedSales = transactions.filter(t => 
+                (t.status === 'Completed' || t.status === 'P.O. Approved') && 
+                t.cashier.toLowerCase() === user.name.toLowerCase()
+            );
+
+            const products = db.getProducts();
+
+            let gross = 0;
+            let commission = 0;
+
+            myCompletedSales.forEach(t => {
+                gross += t.amount;
+                const comm = t.amount * 0.05;
+                commission += comm;
+
+                // Extract base name to match with products
+                let baseName = t.itemName;
+                if (baseName.includes(' & ')) {
+                    baseName = baseName.split(' & ')[0];
+                }
+                baseName = baseName.replace(' (Order Release)', '').trim();
+                
+                const product = products.find(p => p.name === baseName) || {};
+                const partNo = product.partNo || 'N/A';
+                const chineseName = product.chineseName || '';
+                
+                let displayName = `<span style="font-weight: 600; color: var(--text-primary);">${t.itemName}</span>`;
+                if (chineseName) {
+                    displayName += `<br><span style="font-size: 12px; color: var(--text-secondary);">${chineseName}</span>`;
+                }
+
+                // Format payment method to include details if present (e.g. "Cash / Deposit (P1000 applied, P1500 paid)")
+                let paymentDisplay = t.payment;
+                if (t.payment.includes('Deposit')) {
+                    paymentDisplay = `<span style="color: var(--text-secondary);">${t.payment}</span>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = "1px solid var(--border)";
+                tr.innerHTML = `
+                    <td style="padding: 16px; font-size: 13px;">${t.date.replace(', ', '<br>')}</td>
+                    <td style="padding: 16px; font-size: 14px; font-weight: 700; color: var(--text-primary);">${t.siNo}</td>
+                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${partNo}</td>
+                    <td style="padding: 16px;">${displayName}</td>
+                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.qty}</td>
+                    <td style="padding: 16px; font-size: 14px; font-weight: 700;">₱${t.amount.toLocaleString(undefined, {minimumFractionDigits: 0})}</td>
+                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.customer || 'Guest'}</td>
+                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${paymentDisplay}</td>
+                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.cashier}</td>
+                    <td style="padding: 16px;"><span style="color: var(--success); font-size: 13px; font-weight: 600;">Completed</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('cashierGrossSales').innerText = `₱${gross.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('cashierCommission').innerText = `₱${commission.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+            if (myCompletedSales.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 24px 0;">You have not processed any completed transactions yet.</td></tr>';
+            }
+        }
+
+        renderMySales();
+    </script>
+</body>
+</html>

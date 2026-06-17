@@ -3,12 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log In | HeavyParts Pro</title>
+    <title>Log In | ZTG Heavy Parts</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="login-body">
+    <!-- Ambient Background glows -->
+    <div class="login-bg-glow-1"></div>
+    <div class="login-bg-glow-2"></div>
+
     <div class="login-card">
-        <div class="login-logo">Heavy<span>Parts</span> Pro</div>
+        <div class="login-logo">ZTG <span>Heavy Parts</span></div>
         <p class="login-subtitle">Select your role and sign in to continue</p>
         
         <form id="loginForm" onsubmit="handleLogin(event)">
@@ -29,12 +33,18 @@
 
             <div class="form-group">
                 <label class="form-label" for="username">Employee ID or Username</label>
-                <input type="text" id="username" class="form-control" placeholder="Enter your employee ID or username" required>
+                <div class="input-wrapper">
+                    <svg class="input-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>
+                    <input type="text" id="username" class="form-control" placeholder="Enter username or ID" required>
+                </div>
             </div>
 
             <div class="form-group">
                 <label class="form-label" for="password">Password</label>
-                <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+                <div class="input-wrapper">
+                    <svg class="input-icon" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4"/></svg>
+                    <input type="password" id="password" class="form-control" placeholder="Enter password" required>
+                </div>
             </div>
 
             <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
@@ -42,10 +52,15 @@
                 <label class="form-label" for="rememberMe" style="margin-bottom: 0; cursor: pointer; user-select: none;">Remember me on this device</label>
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 10px;">Sign In</button>
+            <button type="submit" class="btn login-btn" style="width: 100%; margin-top: 14px;">
+                Sign In
+                <svg style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.5;" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
         </form>
     </div>
 
+    <!-- Include shared app database & router framework -->
+    <script src="app.js"></script>
     <script>
         // Set selected role on click
         function selectRole(role, element) {
@@ -76,7 +91,7 @@
             
             if (role === 'Cashier') {
                 // Find or mock cashier details
-                const employees = JSON.parse(localStorage.getItem('ztg_employees')) || [];
+                const employees = db.getEmployees() || [];
                 const found = employees.find(e => e.id.toLowerCase() === username.toLowerCase() || e.name.toLowerCase().includes(username.toLowerCase()));
                 if (found) {
                     name = found.name;
@@ -95,11 +110,11 @@
 
             localStorage.setItem('ztg_current_user', JSON.stringify(userSession));
             
-            // Redirect based on role
+            // Redirect based on role dynamically via SPA transitions
             if (role === 'Admin') {
-                window.location.href = 'index.html';
+                navigateTo('index.html');
             } else {
-                window.location.href = 'cashier-inventory.html';
+                navigateTo('pos.html');
             }
         }
     </script>

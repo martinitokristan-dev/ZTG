@@ -99,6 +99,25 @@ const db = {
     saveCategories: (c) => localStorage.setItem('ztg_categories', JSON.stringify(c))
 };
 
+// Database save hooks for real-time notification triggers
+const originalSaveProducts = db.saveProducts;
+db.saveProducts = function(p) {
+    originalSaveProducts(p);
+    if (window.triggerNotificationsUpdate) window.triggerNotificationsUpdate();
+};
+
+const originalSavePendingPOs = db.savePendingPOs;
+db.savePendingPOs = function(po) {
+    originalSavePendingPOs(po);
+    if (window.triggerNotificationsUpdate) window.triggerNotificationsUpdate();
+};
+
+const originalSaveTransactions = db.saveTransactions;
+db.saveTransactions = function(t) {
+    originalSaveTransactions(t);
+    if (window.triggerNotificationsUpdate) window.triggerNotificationsUpdate();
+};
+
 // 3. User & Authentication Logic
 function getCurrentUser() {
     const userJson = localStorage.getItem('ztg_current_user');
@@ -153,15 +172,6 @@ function initSidebar(activePage) {
                                 <svg><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                                 Inventory
                             </div>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="pos.html" class="nav-link ${activePage === 'pos' ? 'active' : ''}">
-                            <div class="nav-link-content">
-                                <svg><path d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                                Point of Sale (POS)
-                            </div>
-                            ${pendingPOsCount > 0 ? `<span class="nav-badge">${pendingPOsCount}</span>` : ''}
                         </a>
                     </li>
                     <li class="nav-item">
@@ -231,26 +241,18 @@ function initSidebar(activePage) {
                 <div class="nav-group-label">Cashier</div>
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a href="cashier-inventory.html" class="nav-link ${activePage === 'cashier-inventory' ? 'active' : ''}">
-                            <div class="nav-link-content">
-                                <svg><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                                Inventory
-                            </div>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="cashier-sales.html" class="nav-link ${activePage === 'cashier-sales' ? 'active' : ''}">
-                            <div class="nav-link-content">
-                                <svg><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                My Sales
-                            </div>
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a href="pos.html" class="nav-link ${activePage === 'pos' ? 'active' : ''}">
                             <div class="nav-link-content">
                                 <svg><path d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                                 Point of Sale (POS)
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="daily-sales.html" class="nav-link ${activePage === 'daily-sales' || activePage === 'cashier-sales' ? 'active' : ''}">
+                            <div class="nav-link-content">
+                                <svg><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                Daily Sales
                             </div>
                         </a>
                     </li>
@@ -284,12 +286,13 @@ function initSidebar(activePage) {
             </a>
         </div>
     `;
+    if (window.initNotifications) window.initNotifications();
 }
 
 function logout(event) {
     if (event) event.preventDefault();
     localStorage.removeItem('ztg_current_user');
-    window.location.href = 'login.html';
+    navigateTo('login.html');
 }
 
 // 5. Modal Utils
@@ -316,3 +319,821 @@ function getStockStatus(qty) {
 
 // Run basic login validation
 checkLogin();
+
+// 7. SPA Router & Framed Transition Implementation
+let pageListeners = [];
+let pageTimers = [];
+let pageIntervals = [];
+let pageRestorers = [];
+let trackListeners = false;
+let isPageLoading = false;
+
+// Global overrides for tracking listeners and timers
+const originalWindowAdd = window.addEventListener;
+const originalDocumentAdd = document.addEventListener;
+const originalSetTimeout = window.setTimeout;
+const originalSetInterval = window.setInterval;
+
+window.addEventListener = function(type, listener, options) {
+    if (trackListeners) {
+        pageListeners.push({ target: window, type, listener, options });
+    }
+    return originalWindowAdd.call(window, type, listener, options);
+};
+
+document.addEventListener = function(type, listener, options) {
+    if (trackListeners) {
+        pageListeners.push({ target: document, type, listener, options });
+    }
+    return originalDocumentAdd.call(document, type, listener, options);
+};
+
+window.setTimeout = function(handler, timeout, ...args) {
+    const id = originalSetTimeout.call(window, handler, timeout, ...args);
+    if (trackListeners) {
+        pageTimers.push(id);
+    }
+    return id;
+};
+
+window.setInterval = function(handler, timeout, ...args) {
+    const id = originalSetInterval.call(window, handler, timeout, ...args);
+    if (trackListeners) {
+        pageIntervals.push(id);
+    }
+    return id;
+};
+
+const sleep = ms => new Promise(res => originalSetTimeout(res, ms));
+
+function unloadCurrentPage() {
+    // 1. Remove tracked event listeners
+    pageListeners.forEach(({ target, type, listener, options }) => {
+        try {
+            target.removeEventListener(type, listener, options);
+        } catch (e) {
+            console.error('Error removing listener:', e);
+        }
+    });
+    pageListeners = [];
+
+    // 2. Clear tracked timers and intervals
+    pageTimers.forEach(id => clearTimeout(id));
+    pageTimers = [];
+    pageIntervals.forEach(id => clearInterval(id));
+    pageIntervals = [];
+
+    // 3. Run window property restorers
+    pageRestorers.forEach(restore => {
+        try {
+            restore();
+        } catch (e) {
+            console.error('Error running restorer:', e);
+        }
+    });
+    pageRestorers = [];
+
+    // 4. Remove subpage modals
+    document.querySelectorAll('.modal-overlay').forEach(el => el.remove());
+
+    // 5. Remove page-specific style tags
+    document.querySelectorAll('[data-spa-style="true"]').forEach(el => el.remove());
+}
+
+async function navigateTo(url, push = true) {
+    if (isPageLoading) return;
+    
+    // Fallback if CORS prevents fetch or using file:// protocol
+    if (window.location.protocol === 'file:') {
+        window.location.href = url;
+        return;
+    }
+    
+    isPageLoading = true;
+    
+    try {
+        const responsePromise = fetch(url).then(res => {
+            if (!res.ok) throw new Error('Failed to fetch page');
+            return res.text();
+        });
+        
+        const html = await responsePromise;
+        const parser = new DOMParser();
+        const parsedDoc = parser.parseFromString(html, 'text/html');
+        
+        const hasCurrentWorkspace = !!document.querySelector('.main-workspace');
+        const hasNewWorkspace = !!parsedDoc.querySelector('.main-workspace');
+        const isCurrentLogin = document.body.classList.contains('login-body');
+        const isNewLogin = parsedDoc.body.classList.contains('login-body');
+        
+        const fullBodySwap = !hasCurrentWorkspace || !hasNewWorkspace || (isCurrentLogin !== isNewLogin);
+        
+        // Trigger fade out
+        if (fullBodySwap) {
+            document.body.classList.add('body-fade-out');
+        } else {
+            const currentWorkspace = document.querySelector('.main-workspace');
+            if (currentWorkspace) {
+                currentWorkspace.classList.add('fade-out');
+            }
+        }
+        
+        // Wait at least 220ms for transition fade-out to complete
+        await sleep(220);
+
+        if (push) {
+            history.pushState({ url }, '', url);
+        }
+
+        // Perform DOM swap and execute scripts
+        unloadCurrentPage();
+
+        // 1. Update title
+        const newTitle = parsedDoc.querySelector('title');
+        if (newTitle) {
+            document.title = newTitle.innerText;
+        }
+
+        // 2. Inject Page Styles
+        const pageStyles = parsedDoc.querySelectorAll('style');
+        pageStyles.forEach(style => {
+            const clonedStyle = style.cloneNode(true);
+            clonedStyle.setAttribute('data-spa-style', 'true');
+            document.head.appendChild(clonedStyle);
+        });
+
+        if (fullBodySwap) {
+            // 3a. Swap entire body
+            document.body.className = parsedDoc.body.className;
+            document.body.innerHTML = parsedDoc.body.innerHTML;
+            
+            // Add fade-out state, then trigger fade-in transition
+            document.body.classList.add('body-fade-out');
+            document.body.offsetHeight; // trigger reflow
+            document.body.classList.remove('body-fade-out');
+        } else {
+            // 3b. Swap only the workspace
+            const currentWorkspace = document.querySelector('.main-workspace');
+            const newWorkspace = parsedDoc.querySelector('.main-workspace');
+            if (currentWorkspace && newWorkspace) {
+                newWorkspace.classList.add('fade-in');
+                currentWorkspace.replaceWith(newWorkspace);
+                
+                // Trigger reflow
+                newWorkspace.offsetHeight;
+                newWorkspace.classList.remove('fade-in');
+            }
+        }
+
+        // 4. Append Modal Overlays
+        const newModals = parsedDoc.querySelectorAll('.modal-overlay');
+        newModals.forEach(modal => {
+            document.body.appendChild(modal);
+        });
+
+        // 5. Run page scripts
+        const inlineScripts = parsedDoc.querySelectorAll('script:not([src])');
+        inlineScripts.forEach(script => {
+            executeSubpageScript(script.textContent);
+        });
+
+    } catch (e) {
+        console.error('SPA navigation failed, falling back to full reload:', e);
+        window.location.href = url;
+    } finally {
+        isPageLoading = false;
+    }
+}
+
+function executeSubpageScript(scriptText) {
+    // Extract top-level function declarations
+    const functionRegex = /(?:async\s+)?function\s+([a-zA-Z0-9_$]+)\s*\(/g;
+    let match;
+    const functionsToBind = [];
+    while ((match = functionRegex.exec(scriptText)) !== null) {
+        functionsToBind.push(match[1]);
+    }
+
+    // Create a localWindow proxy for the execution context
+    const originalWindowProperties = {};
+    const localWindow = new Proxy(window, {
+        get(target, prop) {
+            if (prop === 'window' || prop === 'self' || prop === 'globalThis') {
+                return localWindow;
+            }
+            const val = target[prop];
+            return typeof val === 'function' ? val.bind(target) : val;
+        },
+        set(target, prop, value) {
+            if (!(prop in originalWindowProperties)) {
+                originalWindowProperties[prop] = prop in target ? target[prop] : undefined;
+            }
+            target[prop] = value;
+            return true;
+        }
+    });
+
+    // Expose local functions to window so inline event handlers can call them
+    let exposeScript = '';
+    functionsToBind.forEach(func => {
+        exposeScript += `\nwindow.${func} = ${func};`;
+    });
+
+    // Add restorer function to global restorers array
+    pageRestorers.push(() => {
+        for (const prop in originalWindowProperties) {
+            const originalValue = originalWindowProperties[prop];
+            if (originalValue === undefined) {
+                try {
+                    delete window[prop];
+                } catch (e) {
+                    window[prop] = undefined;
+                }
+            } else {
+                window[prop] = originalValue;
+            }
+        }
+    });
+
+    try {
+        // Run with localWindow parameter shadowing the global window variable
+        const runner = new Function('window', scriptText + exposeScript);
+        runner(localWindow);
+    } catch (err) {
+        console.error('Error executing subpage script:', err);
+    }
+}
+
+// Intercept all clicks on internal links
+originalWindowAdd.call(window, 'click', (e) => {
+    const link = e.target.closest('a');
+    if (!link) return;
+    
+    const href = link.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('javascript:') || link.target === '_blank') return;
+    
+    // Check if it's internal link
+    try {
+        const targetUrl = new URL(href, window.location.href);
+        if (targetUrl.origin !== window.location.origin) return;
+        
+        // Skip if clicking active/current page to avoid double loading
+        const currentUrl = new URL(window.location.href);
+        if (currentUrl.pathname === targetUrl.pathname && currentUrl.search === targetUrl.search) {
+            e.preventDefault();
+            return;
+        }
+        
+        e.preventDefault();
+        navigateTo(href);
+    } catch (err) {
+        // Safe fallback
+    }
+});
+
+// Intercept history back/forward navigation
+originalWindowAdd.call(window, 'popstate', (e) => {
+    navigateTo(window.location.href, false);
+});
+
+// Mark existing inline style tags as SPA styles so they can be cleaned up on transition
+document.querySelectorAll('head style').forEach(style => {
+    style.setAttribute('data-spa-style', 'true');
+});
+
+// Start tracking page listeners after app.js completes initialization
+trackListeners = true;
+
+// ==========================================
+// NOTIFICATIONS SYSTEM
+// ==========================================
+
+let audioCtx = null;
+window.playChime = function() {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        if (!audioCtx) {
+            audioCtx = new AudioContext();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        const ctx = audioCtx;
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(783.99, ctx.currentTime);
+        gain1.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.12);
+        gain2.gain.setValueAtTime(0, ctx.currentTime);
+        gain2.gain.setValueAtTime(0.06, ctx.currentTime + 0.12);
+        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        
+        osc1.start();
+        osc1.stop(ctx.currentTime + 0.7);
+        osc2.start(ctx.currentTime + 0.12);
+        osc2.stop(ctx.currentTime + 0.9);
+    } catch (e) {
+        console.warn('Audio play blocked or unsupported', e);
+    }
+};
+
+window.showToast = function(n) {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.style.cssText = `
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 10000;
+            pointer-events: none;
+        `;
+        document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = 'notif-toast';
+    toast.style.pointerEvents = 'auto';
+    
+    let iconBg = '#EFF6FF';
+    let iconColor = '#3B82F6';
+    let iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>`;
+    
+    if (n.type === 'low_stock') {
+        iconBg = '#FEF2F2';
+        iconColor = '#EF4444';
+        iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+    } else if (n.type === 'insight') {
+        iconBg = '#ECFDF5';
+        iconColor = '#10B981';
+        iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`;
+    }
+    
+    toast.innerHTML = `
+        <div class="notif-toast-icon" style="background: ${iconBg}; color: ${iconColor};">
+            ${iconSvg}
+        </div>
+        <div class="notif-toast-content">
+            <div class="notif-toast-title">${n.title}</div>
+            <div class="notif-toast-msg">${n.message}</div>
+        </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+    
+    toast.addEventListener('click', () => {
+        window.markAsRead(n.id);
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 400);
+        // Resolve destination based on CURRENT user role at click time
+        const toastUser = getCurrentUser();
+        const toastRole = toastUser ? toastUser.role : 'Admin';
+        let dest = null;
+        if (n.type === 'transaction') {
+            dest = toastRole === 'Admin' ? 'transaction-log.html' : 'daily-sales.html';
+        } else if (n.type === 'low_stock') {
+            dest = toastRole === 'Admin' ? 'product-management.html' : 'pos.html';
+        } else if (n.type === 'insight') {
+            dest = 'reports.html';
+        } else if (n.link) {
+            dest = n.link;
+        }
+        if (dest) navigateTo(dest);
+    });
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                if (toast.parentNode) toast.remove();
+            }, 400);
+        }
+    }, 5000);
+};
+
+window.updateNotificationsFromDB = function() {
+    const products = db.getProducts() || [];
+    const pendingPOs = db.getPendingPOs() || [];
+    const transactions = db.getTransactions() || [];
+    const currentUser = getCurrentUser();
+    const role = currentUser ? currentUser.role : 'Admin';
+    
+    let notifications = JSON.parse(localStorage.getItem('ztg_notifications') || '[]');
+    let changed = false;
+    
+    // 1. Process Low Stock Notifications
+    const lowStockProductIds = new Set();
+    products.forEach(p => {
+        if (p.stock <= 5) {
+            lowStockProductIds.add(p.id);
+            const hasNotif = notifications.some(n => n.type === 'low_stock' && n.productId === p.id);
+            if (!hasNotif) {
+                notifications.unshift({
+                    id: 'notif-stock-' + p.id,
+                    type: 'low_stock',
+                    productId: p.id,
+                    title: p.stock === 0 ? 'Out of Stock' : 'Low Stock Alert',
+                    message: `${p.name} (${p.partNo || 'N/A'}) has only ${p.stock} units left!`,
+                    timestamp: Date.now(),
+                    read: false
+                    // link resolved at click time based on current user role
+                });
+                changed = true;
+            }
+        }
+    });
+    const initialLength = notifications.length;
+    notifications = notifications.filter(n => {
+        if (n.type === 'low_stock') {
+            return lowStockProductIds.has(n.productId);
+        }
+        return true;
+    });
+    if (notifications.length !== initialLength) {
+        changed = true;
+    }
+    
+    // 2. Process Completed Transactions (Real-time notifications for Admin and Cashier)
+    const completedTxIds = new Set(transactions.map(t => t.siNo || t.id));
+    transactions.forEach(t => {
+        const txId = t.siNo || t.id;
+        const hasNotif = notifications.some(n => n.type === 'transaction' && n.txId === txId);
+        if (!hasNotif) {
+            const title = role === 'Admin' ? 'New Completed Sale' : 'Transaction Completed';
+            const message = role === 'Admin' 
+                ? `${t.cashier} processed sale ${txId} for ${t.customer} (₱${t.amount.toLocaleString()}).`
+                : `Sale ${txId} was processed successfully (₱${t.amount.toLocaleString()}).`;
+            
+            notifications.unshift({
+                id: 'notif-tx-' + txId,
+                type: 'transaction',
+                txId: txId,
+                title: title,
+                message: message,
+                timestamp: Date.now(),
+                read: false
+                // link resolved at click time based on current user role
+            });
+            changed = true;
+        }
+    });
+    const initialLength2 = notifications.length;
+    notifications = notifications.filter(n => {
+        if (n.type === 'transaction') {
+            return completedTxIds.has(n.txId);
+        }
+        return true;
+    });
+    if (notifications.length !== initialLength2) {
+        changed = true;
+    }
+    
+    // 3. Process Insights (Fast Moving Items)
+    const salesCounts = {};
+    transactions.forEach(t => {
+        if (t.status === 'Completed' || t.status === 'Closed') {
+            salesCounts[t.itemName] = (salesCounts[t.itemName] || 0) + (t.qty || 1);
+        }
+    });
+    Object.keys(salesCounts).forEach(itemName => {
+        const qtySold = salesCounts[itemName];
+        if (qtySold >= 8) {
+            const hasNotif = notifications.some(n => n.type === 'insight' && n.itemName === itemName);
+            if (!hasNotif) {
+                notifications.unshift({
+                    id: 'notif-insight-' + itemName.replace(/\s+/g, '-'),
+                    type: 'insight',
+                    itemName: itemName,
+                    title: 'Fast-Moving Item Insight',
+                    message: `${itemName} is fast-moving! Total ${qtySold} units sold recently.`,
+                    timestamp: Date.now(),
+                    read: false,
+                    link: 'reports.html'
+                });
+                changed = true;
+            }
+        }
+    });
+    
+    if (changed || !localStorage.getItem('ztg_notifications')) {
+        localStorage.setItem('ztg_notifications', JSON.stringify(notifications));
+    }
+    
+    return notifications;
+};
+
+window.markAsRead = function(id) {
+    let notifications = JSON.parse(localStorage.getItem('ztg_notifications') || '[]');
+    notifications = notifications.map(n => {
+        if (n.id === id) n.read = true;
+        return n;
+    });
+    localStorage.setItem('ztg_notifications', JSON.stringify(notifications));
+    window.renderNotificationsUI(notifications);
+};
+
+window.markAllAsRead = function() {
+    let notifications = JSON.parse(localStorage.getItem('ztg_notifications') || '[]');
+    notifications = notifications.map(n => {
+        n.read = true;
+        return n;
+    });
+    localStorage.setItem('ztg_notifications', JSON.stringify(notifications));
+    window.renderNotificationsUI(notifications);
+};
+
+window.renderNotificationsUI = function(notifications) {
+    const badge = document.getElementById('notifBadge');
+    const container = document.getElementById('notifItemsContainer');
+    const emptyFooter = document.getElementById('notifEmptyFooter');
+    
+    if (!badge || !container) return;
+    
+    const unreadCount = notifications.filter(n => !n.read).length;
+    if (unreadCount > 0) {
+        badge.innerText = unreadCount;
+        badge.style.display = 'flex';
+        badge.classList.add('pulse');
+    } else {
+        badge.style.display = 'none';
+        badge.classList.remove('pulse');
+    }
+    
+    container.innerHTML = '';
+    
+    if (notifications.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 32px 16px; color: var(--text-secondary);">
+                <svg viewBox="0 0 24 24" style="width: 32px; height: 32px; fill: none; stroke: currentColor; stroke-width: 1.5; margin-bottom: 8px; opacity: 0.5; display: block; margin-left: auto; margin-right: auto;">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <div style="font-size: 13px; font-weight: 600;">All caught up!</div>
+                <div style="font-size: 11px; margin-top: 4px; opacity: 0.8;">No notifications at this time.</div>
+            </div>
+        `;
+        if (emptyFooter) emptyFooter.style.display = 'none';
+        return;
+    }
+    
+    if (emptyFooter) emptyFooter.style.display = 'block';
+    
+    notifications.forEach(n => {
+        const item = document.createElement('div');
+        item.className = 'notif-item' + (n.read ? '' : ' unread');
+        item.style.cssText = `
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border, #E2E8F0);
+            cursor: pointer;
+            transition: background-color 0.2s;
+            position: relative;
+            background: ${n.read ? '#FFFFFF' : 'rgba(59, 130, 246, 0.03)'};
+        `;
+        
+        let iconBg = '#EFF6FF';
+        let iconColor = '#3B82F6';
+        let iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>`;
+        
+        if (n.type === 'low_stock') {
+            iconBg = '#FEF2F2';
+            iconColor = '#EF4444';
+            iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+        } else if (n.type === 'insight') {
+            iconBg = '#ECFDF5';
+            iconColor = '#10B981';
+            iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`;
+        } else if (n.type === 'transaction') {
+            iconBg = '#F0FDF4';
+            iconColor = '#16A34A';
+            iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`;
+        }
+        
+        const timeDiff = Date.now() - n.timestamp;
+        let timeStr = 'Just now';
+        if (timeDiff > 60000) {
+            const mins = Math.floor(timeDiff / 60000);
+            if (mins < 60) {
+                timeStr = `${mins}m ago`;
+            } else {
+                const hours = Math.floor(mins / 60);
+                if (hours < 24) {
+                    timeStr = `${hours}h ago`;
+                } else {
+                    timeStr = new Date(n.timestamp).toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
+                }
+            }
+        }
+        
+        item.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: ${iconBg}; color: ${iconColor}; border-radius: 8px; flex-shrink: 0;">
+                ${iconSvg}
+            </div>
+            <div style="flex: 1; min-width: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 4px; margin-bottom: 2px;">
+                    <strong style="font-size: 13px; font-weight: 700; color: var(--text-primary, #0F172A); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${n.title}</strong>
+                    <span style="font-size: 10px; color: var(--text-secondary, #64748B); flex-shrink: 0;">${timeStr}</span>
+                </div>
+                <div style="font-size: 11px; color: var(--text-secondary, #64748B); line-height: 1.4; word-break: break-word;">${n.message}</div>
+            </div>
+            ${n.read ? '' : '<div class="unread-dot" style="width: 6px; height: 6px; background: #3B82F6; border-radius: 50%; align-self: center; flex-shrink: 0; margin-left: 8px;"></div>'}
+        `;
+        
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.markAsRead(n.id);
+            const dropdown = document.getElementById('notifDropdown');
+            if (dropdown) dropdown.style.display = 'none';
+            // Resolve destination based on CURRENT user role at click time
+            const clickUser = getCurrentUser();
+            const clickRole = clickUser ? clickUser.role : 'Admin';
+            let dest = null;
+            if (n.type === 'transaction') {
+                dest = clickRole === 'Admin' ? 'transaction-log.html' : 'daily-sales.html';
+            } else if (n.type === 'low_stock') {
+                dest = clickRole === 'Admin' ? 'product-management.html' : 'pos.html';
+            } else if (n.type === 'insight') {
+                dest = 'reports.html';
+            } else if (n.link) {
+                dest = n.link;
+            }
+            if (dest) navigateTo(dest);
+        });
+        
+        container.appendChild(item);
+    });
+};
+
+window.triggerNotificationsUpdate = function() {
+    const notifications = window.updateNotificationsFromDB();
+    
+    // Check for newly added unread notifications to trigger toast/chime
+    const notifiedIds = new Set(JSON.parse(localStorage.getItem('ztg_notified_ids') || '[]'));
+    let hasNew = false;
+    
+    notifications.forEach(n => {
+        if (!n.read && !notifiedIds.has(n.id)) {
+            if (window.isNotificationsLoaded) {
+                window.showToast(n);
+                hasNew = true;
+            }
+            notifiedIds.add(n.id);
+        }
+    });
+    
+    if (hasNew) {
+        window.playChime();
+    }
+    
+    localStorage.setItem('ztg_notified_ids', JSON.stringify(Array.from(notifiedIds)));
+    window.renderNotificationsUI(notifications);
+};
+
+window.initNotifications = function() {
+    const topBar = document.querySelector('.top-bar');
+    if (!topBar) return;
+    
+    topBar.style.position = 'relative';
+    
+    // Remove any existing notification bell first to prevent duplicate renderings on SPA transition
+    const existingNotif = topBar.querySelector('.notif-wrapper');
+    if (existingNotif) {
+        existingNotif.remove();
+    }
+    
+    let actionsContainer = topBar.querySelector('.top-bar-actions');
+    const isPOS = window.location.pathname.includes('pos.html');
+    
+    // Create notifications container
+    const wrapper = document.createElement('div');
+    wrapper.className = 'notif-wrapper';
+    
+    wrapper.innerHTML = `
+        <button class="notif-btn" id="notifBellBtn" aria-label="Notifications">
+            <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; fill: none; stroke: var(--text-secondary, #64748B); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span class="notif-badge" id="notifBadge">0</span>
+        </button>
+        
+        <div class="notif-dropdown" id="notifDropdown">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border, #E2E8F0); background: #F8FAFC;">
+                <span style="font-weight: 700; font-size: 14px; color: var(--text-primary, #0F172A);">Notifications</span>
+                <button id="notifMarkAllRead" style="background: none; border: none; color: var(--primary, #3B82F6); font-size: 12px; font-weight: 600; cursor: pointer; padding: 0;">Mark all as read</button>
+            </div>
+            <div id="notifItemsContainer" style="max-height: 320px; overflow-y: auto;"></div>
+            <div id="notifEmptyFooter" style="text-align: center; padding: 12px; border-top: 1px solid var(--border, #E2E8F0); background: #F8FAFC; display:none;">
+                <span style="font-size: 11px; color: var(--text-secondary, #64748B);">Notifications Synced</span>
+            </div>
+        </div>
+    `;
+    
+    if (isPOS) {
+        // Position absolutely on pos.html to avoid tab bar layout break
+        wrapper.style.position = 'absolute';
+        wrapper.style.top = '12px';
+        wrapper.style.right = '24px';
+        topBar.appendChild(wrapper);
+    } else if (actionsContainer) {
+        actionsContainer.style.display = 'flex';
+        actionsContainer.style.alignItems = 'center';
+        actionsContainer.style.gap = '16px';
+        actionsContainer.appendChild(wrapper);
+    } else {
+        // Create an actions container on the fly for other pages
+        actionsContainer = document.createElement('div');
+        actionsContainer.className = 'top-bar-actions';
+        actionsContainer.style.display = 'flex';
+        actionsContainer.style.alignItems = 'center';
+        actionsContainer.style.gap = '16px';
+        
+        const children = Array.from(topBar.children);
+        children.forEach(child => {
+            const isTitle = child.querySelector('h1') || child.classList.contains('top-bar-title') || child.querySelector('.top-bar-title') || child.tagName === 'H1';
+            if (!isTitle && child !== topBar.firstElementChild) {
+                actionsContainer.appendChild(child);
+            }
+        });
+        
+        actionsContainer.appendChild(wrapper);
+        topBar.appendChild(actionsContainer);
+    }
+    
+    // Toggle dropdown
+    const bellBtn = wrapper.querySelector('#notifBellBtn');
+    const dropdown = wrapper.querySelector('#notifDropdown');
+    const markAllBtn = wrapper.querySelector('#notifMarkAllRead');
+    
+    bellBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Toggle
+        const isShown = dropdown.style.display === 'block';
+        dropdown.style.display = isShown ? 'none' : 'block';
+        
+        // Resume AudioContext context on interaction to allow chime play
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    });
+    
+    markAllBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.markAllAsRead();
+    });
+    
+    // Close dropdown on click outside
+    document.addEventListener('click', (e) => {
+        if (!wrapper.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Perform initial notifications render
+    const notifications = window.updateNotificationsFromDB();
+    
+    // Populate notifiedIds if not present to avoid chime blast on load
+    const notifiedIds = new Set(JSON.parse(localStorage.getItem('ztg_notified_ids') || '[]'));
+    let notifiedChanged = false;
+    notifications.forEach(n => {
+        if (!notifiedIds.has(n.id)) {
+            notifiedIds.add(n.id);
+            notifiedChanged = true;
+        }
+    });
+    if (notifiedChanged) {
+        localStorage.setItem('ztg_notified_ids', JSON.stringify(Array.from(notifiedIds)));
+    }
+    
+    window.renderNotificationsUI(notifications);
+    window.isNotificationsLoaded = true;
+};
+
+// Cross-tab notification sync listener
+originalWindowAdd.call(window, 'storage', (e) => {
+    if (e.key === 'ztg_pending_pos' || e.key === 'ztg_products' || e.key === 'ztg_transactions' || e.key === 'ztg_notifications') {
+        if (window.triggerNotificationsUpdate) window.triggerNotificationsUpdate();
+    }
+});
+

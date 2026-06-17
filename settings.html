@@ -95,7 +95,7 @@
                                 <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                                     <div class="form-group" style="margin-bottom: 0;">
                                         <label class="form-label" for="businessName">Business Name</label>
-                                        <input type="text" id="businessName" class="form-control" value="HeavyParts Pro">
+                                        <input type="text" id="businessName" class="form-control" value="ZTG Heavy Parts">
                                     </div>
                                     <div class="form-group" style="margin-bottom: 0;">
                                         <label class="form-label" for="branchLocation">Branch Location</label>
@@ -107,7 +107,7 @@
                                     </div>
                                     <div class="form-group" style="margin-bottom: 0;">
                                         <label class="form-label" for="emailAddress">Email Address</label>
-                                        <input type="email" id="emailAddress" class="form-control" value="info@heavypartspro.com">
+                                        <input type="email" id="emailAddress" class="form-control" value="info@ztgheavyparts.com">
                                     </div>
                                     <div class="form-group" style="margin-bottom: 0;">
                                         <label class="form-label" for="taxRate">Tax Rate (%)</label>
@@ -362,7 +362,7 @@
                                 </div>
                                 <div class="form-group" style="margin-bottom: 16px;">
                                     <label class="form-label" for="alertAdminEmail">Admin Email Address</label>
-                                    <input type="email" id="alertAdminEmail" class="form-control" value="admin@heavypartspro.com">
+                                    <input type="email" id="alertAdminEmail" class="form-control" value="admin@ztgheavyparts.com">
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
                                     <label class="form-label" for="alertAdditionalRecipients">Additional Email Recipients (comma separated)</label>
@@ -961,10 +961,10 @@
 
         function loadAllSettings() {
             // General Settings
-            document.getElementById('businessName').value = localStorage.getItem('ztg_config_business_name') || 'HeavyParts Pro';
+            document.getElementById('businessName').value = localStorage.getItem('ztg_config_business_name') || 'ZTG Heavy Parts';
             document.getElementById('branchLocation').value = localStorage.getItem('ztg_config_branch_location') || 'Butuan City';
             document.getElementById('contactNumber').value = localStorage.getItem('ztg_config_contact_number') || '09XX-XXX-XXXX';
-            document.getElementById('emailAddress').value = localStorage.getItem('ztg_config_email_address') || 'info@heavypartspro.com';
+            document.getElementById('emailAddress').value = localStorage.getItem('ztg_config_email_address') || 'info@ztgheavyparts.com';
             document.getElementById('taxRate').value = localStorage.getItem('ztg_config_tax_rate') || '12';
             document.getElementById('currency').value = localStorage.getItem('ztg_config_currency') || 'PHP (Philippine Peso)';
 
@@ -996,7 +996,7 @@
             document.getElementById('alertResExpired').checked = (localStorage.getItem('ztg_config_alert_res_expired') !== 'false');
 
             document.getElementById('alertEnableEmail').checked = (localStorage.getItem('ztg_config_alert_enable_email') !== 'false');
-            document.getElementById('alertAdminEmail').value = localStorage.getItem('ztg_config_alert_admin_email') || 'admin@heavypartspro.com';
+            document.getElementById('alertAdminEmail').value = localStorage.getItem('ztg_config_alert_admin_email') || 'admin@ztgheavyparts.com';
             document.getElementById('alertAdditionalRecipients').value = localStorage.getItem('ztg_config_alert_additional_recipients') || '';
 
             document.getElementById('alertReportDailySales').checked = (localStorage.getItem('ztg_config_alert_report_daily_sales') === 'true');

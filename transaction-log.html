@@ -105,15 +105,11 @@
                         <table style="width: 100%; border-collapse: collapse; text-align: left;">
                             <thead style="border-bottom: 1px solid var(--border); font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">
                                 <tr>
-                                    <th style="padding: 16px; font-weight: 700;">DATE</th>
-                                    <th style="padding: 16px; font-weight: 700;">S.I./C.I./D.R.</th>
-                                    <th style="padding: 16px; font-weight: 700;">PART NO.</th>
-                                    <th style="padding: 16px; font-weight: 700;">PRODUCT</th>
-                                    <th style="padding: 16px; font-weight: 700;">QTY</th>
-                                    <th style="padding: 16px; font-weight: 700;">PRICE 1</th>
-                                    <th style="padding: 16px; font-weight: 700;">CUSTOMER</th>
-                                    <th style="padding: 16px; font-weight: 700;">PAYMENT</th>
+                                    <th style="padding: 16px; font-weight: 700;">TRANSACTION DATE & TIME</th>
+                                    <th style="padding: 16px; font-weight: 700;">RECEIPT/INVOICE</th>
+                                    <th style="padding: 16px; font-weight: 700;">CUSTOMER NAME</th>
                                     <th style="padding: 16px; font-weight: 700;">SERVED BY</th>
+                                    <th style="padding: 16px; font-weight: 700;">PAYMENT METHOD</th>
                                     <th style="padding: 16px; font-weight: 700;">STATUS</th>
                                     <th style="padding: 16px; font-weight: 700;">REASON</th>
                                     <th style="padding: 16px; font-weight: 700; text-align: center;">ACTIONS</th>
@@ -542,35 +538,33 @@
                 if (mainProd) partNo = mainProd.partNo;
 
                 // Format Date & Time
-                let datePart = tx.date;
-                let timePart = '09:00 AM';
-                if (tx.date.includes('ago') || tx.date.includes('Yesterday') || tx.date.includes('Just now')) {
-                    datePart = tx.date;
-                    timePart = '';
+                let displayDate = tx.date;
+                let displayTime = '';
+                if (tx.date.includes(',')) {
+                    const parts = tx.date.split(', ');
+                    if (parts.length >= 2) {
+                        displayDate = parts[0];
+                        displayTime = parts.slice(1).join(', ');
+                    }
+                } else if (tx.date.includes('ago') || tx.date.includes('Yesterday') || tx.date.includes('Just now')) {
+                    displayDate = tx.date;
+                } else {
+                    displayTime = '09:00 AM'; // fallback mock time if not exactly formatted
                 }
 
-                const price1 = tx.amount / (tx.qty || 1);
-                
                 const actionBtn = statusGrp === 'Pending' ? 'Update' : 'View';
 
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid var(--border)';
                 tr.innerHTML = `
                     <td style="padding: 16px;">
-                        <span style="display: block; color: var(--text-primary); font-size: 13px;">${datePart}</span>
-                        ${timePart ? `<span style="display: block; font-size: 11px; color: var(--text-secondary);">${timePart}</span>` : ''}
+                        <span style="display: block; color: var(--text-primary); font-size: 13px;">${displayDate}</span>
+                        ${displayTime ? `<span style="display: block; font-size: 11px; color: var(--text-secondary);">${displayTime}</span>` : ''}
                     </td>
                     <td style="padding: 16px; font-weight: 700; color: var(--text-primary);">${tx.siNo}</td>
-                    <td style="padding: 16px; color: var(--text-secondary);">${partNo}</td>
-                    <td style="padding: 16px;">
-                        <strong style="color: var(--text-primary); font-size: 13px; display: block;">${tx.itemName}</strong>
-                        ${mainProd && mainProd.chineseName ? `<span style="font-size: 11px; color: var(--text-secondary); display: block;">${mainProd.chineseName}</span>` : ''}
-                    </td>
-                    <td style="padding: 16px; color: var(--text-secondary);">${tx.qty}</td>
-                    <td style="padding: 16px; color: var(--text-primary); font-weight: 500;">₱${price1.toLocaleString(undefined, {maximumFractionDigits:2})}</td>
                     <td style="padding: 16px; color: var(--text-secondary);">${displayName}</td>
-                    <td style="padding: 16px; color: var(--text-secondary);">${tx.payment}</td>
                     <td style="padding: 16px; color: var(--text-secondary);">${tx.cashier.split(' ')[0]}</td>
+                    <td style="padding: 16px; color: var(--text-secondary);">${tx.payment}</td>
                     <td style="padding: 16px;">
                         <span class="${textClass}">${statusGrp}</span>
                     </td>

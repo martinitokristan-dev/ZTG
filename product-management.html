@@ -593,8 +593,10 @@
                     <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; text-align: center;">
                         <div class="btn-group" style="display: flex; gap: 8px; justify-content: center;">
                             <button class="btn btn-sm" style="background: #F1F5F9; border: 1px solid #E2E8F0; color: #334155; border-radius: 4px; padding: 4px 12px;" onclick="openEditModal(${p.id})">Edit</button>
-                            <button class="btn btn-sm" style="background: #F1F5F9; border: 1px solid #E2E8F0; color: #334155; border-radius: 4px; padding: 4px 8px; display: flex; align-items: center; justify-content: center;" onclick="openDamagedModal(${p.id})">
-                                <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
+                            <button class="btn btn-sm" style="background: #F1F5F9; border: 1px solid #E2E8F0; color: ${p.status === 'Disabled' ? '#10B981' : '#EF4444'}; border-radius: 4px; padding: 4px 8px; display: flex; align-items: center; justify-content: center;" onclick="toggleProductStatus(${p.id})" title="${p.status === 'Disabled' ? 'Enable Product' : 'Disable Product'}">
+                                ${p.status === 'Disabled' ? 
+                                '<svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>' : 
+                                '<svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>'}
                             </button>
                         </div>
                     </td>
@@ -645,18 +647,21 @@
         }
 
         // Damaged Modal trigger
-        function openDamagedModal(id) {
+        function toggleProductStatus(id) {
             const products = db.getProducts();
-            const p = products.find(x => x.id === id);
-            if (!p) return;
+            const product = products.find(x => x.id === id);
+            if (!product) return;
 
-            document.getElementById('damagedId').value = p.id;
-            document.getElementById('damagedInfo').innerText = `Item: ${p.name} (${p.partNo}) | Current Stock on hand: ${p.stock}`;
-            document.getElementById('damagedQty').max = p.stock;
-            document.getElementById('damagedQty').value = '';
-            document.getElementById('damagedReason').value = '';
-
-            openModal('damagedModal');
+            if (product.status === 'Disabled') {
+                product.status = product.stock > 10 ? 'Active' : (product.stock > 0 ? 'Low Stock' : 'No Stock');
+                // Optional: you could show a toast here if a toast function exists
+                // showToast(`Product ${product.name} enabled.`);
+            } else {
+                product.status = 'Disabled';
+                // showToast(`Product ${product.name} disabled.`);
+            }
+            db.saveProducts(products);
+            renderProductsTable();
         }
 
         // Save handlers

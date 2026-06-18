@@ -108,7 +108,7 @@
                 id: empId
             };
 
-            localStorage.setItem('ztg_current_user', JSON.stringify(userSession));
+            sessionStorage.setItem('ztg_current_user', JSON.stringify(userSession));
             
             // Redirect based on role dynamically via SPA transitions
             if (role === 'Admin') {

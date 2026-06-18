@@ -174,7 +174,7 @@ window.addEventListener('storage', (event) => {
 
 // 3. User & Authentication Logic
 function getCurrentUser() {
-    const userJson = localStorage.getItem('ztg_current_user');
+    const userJson = sessionStorage.getItem('ztg_current_user');
     if (!userJson) {
         // Fallback default admin
         return { name: 'Administrator', role: 'Admin', id: 'EMP-000' };
@@ -184,7 +184,7 @@ function getCurrentUser() {
 
 function checkLogin() {
     const isLoginPage = window.location.pathname.endsWith('/') || window.location.pathname.endsWith('index.html');
-    const userJson = localStorage.getItem('ztg_current_user');
+    const userJson = sessionStorage.getItem('ztg_current_user');
 
     if (!userJson) {
         if (!isLoginPage) {
@@ -371,7 +371,7 @@ function initSidebar(activePage) {
 
 function logout(event) {
     if (event) event.preventDefault();
-    localStorage.removeItem('ztg_current_user');
+    sessionStorage.removeItem('ztg_current_user');
     navigateTo('index.html');
 }
 

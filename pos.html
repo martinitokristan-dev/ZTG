@@ -390,8 +390,21 @@
 
                             <!-- Customer Fields at Top -->
                             <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
-                                <input type="text" id="posCustomerName" class="form-control form-control-sm" placeholder="Customer Name">
-                                <input type="text" id="posCustomerPhone" class="form-control form-control-sm" placeholder="Contact Number (Optional)">
+                                <div>
+                                    <label class="form-label" style="font-size: 10px; margin-bottom: 2px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Existing Customer / Already Exist</label>
+                                    <div style="position: relative;">
+                                        <input type="text" id="posExistingCustomer" autocomplete="off" class="form-control form-control-sm" placeholder="Search existing customer..." oninput="filterExistingCustomers()" onfocus="filterExistingCustomers()" style="text-align: left !important;">
+                                        <div id="customerDropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #FFFFFF; border: 1px solid var(--border); border-radius: 8px; z-index: 1000; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 4px; padding: 4px 0;">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="form-label" style="font-size: 10px; margin-bottom: 2px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">New Customer / First Time</label>
+                                    <input type="text" id="posCustomerName" class="form-control form-control-sm" placeholder="Enter new customer name" oninput="document.getElementById('posExistingCustomer').value = '';">
+                                </div>
+                                <div>
+                                    <input type="text" id="posCustomerPhone" class="form-control form-control-sm" placeholder="Contact Number (Optional)">
+                                </div>
                             </div>
                         </div>
 
@@ -418,7 +431,7 @@
                                 </div>
                             </div>
                                                    <!-- Document & Serving Cashier Info -->
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
                                 <div class="form-group" style="margin-bottom: 0;">
                                     <label class="form-label" style="font-size: 10px; margin-bottom: 2px; color: var(--text-muted);">Doc Type</label>
                                     <select id="posDocType" class="form-control form-control-sm">
@@ -437,6 +450,15 @@
                                         <option value="Mark Bautista">Mark Bautista</option>
                                     </select>
                                 </div>
+                            </div>
+                            <!-- Payment Info -->
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label class="form-label" style="font-size: 10px; margin-bottom: 2px; color: var(--text-muted);">Payment Method</label>
+                                <select id="posPaymentMethod" class="form-control form-control-sm">
+                                    <option value="Cash">Cash</option>
+                                    <option value="GCash">GCash</option>
+                                    <option value="Bank Transfer">Bank Transfer</option>
+                                </select>
                             </div>
 
                             <!-- Cash Payment Card -->
@@ -954,8 +976,10 @@
                 alert('Add product items before processing checkout!');
                 return;
             }
-
-            const customerName = document.getElementById('posCustomerName').value.trim();
+            
+            const existingCustomer = document.getElementById('posExistingCustomer').value;
+            const newCustomer = document.getElementById('posCustomerName').value.trim();
+            const customerName = existingCustomer || newCustomer;
             const customerPhone = document.getElementById('posCustomerPhone').value.trim();
             const docType = document.getElementById('posDocType').value;
             const servedBy = document.getElementById('posServedBy').value;
@@ -1022,6 +1046,8 @@
             const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
             const dateStr = new Date().toLocaleDateString('en-US', dateOptions) + ', ' + new Date().toLocaleTimeString('en-US', timeOptions);
 
+            const posPaymentMethod = document.getElementById('posPaymentMethod').value;
+            
             const newTx = {
                 siNo: siNo,
                 date: dateStr,
@@ -1030,7 +1056,7 @@
                 qty: cart.reduce((sum, i) => sum + i.qty, 0),
                 amount: totalVal,
                 amountTendered: tenderedVal,
-                payment: 'Cash',
+                payment: posPaymentMethod,
                 cashier: currentUser.name,
                 status: 'Completed',
                 phone: customerPhone,
@@ -1096,6 +1122,7 @@
             document.getElementById('receiptContent').innerHTML = receiptHtml;
 
             // Reset fields
+            document.getElementById('posExistingCustomer').value = '';
             document.getElementById('posCustomerName').value = '';
             document.getElementById('posCustomerPhone').value = '';
             document.getElementById('amountTendered').value = '';
@@ -1133,16 +1160,27 @@
             const printDiv = document.createElement('div');
             printDiv.id = 'print-section';
             printDiv.innerHTML = `
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <h2 style="margin: 0;">ZTG Heavy Parts</h2>
-                    <p style="margin: 4px 0;">Inventory & POS System</p>
-                    <p style="margin: 4px 0;">================================</p>
-                    <p style="margin: 4px 0; font-weight: bold;">Receipt No: ${receiptNo}</p>
+                <div style="text-align: center; margin-bottom: 10px; line-height: 1.3;">
+                    <h2 style="margin: 0; font-size: 18px; font-weight: bold;">ZTG HEAVY PARTS</h2>
+                    <div style="font-size: 12px; margin-top: 4px;">
+                        <div>Non-VAT Reg. TIN: 000-123-456-000</div>
+                        <div>123 Industrial Ave., Brgy. San Jose</div>
+                        <div>Quezon City, Metro Manila</div>
+                    </div>
                 </div>
+                
+                <div style="text-align: center; margin: 15px 0;">
+                    <h3 style="margin: 0; font-size: 15px; font-weight: bold;">SALES INVOICE</h3>
+                    <p style="margin: 4px 0; font-size: 14px; font-weight: bold; color: var(--danger);">No. ${receiptNo}</p>
+                </div>
+                
                 ${printContent}
-                <div style="text-align: center; margin-top: 20px;">
+                
+                <div style="text-align: center; margin-top: 20px; font-size: 11px; line-height: 1.4;">
                     <p style="margin: 4px 0;">================================</p>
-                    <p style="margin: 4px 0;">Thank you for your business!</p>
+                    <p style="margin: 4px 0; font-weight: bold;">THIS DOCUMENT IS NOT VALID FOR CLAIM OF INPUT TAX</p>
+                    <p style="margin: 8px 0 4px 0; font-size: 13px;">Thank you for your business!</p>
+                    <p style="margin: 4px 0; font-style: italic;">Software Provider: ZTG POS System</p>
                 </div>
             `;
             document.body.appendChild(printDiv);
@@ -1156,9 +1194,80 @@
             }, 1000);
         }
 
+        // Global map to store existing customer phone numbers
+        window.customerDataMap = {};
+
+        function loadExistingCustomers() {
+            const txs = db.getTransactions();
+            const customers = {};
+            txs.forEach(tx => {
+                if (tx.customer && tx.customer !== 'Guest') {
+                    if (!customers[tx.customer] || tx.phone) {
+                        customers[tx.customer] = tx.phone || '';
+                    }
+                }
+            });
+            window.customerDataMap = customers;
+        }
+
+        function filterExistingCustomers() {
+            const input = document.getElementById('posExistingCustomer');
+            const dropdown = document.getElementById('customerDropdown');
+            const query = input.value.toLowerCase();
+            
+            dropdown.innerHTML = '';
+            let hasMatches = false;
+            
+            Object.keys(window.customerDataMap).sort().forEach(name => {
+                if (name.toLowerCase().includes(query)) {
+                    hasMatches = true;
+                    const div = document.createElement('div');
+                    div.textContent = name;
+                    div.style.cssText = 'padding: 8px 14px; cursor: pointer; font-size: 13px; color: var(--text-primary); text-align: left; transition: background 0.1s;';
+                    div.onmouseover = () => div.style.backgroundColor = '#f1f5f9';
+                    div.onmouseout = () => div.style.backgroundColor = 'transparent';
+                    div.onmousedown = (e) => {
+                        e.preventDefault(); // Prevents blur event on input
+                        selectExistingCustomer(name);
+                    };
+                    dropdown.appendChild(div);
+                }
+            });
+            
+            if (hasMatches) {
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function selectExistingCustomer(name) {
+            const input = document.getElementById('posExistingCustomer');
+            const nameInput = document.getElementById('posCustomerName');
+            const phoneInput = document.getElementById('posCustomerPhone');
+            const dropdown = document.getElementById('customerDropdown');
+            
+            input.value = name;
+            nameInput.value = ''; // clear new customer if existing is selected
+            if (window.customerDataMap[name]) {
+                phoneInput.value = window.customerDataMap[name];
+            }
+            dropdown.style.display = 'none';
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('customerDropdown');
+            const input = document.getElementById('posExistingCustomer');
+            if (dropdown && e.target !== input && !dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
         // Run initializations
         loadCategoryPills();
         renderPOSProducts();
+        loadExistingCustomers();
         if (document.getElementById('paymentMode')) {
             togglePaymentModeInline();
         }

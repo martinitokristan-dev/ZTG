@@ -99,24 +99,78 @@ const db = {
     saveCategories: (c) => localStorage.setItem('ztg_categories', JSON.stringify(c))
 };
 
-// Database save hooks for real-time notification triggers
-const originalSaveProducts = db.saveProducts;
-db.saveProducts = function(p) {
-    originalSaveProducts(p);
-    if (window.triggerNotificationsUpdate) window.triggerNotificationsUpdate();
+// Helper to notify local and remote tabs of database updates
+function notifyDbChange(key) {
+    try {
+        const storageEvent = new StorageEvent('storage', {
+            key: key,
+            newValue: localStorage.getItem(key)
+        });
+        window.dispatchEvent(storageEvent);
+    } catch (e) {
+        console.error('Error dispatching local storage event', e);
+    }
+}
+
+// Wrap save methods to auto-trigger sync and local updates
+const dbKeys = {
+    saveProducts: 'ztg_products',
+    saveEmployees: 'ztg_employees',
+    savePendingPOs: 'ztg_pending_pos',
+    saveTransactions: 'ztg_transactions',
+    saveReservations: 'ztg_reservations',
+    saveArchives: 'ztg_archives',
+    saveCategories: 'ztg_categories'
 };
 
-const originalSavePendingPOs = db.savePendingPOs;
-db.savePendingPOs = function(po) {
-    originalSavePendingPOs(po);
-    if (window.triggerNotificationsUpdate) window.triggerNotificationsUpdate();
-};
+Object.keys(dbKeys).forEach(methodName => {
+    const originalMethod = db[methodName];
+    if (originalMethod) {
+        db[methodName] = function(data) {
+            originalMethod(data);
+            notifyDbChange(dbKeys[methodName]);
+        };
+    }
+});
 
-const originalSaveTransactions = db.saveTransactions;
-db.saveTransactions = function(t) {
-    originalSaveTransactions(t);
-    if (window.triggerNotificationsUpdate) window.triggerNotificationsUpdate();
-};
+// Global cross-tab storage event listener for real-time prototype syncing
+window.addEventListener('storage', (event) => {
+    if (event.key && event.key.startsWith('ztg_')) {
+        // Trigger notification updates
+        if (typeof window.triggerNotificationsUpdate === 'function') {
+            window.triggerNotificationsUpdate();
+        }
+        
+        // Dynamically invoke render routines of the active tab view if defined
+        if (typeof renderReservations === 'function') {
+            renderReservations();
+        }
+        if (typeof renderTransactions === 'function') {
+            renderTransactions();
+        }
+        if (typeof renderProductsTable === 'function') {
+            renderProductsTable();
+        }
+        if (typeof renderInventoryTable === 'function') {
+            renderInventoryTable();
+        }
+        if (typeof renderSalesTable === 'function') {
+            renderSalesTable();
+        }
+        if (typeof renderMySales === 'function') {
+            renderMySales();
+        }
+        if (typeof renderPOSProducts === 'function') {
+            renderPOSProducts();
+        }
+        if (typeof renderArchives === 'function') {
+            renderArchives();
+        }
+        if (typeof updateDashboard === 'function') {
+            updateDashboard();
+        }
+    }
+});
 
 // 3. User & Authentication Logic
 function getCurrentUser() {
@@ -253,6 +307,22 @@ function initSidebar(activePage) {
                             <div class="nav-link-content">
                                 <svg><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 Daily Sales
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="reservations.html" class="nav-link ${activePage === 'reservations' ? 'active' : ''}">
+                            <div class="nav-link-content">
+                                <svg><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                Order Based
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="customer-log.html" class="nav-link ${activePage === 'customer-log' ? 'active' : ''}">
+                            <div class="nav-link-content">
+                                <svg><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                                Customer Log
                             </div>
                         </a>
                     </li>
@@ -1130,10 +1200,82 @@ window.initNotifications = function() {
     window.isNotificationsLoaded = true;
 };
 
-// Cross-tab notification sync listener
-originalWindowAdd.call(window, 'storage', (e) => {
-    if (e.key === 'ztg_pending_pos' || e.key === 'ztg_products' || e.key === 'ztg_transactions' || e.key === 'ztg_notifications') {
+// Cross-tab notification sync listener (localStorage storage event — works across tabs in same browser)
+window.addEventListener('storage', (e) => {
+    if (e.key === 'ztg_pending_pos' || e.key === 'ztg_products' || e.key === 'ztg_transactions' || e.key === 'ztg_notifications' || e.key === 'ztg_reservations') {
         if (window.triggerNotificationsUpdate) window.triggerNotificationsUpdate();
+        // Refresh transaction log table if on that page
+        if (typeof window.renderTransactions === 'function') window.renderTransactions();
+        // Refresh reservations table if on that page
+        if (typeof window.renderReservations === 'function') window.renderReservations();
+        // Refresh sales log if on that page
+        if (typeof window.renderSalesLog === 'function') window.renderSalesLog();
     }
 });
+
+// ==========================================
+// REAL-TIME BROADCAST CHANNEL SYNC
+// ==========================================
+// BroadcastChannel provides real-time messaging between tabs on the same origin.
+// This works in production (Vercel) because tabs share the same origin.
+// Falls back to setInterval polling for browsers that don't support BroadcastChannel.
+
+(function setupRealTimeSync() {
+    const CHANNEL_NAME = 'ztg_sync';
+    let bc = null;
+
+    // Try to set up BroadcastChannel
+    if (typeof BroadcastChannel !== 'undefined') {
+        try {
+            bc = new BroadcastChannel(CHANNEL_NAME);
+
+            // Listen for messages from other tabs
+            bc.onmessage = function(event) {
+                const data = event.data || {};
+                if (data.type === 'data_changed') {
+                    // Re-run notifications update (updates badge + stores in localStorage)
+                    if (window.triggerNotificationsUpdate) window.triggerNotificationsUpdate();
+                    // Refresh live tables if present on the current page
+                    if (typeof window.renderTransactions === 'function') window.renderTransactions();
+                    if (typeof window.renderReservations === 'function') window.renderReservations();
+                    if (typeof window.renderSalesLog === 'function') window.renderSalesLog();
+                    if (typeof window.renderDashboard === 'function') window.renderDashboard();
+                }
+            };
+
+            // Patch db save methods to also broadcast changes
+            const keysToWatch = ['saveTransactions', 'saveProducts', 'savePendingPOs', 'saveReservations'];
+            keysToWatch.forEach(method => {
+                const original = db[method];
+                db[method] = function(...args) {
+                    original.apply(db, args);
+                    try { bc.postMessage({ type: 'data_changed', method }); } catch(e) {}
+                };
+            });
+        } catch(e) {
+            console.warn('BroadcastChannel setup failed:', e);
+        }
+    }
+
+    // POLLING FALLBACK: Check for new transactions every 3s regardless of BroadcastChannel.
+    // This ensures the transaction log & notification badge refresh even without cross-tab events.
+    let lastTxCount = (db.getTransactions() || []).length;
+    let lastResCound = (db.getReservations() || []).length;
+
+    setInterval(function() {
+        const txs = db.getTransactions() || [];
+        const ress = db.getReservations() || [];
+        const newTxCount = txs.length;
+        const newResCount = ress.length;
+
+        if (newTxCount !== lastTxCount || newResCount !== lastResCound) {
+            lastTxCount = newTxCount;
+            lastResCound = newResCount;
+            if (window.triggerNotificationsUpdate) window.triggerNotificationsUpdate();
+            if (typeof window.renderTransactions === 'function') window.renderTransactions();
+            if (typeof window.renderReservations === 'function') window.renderReservations();
+            if (typeof window.renderSalesLog === 'function') window.renderSalesLog();
+        }
+    }, 3000);
+})();
 

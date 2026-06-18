@@ -23,20 +23,7 @@
             <div class="content-body">
                 <!-- Out of Stock / Low Stock Alert Banners -->
                 <div id="alertsContainer">
-                    <div class="alert-banner danger">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 11-12.73 0M12 2v10m0 4h.01"/></svg>
-                        <div class="alert-banner-content">
-                            <h4>2 items are out of stock</h4>
-                            <p>Track Link Assembly (TRK-003), Alternator 24V (ELE-006).</p>
-                        </div>
-                    </div>
-                    <div class="alert-banner warning">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                        <div class="alert-banner-content">
-                            <h4>2 items are running low</h4>
-                            <p>Engine Gasket Set (ENG-005 · Qty 3), Fuel Filter Primary (FLT-008 · Qty 1).</p>
-                        </div>
-                    </div>
+                    <!-- Dynamically populated by JS -->
                 </div>
 
                 <!-- Date Filter Selector Row -->
@@ -55,30 +42,30 @@
                     <div class="card stat-box">
                         <div>
                             <span class="stat-label">Total Items</span>
-                            <div class="stat-value">248</div>
+                            <div class="stat-value" id="statTotalItems">0</div>
                         </div>
-                        <span class="stat-trend trend-up">▲ 12 added this week</span>
+                        <span class="stat-trend trend-up" id="statTotalItemsTrend">▲ Stock items on hand</span>
                     </div>
                     <div class="card stat-box">
                         <div>
                             <span class="stat-label">Today's Revenue</span>
-                            <div class="stat-value">₱34,400</div>
+                            <div class="stat-value" id="statTodayRevenue">₱0</div>
                         </div>
-                        <span class="stat-trend trend-up">▲ 12.5% vs yesterday</span>
+                        <span class="stat-trend trend-up" id="statTodayRevenueTrend">▲ Real-time sales total</span>
                     </div>
                     <div class="card stat-box">
                         <div>
                             <span class="stat-label">Employees</span>
-                            <div class="stat-value">7</div>
+                            <div class="stat-value" id="statEmployeesCount">0</div>
                         </div>
-                        <span class="stat-trend">4 on shift today</span>
+                        <span class="stat-trend" id="statEmployeesTrend">Active store workers</span>
                     </div>
                     <div class="card stat-box">
                         <div>
                             <span class="stat-label">Top Product</span>
-                            <div class="stat-value" style="font-size: 20px; line-height: 1.4; margin-top: 16px;">Engine Oil Filter</div>
+                            <div class="stat-value" style="font-size: 16px; line-height: 1.4; margin-top: 16px;" id="statTopProductName">None</div>
                         </div>
-                        <span class="stat-trend trend-up">103 units sold</span>
+                        <span class="stat-trend trend-up" id="statTopProductQty">0 units sold</span>
                     </div>
                 </div>
 
@@ -127,35 +114,8 @@
                     <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
                         <div>
                             <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">Critical Stock Alerts</h3>
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
-                                        <span style="font-size: 13px; font-weight: 600;">Track Link Assembly</span>
-                                        <span style="display:block; font-size: 11px; color: var(--text-secondary);">TRK-003</span>
-                                    </div>
-                                    <span class="badge badge-danger">Out of stock</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
-                                        <span style="font-size: 13px; font-weight: 600;">Alternator 24V</span>
-                                        <span style="display:block; font-size: 11px; color: var(--text-secondary);">ELE-006</span>
-                                    </div>
-                                    <span class="badge badge-danger">Out of stock</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
-                                        <span style="font-size: 13px; font-weight: 600;">Engine Gasket Set</span>
-                                        <span style="display:block; font-size: 11px; color: var(--text-secondary);">ENG-005</span>
-                                    </div>
-                                    <span class="badge badge-warning">Qty: 3</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
-                                        <span style="font-size: 13px; font-weight: 600;">Fuel Filter Primary</span>
-                                        <span style="display:block; font-size: 11px; color: var(--text-secondary);">FLT-008</span>
-                                    </div>
-                                    <span class="badge badge-warning">Qty: 1</span>
-                                </div>
+                            <div id="criticalAlertsList" style="display: flex; flex-direction: column; gap: 12px;">
+                                <!-- Dynamically populated by JS -->
                             </div>
                         </div>
                         <a href="product-management.html" class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 16px;">Manage Stock</a>
@@ -212,39 +172,129 @@
 
     <script src="app.js"></script>
     <script>
-        // Set user info on top bar
-        const currentUser = getCurrentUser();
-        document.getElementById('adminName').innerText = currentUser.name;
+        function updateDashboard() {
+            // Set user info on top bar
+            const currentUser = getCurrentUser();
+            document.getElementById('adminName').innerText = currentUser.name;
 
-        // Load sidebar active link
-        initSidebar('dashboard');
+            // Load sidebar active link
+            initSidebar('dashboard');
 
-        // Populate recent transactions
-        const transactions = db.getTransactions();
-        const tbody = document.getElementById('recentTransactionsTableBody');
+            const products = db.getProducts();
+            const transactions = db.getTransactions();
+            const employees = db.getEmployees();
 
-        transactions.forEach(tx => {
-            const tr = document.createElement('tr');
-            tr.style.cursor = 'pointer';
-            tr.onclick = () => showTransactionDetails(tx);
+            // 1. Calculate and update stat cards
+            // Stat 1: Total Items (Sum of all stocks)
+            const totalItems = products.reduce((sum, p) => sum + (p.stock || 0), 0);
+            document.getElementById('statTotalItems').innerText = totalItems.toLocaleString();
             
-            let badgeClass = 'badge-secondary';
-            if (tx.status === 'Completed') badgeClass = 'badge-success';
-            if (tx.status === 'Refund') badgeClass = 'badge-danger';
-            if (tx.status === 'Return') badgeClass = 'badge-warning';
+            // Stat 2: Today's Revenue
+            const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const todayCompletedTxs = transactions.filter(t => t.date === todayStr && t.status === 'Completed');
+            const todayRevenue = todayCompletedTxs.reduce((sum, t) => sum + t.amount, 0);
+            document.getElementById('statTodayRevenue').innerText = `₱${todayRevenue.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
 
-            tr.innerHTML = `
-                <td class="font-bold">${tx.siNo}</td>
-                <td>${tx.itemName}</td>
-                <td>${tx.customer}</td>
-                <td>${tx.qty}</td>
-                <td class="font-bold">₱${tx.amount.toLocaleString()}</td>
-                <td>${tx.payment}</td>
-                <td>${tx.cashier}</td>
-                <td><span class="badge ${badgeClass}">${tx.status}</span></td>
-            `;
-            tbody.appendChild(tr);
-        });
+            // Stat 3: Employees count
+            document.getElementById('statEmployeesCount').innerText = employees.length.toString();
+
+            // Stat 4: Top Product
+            let topProduct = { name: 'None', salesCount: -1 };
+            products.forEach(p => {
+                if ((p.salesCount || 0) > topProduct.salesCount) {
+                    topProduct = p;
+                }
+            });
+            document.getElementById('statTopProductName').innerText = topProduct.name;
+            document.getElementById('statTopProductQty').innerText = `${topProduct.salesCount || 0} units sold`;
+
+            // 2. Generate stock alerts
+            const outOfStock = products.filter(p => p.stock === 0 && p.status !== 'Archived');
+            const lowStock = products.filter(p => p.stock > 0 && p.stock <= 5 && p.status !== 'Archived');
+
+            // Top banners
+            const alertsContainer = document.getElementById('alertsContainer');
+            alertsContainer.innerHTML = '';
+            if (outOfStock.length > 0) {
+                const outOfStockNames = outOfStock.map(p => `${p.name} (${p.partNo})`).join(', ');
+                alertsContainer.innerHTML += `
+                    <div class="alert-banner danger">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 11-12.73 0M12 2v10m0 4h.01"/></svg>
+                        <div class="alert-banner-content">
+                            <h4>${outOfStock.length} item${outOfStock.length > 1 ? 's' : ''} out of stock</h4>
+                            <p>${outOfStockNames}.</p>
+                        </div>
+                    </div>
+                `;
+            }
+            if (lowStock.length > 0) {
+                const lowStockNames = lowStock.map(p => `${p.name} (${p.partNo} · Qty ${p.stock})`).join(', ');
+                alertsContainer.innerHTML += `
+                    <div class="alert-banner warning">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <div class="alert-banner-content">
+                            <h4>${lowStock.length} item${lowStock.length > 1 ? 's' : ''} running low</h4>
+                            <p>${lowStockNames}.</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Right-side list card: Critical Stock Alerts (max 4 for layout consistency)
+            const criticalList = document.getElementById('criticalAlertsList');
+            criticalList.innerHTML = '';
+            
+            const criticalProducts = [...outOfStock, ...lowStock].slice(0, 4);
+            criticalProducts.forEach(p => {
+                const isOut = p.stock === 0;
+                const badge = isOut ? '<span class="badge badge-danger">Out of stock</span>' : `<span class="badge badge-warning">Qty: ${p.stock}</span>`;
+                criticalList.innerHTML += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div>
+                            <span style="font-size: 13px; font-weight: 600;">${p.name}</span>
+                            <span style="display:block; font-size: 11px; color: var(--text-secondary);">${p.partNo}</span>
+                        </div>
+                        ${badge}
+                    </div>
+                `;
+            });
+            if (criticalProducts.length === 0) {
+                criticalList.innerHTML = '<div style="font-size: 13px; color: var(--text-secondary); text-align: center; padding: 12px 0;">All stocks healthy.</div>';
+            }
+
+            // 3. Populate recent transactions table
+            const tbody = document.getElementById('recentTransactionsTableBody');
+            tbody.innerHTML = '';
+
+            // Take the 5 most recent transactions
+            const recent = transactions.slice(0, 5);
+            recent.forEach(tx => {
+                const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
+                tr.onclick = () => showTransactionDetails(tx);
+                
+                let badgeClass = 'badge-secondary';
+                if (tx.status === 'Completed') badgeClass = 'badge-success';
+                if (tx.status === 'Refund') badgeClass = 'badge-danger';
+                if (tx.status === 'Return') badgeClass = 'badge-warning';
+
+                tr.innerHTML = `
+                    <td class="font-bold">${tx.siNo}</td>
+                    <td>${tx.itemName}</td>
+                    <td>${tx.customer || 'Guest'}</td>
+                    <td>${tx.qty}</td>
+                    <td class="font-bold">₱${tx.amount.toLocaleString()}</td>
+                    <td>${tx.payment}</td>
+                    <td>${tx.cashier.split(' ')[0]}</td>
+                    <td><span class="badge ${badgeClass}">${tx.status}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if (recent.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 20px;">No transactions recorded yet.</td></tr>';
+            }
+        }
 
         function showTransactionDetails(tx) {
             const mTitle = document.getElementById('mTxTitle');
@@ -308,6 +358,9 @@
             `;
             openModal('txDetailModal');
         }
+
+        // Run on load
+        updateDashboard();
     </script>
 </body>
 </html>

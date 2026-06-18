@@ -54,6 +54,7 @@
                                     <th>Total Price</th>
                                     <th>Date Placed</th>
                                     <th>Expected Pickup</th>
+                                    <th>Reserved by</th>
                                     <th>Status</th>
                                     <th style="text-align: center;">Actions</th>
                                 </tr>
@@ -739,7 +740,7 @@
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: var(--text-secondary); padding: 20px;">No orders found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: var(--text-secondary); padding: 20px;">No orders found.</td></tr>';
                 return;
             }
 
@@ -772,6 +773,7 @@
                     <td class="font-bold">₱${r.total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                     <td>${r.date}</td>
                     <td><code>${r.pickupDate}</code></td>
+                    <td style="font-size: 13px; color: var(--text-secondary); font-weight: 500;">${r.reservedBy || 'Admin'}</td>
                     <td><span class="badge ${badgeClass}">${r.status}</span></td>
                     <td style="text-align: center;">
                         <div class="btn-group" style="display: flex; gap: 4px; justify-content: center;">
@@ -830,6 +832,7 @@
                 date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                 pickupDate: document.getElementById('resDate').value,
                 pickupTime: document.getElementById('resTime').value,
+                reservedBy: getCurrentUser().name,
                 status: 'Pending'
             };
 

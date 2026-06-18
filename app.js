@@ -183,8 +183,18 @@ function getCurrentUser() {
 }
 
 function checkLogin() {
-    if (!localStorage.getItem('ztg_current_user') && !window.location.href.includes('login.html')) {
-        window.location.href = 'login.html';
+    const isLoginPage = window.location.pathname.endsWith('/') || window.location.pathname.endsWith('index.html');
+    const userJson = localStorage.getItem('ztg_current_user');
+
+    if (!userJson) {
+        if (!isLoginPage) {
+            window.location.href = 'index.html';
+        }
+    } else {
+        if (isLoginPage) {
+            const user = JSON.parse(userJson);
+            window.location.href = user.role === 'Admin' ? 'dashboard.html' : 'pos.html';
+        }
     }
 }
 
@@ -205,7 +215,7 @@ function initSidebar(activePage) {
                 <div class="nav-group-label">Main</div>
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a href="index.html" class="nav-link ${activePage === 'dashboard' ? 'active' : ''}">
+                        <a href="dashboard.html" class="nav-link ${activePage === 'dashboard' ? 'active' : ''}">
                             <div class="nav-link-content">
                                 <svg><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                                 Dashboard
@@ -362,7 +372,7 @@ function initSidebar(activePage) {
 function logout(event) {
     if (event) event.preventDefault();
     localStorage.removeItem('ztg_current_user');
-    navigateTo('login.html');
+    navigateTo('index.html');
 }
 
 // 5. Modal Utils

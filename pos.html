@@ -1001,6 +1001,8 @@
             const docType = document.getElementById('posDocType').value;
             const servedBy = document.getElementById('posServedBy').value;
             
+            const products = db.getProducts();
+            
             const totalVal = cart.reduce((sum, item) => {
                 const product = products.find(p => p.id === item.id);
                 if (!product) return sum;
@@ -1019,7 +1021,6 @@
             }
 
             // Verify stock holds out for all items in the cart
-            const products = db.getProducts();
             let stockAvailable = true;
             let offendingItem = '';
 

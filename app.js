@@ -13,11 +13,12 @@ const DEFAULT_PRODUCTS = [
 ];
 
 const DEFAULT_EMPLOYEES = [
-    { id: 'EMP-001', name: 'Maria Santos', role: 'Cashier', status: 'Active', commissionRate: '5%' },
-    { id: 'EMP-002', name: 'Carlos Dizon', role: 'Cashier', status: 'Active', commissionRate: '5%' },
-    { id: 'EMP-003', name: 'Joey Ramos', role: 'Cashier', status: 'Active', commissionRate: '5%' },
-    { id: 'EMP-004', name: 'Ana Cruz', role: 'Cashier', status: 'Active', commissionRate: '5%' },
-    { id: 'EMP-005', name: 'Pedro Gonzales', role: 'Checker', status: 'Active', commissionRate: 'N/A' }
+    { id: 'EMP-000', name: 'Administrator', role: 'Admin', status: 'Active', commissionRate: 'N/A', pin: '1234' },
+    { id: 'EMP-001', name: 'Maria Santos', role: 'Cashier', status: 'Active', commissionRate: '5%', pin: '' },
+    { id: 'EMP-002', name: 'Carlos Dizon', role: 'Cashier', status: 'Active', commissionRate: '5%', pin: '' },
+    { id: 'EMP-003', name: 'Joey Ramos', role: 'Cashier', status: 'Active', commissionRate: '5%', pin: '' },
+    { id: 'EMP-004', name: 'Ana Cruz', role: 'Cashier', status: 'Active', commissionRate: '5%', pin: '' },
+    { id: 'EMP-005', name: 'Pedro Gonzales', role: 'Checker', status: 'Active', commissionRate: 'N/A', pin: '' }
 ];
 
 const DEFAULT_PENDING_POS = [
@@ -70,6 +71,23 @@ function dbInit() {
     }
     if (!localStorage.getItem('ztg_categories')) {
         localStorage.setItem('ztg_categories', JSON.stringify(['Hydraulics', 'Filters', 'Undercarriage', 'Engine', 'Electrical', 'Brake Systems']));
+    }
+
+    const existingEmps = JSON.parse(localStorage.getItem('ztg_employees') || '[]');
+    let patched = false;
+    existingEmps.forEach(emp => {
+        if (emp.pin === undefined) {
+            emp.pin = '';
+            patched = true;
+        }
+    });
+    // Ensure default admin exists
+    if (!existingEmps.find(e => e.id === 'EMP-000')) {
+        existingEmps.unshift({ id: 'EMP-000', name: 'Administrator', role: 'Admin', status: 'Active', commissionRate: 'N/A', pin: '1234' });
+        patched = true;
+    }
+    if (patched) {
+        localStorage.setItem('ztg_employees', JSON.stringify(existingEmps));
     }
 }
 
@@ -252,7 +270,7 @@ function initSidebar(activePage) {
                 <div class="nav-group-label">Records</div>
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a href="transaction-log.html" class="nav-link ${activePage === 'transactions' ? 'active' : ''}">
+                        <a href="transaction-log.html?v=${Date.now()}" class="nav-link ${activePage === 'transactions' ? 'active' : ''}">
                             <div class="nav-link-content">
                                 <svg><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 Transaction Log
@@ -794,7 +812,7 @@ window.showToast = function(n) {
         const toastRole = toastUser ? toastUser.role : 'Admin';
         let dest = null;
         if (n.type === 'transaction') {
-            dest = toastRole === 'Admin' ? 'transaction-log.html' : 'daily-sales.html';
+            dest = toastRole === 'Admin' ? `transaction-log.html?v=${Date.now()}` : `daily-sales.html?v=${Date.now()}`;
         } else if (n.type === 'low_stock') {
             dest = toastRole === 'Admin' ? 'product-management.html' : 'pos.html';
         } else if (n.type === 'insight') {
@@ -1055,7 +1073,7 @@ window.renderNotificationsUI = function(notifications) {
             const clickRole = clickUser ? clickUser.role : 'Admin';
             let dest = null;
             if (n.type === 'transaction') {
-                dest = clickRole === 'Admin' ? 'transaction-log.html' : 'daily-sales.html';
+                dest = clickRole === 'Admin' ? `transaction-log.html?v=${Date.now()}` : `daily-sales.html?v=${Date.now()}`;
             } else if (n.type === 'low_stock') {
                 dest = clickRole === 'Admin' ? 'product-management.html' : 'pos.html';
             } else if (n.type === 'insight') {

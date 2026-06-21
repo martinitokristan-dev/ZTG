@@ -736,8 +736,81 @@
                 tbody.appendChild(tr);
             });
 
+            const approverSelect = document.getElementById('refundApprover');
+            approverSelect.innerHTML = '';
+            const employees = db.getEmployees() || [];
+            const approvers = employees.filter(e => e.role === 'Admin' || e.role === 'Supervisor');
+            if (approvers.length > 0) {
+                approvers.forEach(app => {
+                    const opt = document.createElement('option');
+                    opt.value = app.id;
+                    opt.textContent = `${app.name} (${app.role})`;
+                    approverSelect.appendChild(opt);
+                });
+            } else {
+                approverSelect.innerHTML = '<option value="EMP-000">Administrator (Default)</option>';
+            }
+
             calculateRefundTotals();
             openModal('refundModal');
+        }
+
+        function checkDailyVoidLimit() {
+            const txs = db.getTransactions();
+            const todayStr = new Date().toISOString().split('T')[0];
+            const voidCount = txs.filter(t => (t.status === 'Refund' || t.status === 'Void') && t.date.startsWith(todayStr)).length;
+            const DAILY_LIMIT = 10;
+            if (voidCount >= DAILY_LIMIT) {
+                alert('Daily void limit reached. Please contact system admin.');
+                return false;
+            }
+            if (voidCount >= DAILY_LIMIT * 0.7) {
+                alert(`Warning: Daily void count is at ${voidCount}/${DAILY_LIMIT}.`);
+            }
+            return true;
+        }
+
+        function logFailedPinAttempt(approverId, attemptedPin, siNo) {
+            const txs = db.getTransactions();
+            const currentUser = getCurrentUser();
+            txs.unshift({
+                siNo: 'SEC-' + Date.now(),
+                date: new Date().toISOString(),
+                type: 'system',
+                status: 'Security Alert',
+                customer: 'System',
+                amount: 0,
+                cashier: currentUser.name,
+                payment: 'None',
+                items: [],
+                notes: `Failed PIN attempt for Void on invoice ${siNo}. Approver ID: ${approverId}`
+            });
+            db.saveTransactions(txs);
+            renderTransactions(); // Refresh the list
+        }
+
+        function printVoidSlip(tx) {
+            let win = window.open('', '_blank');
+            win.document.write(`
+                <html><head><title>Void Slip</title>
+                <style>body { font-family: monospace; width: 300px; margin: 0 auto; padding: 20px; }</style>
+                </head><body>
+                <h3 style="text-align:center; margin-bottom: 5px;">VOID / REFUND SLIP</h3>
+                <h4 style="text-align:center; margin-top: 0; border-bottom: 1px dashed #000; padding-bottom: 10px;">ZTG HEAVY PARTS</h4>
+                <p><strong>Invoice:</strong> ${tx.siNo}</p>
+                <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+                <p><strong>Cashier:</strong> ${tx.cashier}</p>
+                <p><strong>Approved By:</strong> ${tx.approver}</p>
+                <p><strong>Amount:</strong> PHP ${tx.amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+                <p><strong>Reason:</strong> ${tx.refundReason}</p>
+                <hr style="border-top: 1px dashed #000;">
+                <p style="text-align:center; font-size:12px; margin-top: 20px;">Keep this slip for auditing purposes.</p>
+                \x3Cscript\x3E
+                    window.onload = function() { window.print(); window.close(); }
+                \x3C/script\x3E
+                </' + 'body></' + 'html>
+            `);
+            win.document.close();
         }
 
         function submitRefund(event) {
@@ -749,14 +822,26 @@
             const refundReason = document.querySelector('input[name="refundReason"]:checked').value;
             const notes = document.getElementById('refundNotes').value.trim();
             const method = document.getElementById('refundMethod').value;
-            const approver = document.getElementById('refundApprover').value;
+            const approverId = document.getElementById('refundApprover').value;
             const approvalCode = document.getElementById('refundApprovalCode').value;
             const restoreStock = document.getElementById('checkRestoreStock').checked;
             const markDamaged = document.getElementById('checkMarkDamaged').checked;
 
             const transactions = db.getTransactions();
             const products = db.getProducts();
+            const employees = db.getEmployees();
             const tx = transactions[idx];
+
+            const approver = employees.find(e => e.id === approverId) || { name: 'Admin', pin: '0000', role: 'Admin' };
+            if (approver.pin !== approvalCode) {
+                logFailedPinAttempt(approverId, approvalCode, tx.siNo);
+                alert('Invalid Manager PIN. Please try again.');
+                return;
+            }
+
+            if (!checkDailyVoidLimit()) {
+                return;
+            }
 
             const checkedRows = document.querySelectorAll('.refund-item-row');
             let anyItemChecked = false;
@@ -793,7 +878,7 @@
             tx.refundReason = refundReason;
             tx.actionType = refundType === 'Refund' ? `Refunded via ${method}` : `Exchange / Store Credit`;
             tx.invAction = (restoreStock ? 'Restocked to Shelf' : '') + (restoreStock && markDamaged ? ' & ' : '') + (markDamaged ? 'Moved to Scrap/Damaged' : '');
-            tx.approver = approver;
+            tx.approver = approver.name;
             tx.approvalCode = approvalCode;
             tx.notes = notes;
 
@@ -809,6 +894,7 @@
             tx.amount = totalRefunded * 1.12;
 
             db.saveTransactions(transactions);
+            printVoidSlip(tx);
 
             closeModal('refundModal');
             renderTransactions();

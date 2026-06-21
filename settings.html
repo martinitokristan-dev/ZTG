@@ -474,6 +474,8 @@
                             <option value="Transaction - Refund Processed">Transaction - Refund Processed</option>
                             <option value="P.O. - Awaiting Approval">P.O. - Awaiting Approval</option>
                             <option value="Reservation - Expiring Soon">Reservation - Expiring Soon</option>
+                            <option value="Security - Excessive Voids">Security - Excessive Voids</option>
+                            <option value="Security - Failed PIN Attempt">Security - Failed PIN Attempt</option>
                         </select>
                     </div>
                     <div class="form-group" style="margin-bottom: 16px;">
@@ -534,6 +536,11 @@
                             <input type="text" id="empCommInput" class="form-control" value="5%" required>
                         </div>
                     </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label class="form-label" for="empPinInput">Manager PIN (Required for Admin/Supervisor)</label>
+                        <input type="password" id="empPinInput" class="form-control" placeholder="4-digit PIN" maxlength="4" pattern="[0-9]{4}">
+                        <small style="color: var(--text-secondary); font-size: 11px;">Only Admin and Supervisor roles need a PIN to approve voids/refunds.</small>
+                    </div>
                 </div>
                 <div class="modal-footer" style="padding: 12px 20px;">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('addEmpModal')">Cancel</button>
@@ -577,6 +584,11 @@
                             <label class="form-label" for="editEmpCommInput">Commission Rate (%)</label>
                             <input type="text" id="editEmpCommInput" class="form-control" value="5%" required>
                         </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label class="form-label" for="editEmpPinInput">Manager PIN</label>
+                        <input type="password" id="editEmpPinInput" class="form-control" placeholder="4-digit PIN" maxlength="4" pattern="[0-9]{4}">
+                        <small style="color: var(--text-secondary); font-size: 11px;">Only Admin and Supervisor roles need a PIN.</small>
                     </div>
                 </div>
                 <div class="modal-footer" style="padding: 12px 20px;">
@@ -895,6 +907,7 @@
             document.getElementById('editEmpNameInput').value = emp.name;
             document.getElementById('editEmpRoleInput').value = emp.role;
             document.getElementById('editEmpCommInput').value = emp.commissionRate;
+            document.getElementById('editEmpPinInput').value = emp.pin || '';
             
             toggleEditCommissionField();
             openModal('editEmpModal');
@@ -909,8 +922,14 @@
                 name: document.getElementById('empNameInput').value.trim(),
                 role: document.getElementById('empRoleInput').value,
                 status: 'Active',
-                commissionRate: document.getElementById('empCommInput').value.trim()
+                commissionRate: document.getElementById('empCommInput').value.trim(),
+                pin: document.getElementById('empPinInput').value.trim()
             };
+
+            if ((newEmp.role === 'Admin' || newEmp.role === 'Supervisor') && newEmp.pin.length !== 4) {
+                alert('Admin and Supervisor roles require a 4-digit PIN for void/refund approvals.');
+                return;
+            }
 
             // Check duplicate ID
             if (employees.some(e => e.id === newEmp.id)) {
@@ -935,6 +954,12 @@
             emp.name = document.getElementById('editEmpNameInput').value.trim();
             emp.role = document.getElementById('editEmpRoleInput').value;
             emp.commissionRate = document.getElementById('editEmpCommInput').value.trim();
+            emp.pin = document.getElementById('editEmpPinInput').value.trim();
+
+            if ((emp.role === 'Admin' || emp.role === 'Supervisor') && emp.pin.length !== 4) {
+                alert('Admin and Supervisor roles require a 4-digit PIN.');
+                return;
+            }
 
             db.saveEmployees(employees);
             closeModal('editEmpModal');

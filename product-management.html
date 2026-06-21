@@ -754,18 +754,20 @@
             products[pIndex].damaged = (products[pIndex].damaged || 0) + qty;
             db.saveProducts(products);
 
-            // Log this action
+            // Log this action as an inventory/audit event — NOT a sale
             const transactions = db.getTransactions();
+            const now = new Date();
             const newTx = {
-                siNo: 'CI-DAMAGED-' + Math.floor(Math.random() * 900 + 100),
-                date: 'Jun 14, 2026',
+                siNo: 'INV-DAMAGED-' + Math.floor(Math.random() * 900 + 100),
+                date: now.toLocaleString(),
                 itemName: products[pIndex].name,
                 customer: 'SCRAP LOG',
                 qty: qty,
                 amount: 0,
                 payment: 'N/A',
                 cashier: getCurrentUser().name,
-                status: 'Refund',
+                status: 'Damaged',
+                type: 'inventory',
                 phone: 'N/A',
                 refundReason: `Scrapped: ${reason}`
             };
@@ -926,18 +928,20 @@
 
             db.saveProducts(products);
             
-            // Log this action to archives / transactions
+            // Log this action as an inventory/audit event — NOT a sale
             const transactions = db.getTransactions();
+            const now = new Date();
             const newTx = {
-                siNo: 'RESTOCK-' + Date.now().toString().slice(-4),
-                date: document.getElementById('restockDate').value,
+                siNo: 'INV-RESTOCK-' + Date.now().toString().slice(-4),
+                date: now.toLocaleString(),
                 itemName: restockItems.map(i => `${i.partNo} (+${i.qty} units)`).join(', '),
                 customer: 'SUPPLIER RESTOCK',
                 qty: restockItems.reduce((sum, i) => sum + i.qty, 0),
                 amount: 0,
                 payment: 'N/A',
                 cashier: verifiedBy,
-                status: 'Completed',
+                status: 'Restocked',
+                type: 'inventory',
                 phone: 'N/A',
                 internalNotes: 'Inventory restocked'
             };

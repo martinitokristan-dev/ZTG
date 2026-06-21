@@ -369,7 +369,8 @@
                                         <th style="text-align: left;">Category</th>
                                         <th style="text-align: left;">Address</th>
                                         <th style="text-align: left;">Stock</th>
-                                        <th style="text-align: right; padding-right: 20px;">Price</th>
+                                        <th style="text-align: right; padding-right: 16px; color: #3B82F6;">Price 1</th>
+                                        <th style="text-align: right; padding-right: 20px; color: #8B5CF6;">Price 2</th>
                                     </tr>
                                 </thead>
                                 <tbody id="posProductsTableBody">
@@ -689,28 +690,36 @@
                 tr.style.cursor = (isDisabled || isOutOfStock) ? 'not-allowed' : 'pointer';
                 if (isDisabled || isOutOfStock) {
                     tr.style.opacity = '0.5';
-                } else {
-                    tr.onclick = () => openAddToCartModal(p.id);
                 }
 
-                const price = (selectedPriceType === 'regular' ? p.price1 : p.price2).toLocaleString();
+                const price1 = (p.price1 || 0).toLocaleString();
+                const price2 = (p.price2 || 0).toLocaleString();
                 const stockColor = isDisabled ? 'var(--text-muted)' : (p.stock === 0 ? 'var(--danger)' : (p.stock <= 5 ? 'var(--warning)' : 'var(--success)'));
                 
                 const disabledIcon = isDisabled ? `<svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: var(--danger); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; margin-left: 6px;" title="Disabled"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>` : '';
 
                 tr.innerHTML = `
-                    <td style="text-align: left; padding: 12px 16px;">
+                    <td style="text-align: left; padding: 12px 16px;" onclick="${(!isDisabled && !isOutOfStock) ? `openAddToCartModal(${p.id}, 'price1')` : ''}">
                         <strong style="color: var(--text-primary); font-size: 13.5px; display: flex; align-items: center;">${p.name} ${disabledIcon}</strong>
                         <span class="chinese-subtitle" style="font-size: 11px; color: var(--text-secondary); display: block; margin-top: 1px;">${p.chineseName || ''}</span>
                     </td>
-                    <td class="font-bold" style="font-size: 13px; text-align: left; padding: 12px 16px;">${p.partNo}</td>
-                    <td style="text-align: left; padding: 12px 16px;">${p.category}</td>
-                    <td style="text-align: left; padding: 12px 16px;">${p.address}</td>
-                    <td style="text-align: left; padding: 12px 16px;">
+                    <td class="font-bold" style="font-size: 13px; text-align: left; padding: 12px 16px;" onclick="${(!isDisabled && !isOutOfStock) ? `openAddToCartModal(${p.id}, 'price1')` : ''}">${p.partNo}</td>
+                    <td style="text-align: left; padding: 12px 16px;" onclick="${(!isDisabled && !isOutOfStock) ? `openAddToCartModal(${p.id}, 'price1')` : ''}">${p.category}</td>
+                    <td style="text-align: left; padding: 12px 16px;" onclick="${(!isDisabled && !isOutOfStock) ? `openAddToCartModal(${p.id}, 'price1')` : ''}">${p.address}</td>
+                    <td style="text-align: left; padding: 12px 16px;" onclick="${(!isDisabled && !isOutOfStock) ? `openAddToCartModal(${p.id}, 'price1')` : ''}">
                         ${isDisabled ? `<span style="color: var(--danger); background: #FEF2F2; padding: 2px 10px; border-radius: 12px; font-weight: 600; display: inline-block;">Disabled</span>` : 
                         `<span style="color: ${stockColor}; background: ${p.stock === 0 ? '#FEF2F2' : (p.stock <= 5 ? '#FEFCE8' : '#F0FDF4')}; padding: 2px 10px; border-radius: 12px; font-weight: 600; display: inline-block;">${p.stock}</span>`}
                     </td>
-                    <td class="font-bold" style="color: var(--primary); text-align: right; padding: 12px 16px; padding-right: 20px;">₱${price}</td>
+                    <td style="text-align: right; padding: 12px 16px;">
+                        ${(!isDisabled && !isOutOfStock) ? `
+                        <button onclick="openAddToCartModal(${p.id}, 'price1')" style="background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;" title="Add with Price 1">₱${price1}</button>
+                        ` : `<span style="color: var(--text-muted); font-size: 13px;">₱${price1}</span>`}
+                    </td>
+                    <td style="text-align: right; padding: 12px 16px; padding-right: 20px;">
+                        ${(!isDisabled && !isOutOfStock) ? `
+                        <button onclick="openAddToCartModal(${p.id}, 'price2')" style="background: #F5F3FF; color: #7C3AED; border: 1px solid #DDD6FE; border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;" title="Add with Price 2">₱${price2}</button>
+                        ` : `<span style="color: var(--text-muted); font-size: 13px;">₱${price2}</span>`}
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -775,16 +784,22 @@
 
         // Cart Actions
         let currentModalProductId = null;
+        let currentModalPriceTier = 'price1';
 
-        function openAddToCartModal(id) {
+        function openAddToCartModal(id, priceTier) {
             const products = db.getProducts();
             const product = products.find(p => p.id === id);
             if (!product) return;
 
             currentModalProductId = id;
+            currentModalPriceTier = priceTier || 'price1';
+
+            const selectedPrice = currentModalPriceTier === 'price2' ? product.price2 : product.price1;
+            const tierLabel = currentModalPriceTier === 'price2' ? 'Price 2 (Wholesale)' : 'Price 1 (Retail)';
+            const tierColor = currentModalPriceTier === 'price2' ? '#7C3AED' : '#2563EB';
 
             document.getElementById('addCartModalProductName').innerText = product.name;
-            document.getElementById('addCartModalPartNo').innerText = product.partNo;
+            document.getElementById('addCartModalPartNo').innerHTML = `${product.partNo} &nbsp;<span style="background:${currentModalPriceTier === 'price2' ? '#F5F3FF' : '#EFF6FF'}; color:${tierColor}; font-size:11px; padding:2px 8px; border-radius:10px; font-weight:700;">${tierLabel}: &#8369;${selectedPrice.toLocaleString()}</span>`;
             document.getElementById('addCartModalStock').innerText = product.stock + ' units available';
             
             const variantContainer = document.getElementById('addCartModalVariantContainer');
@@ -830,12 +845,12 @@
                 return;
             }
 
-            const existingIndex = cart.findIndex(item => item.id === product.id && item.variant === variant);
+            const existingIndex = cart.findIndex(item => item.id === product.id && item.variant === variant && item.priceTier === currentModalPriceTier);
             
             if (existingIndex > -1) {
                 cart[existingIndex].qty += qty;
             } else {
-                cart.push({ id: product.id, name: product.name, partNo: product.partNo, qty: qty, variant: variant });
+                cart.push({ id: product.id, name: product.name, partNo: product.partNo, qty: qty, variant: variant, priceTier: currentModalPriceTier });
             }
 
             updateCartSummary();
@@ -902,7 +917,9 @@
                 const product = products.find(p => p.id === item.id);
                 if (!product) return;
 
-                const price = selectedPriceType === 'regular' ? product.price1 : product.price2;
+                const price = (item.priceTier === 'price2') ? product.price2 : product.price1;
+                const tierLabel = (item.priceTier === 'price2') ? 'P2' : 'P1';
+                const tierColor = (item.priceTier === 'price2') ? '#7C3AED' : '#2563EB';
                 const cost = price * item.qty;
                 subtotal += cost;
 
@@ -919,7 +936,7 @@
                 row.innerHTML = `
                     <div style="flex: 1; min-width: 0; padding-right: 8px;">
                         <span class="font-bold" style="font-size: 12px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); margin-bottom: 2px;">${item.name}</span>
-                        <span style="font-size: 10px; color: var(--text-secondary); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.partNo}${item.variant ? ` • ${item.variant}` : ''}</span>
+                        <span style="font-size: 10px; color: var(--text-secondary); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.partNo}${item.variant ? ` &bull; ${item.variant}` : ''} &nbsp;<span style="background: ${item.priceTier === 'price2' ? '#F5F3FF' : '#EFF6FF'}; color: ${tierColor}; padding: 1px 5px; border-radius: 8px; font-weight: 700;">${tierLabel}</span></span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; background: #FFFFFF;">
@@ -927,7 +944,7 @@
                             <input type="number" style="width: 30px; text-align: center; font-size: 12px; border: none; outline: none; padding: 2px 0; -moz-appearance: textfield;" value="${item.qty}" onchange="updateCartQty(${index}, this.value)">
                             <span onclick="changeQtyInline(${index}, 1)" style="cursor: pointer; padding: 2px 8px; font-size: 14px; color: var(--text-secondary); user-select: none;">+</span>
                         </div>
-                        <span class="font-bold" style="width: 60px; text-align: right; font-size: 12px; color: var(--text-primary);">₱${cost.toLocaleString()}</span>
+                        <span class="font-bold" style="width: 60px; text-align: right; font-size: 12px; color: var(--text-primary);">&#8369;${cost.toLocaleString()}</span>
                         <button style="padding: 2px 8px; color: var(--danger); background-color: #FEF2F2; font-size: 12px; border:none; cursor:pointer; border-radius: 4px; font-weight: bold; margin-left: 4px; align-self: center;" onclick="removeFromCart(${index})">&times;</button>
                     </div>
                 `;
@@ -952,7 +969,7 @@
             const subtotal = cart.reduce((sum, item) => {
                 const product = products.find(p => p.id === item.id);
                 if (!product) return sum;
-                const price = selectedPriceType === 'regular' ? product.price1 : product.price2;
+                const price = (item.priceTier === 'price2') ? product.price2 : product.price1;
                 return sum + price * item.qty;
             }, 0);
 
@@ -984,8 +1001,11 @@
             const docType = document.getElementById('posDocType').value;
             const servedBy = document.getElementById('posServedBy').value;
             
-            const totalStr = document.getElementById('cartTotal').innerText.replace('₱', '').replace(/,/g, '');
-            const totalVal = parseFloat(totalStr) || 0;
+            const totalVal = cart.reduce((sum, item) => {
+                const product = products.find(p => p.id === item.id);
+                if (!product) return sum;
+                return sum + ((item.priceTier === 'price2') ? product.price2 : product.price1) * item.qty;
+            }, 0);
 
             if (!customerName) {
                 alert('Please enter Customer Name to complete this transaction.');
@@ -1059,8 +1079,14 @@
                 payment: posPaymentMethod,
                 cashier: currentUser.name,
                 status: 'Completed',
+                type: 'sale',
                 phone: customerPhone,
-                internalNotes: `Served by ${servedBy}`
+                internalNotes: `Served by ${servedBy}`,
+                items: cart.map(item => {
+                    const prod = products.find(p => p.id === item.id);
+                    const price = (item.priceTier === 'price2') ? prod.price2 : prod.price1;
+                    return { id: item.id, name: item.name, partNo: item.partNo, qty: item.qty, price, priceTier: item.priceTier, variant: item.variant };
+                })
             };
 
             transactions.unshift(newTx);
@@ -1089,13 +1115,14 @@
             `;
             cart.forEach(item => {
                 const product = products.find(p => p.id === item.id);
-                const price = selectedPriceType === 'regular' ? product.price1 : product.price2;
+                const price = (item.priceTier === 'price2') ? product.price2 : product.price1;
+                const tierBadge = item.priceTier === 'price2' ? '<span style="font-size:10px;background:#F5F3FF;color:#7C3AED;padding:1px 5px;border-radius:8px;font-weight:700;margin-left:4px;">P2</span>' : '<span style="font-size:10px;background:#EFF6FF;color:#2563EB;padding:1px 5px;border-radius:8px;font-weight:700;margin-left:4px;">P1</span>';
                 const itemTotal = (price * item.qty).toLocaleString();
                 receiptHtml += `
                         <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
-                            <span style="flex: 1; padding-right: 12px; font-weight: 500;">${item.name}</span>
+                            <span style="flex: 1; padding-right: 12px; font-weight: 500;">${item.name}${tierBadge}</span>
                             <span style="color: var(--text-secondary); width: 40px; text-align: center;">x${item.qty}</span>
-                            <span style="font-weight: 600; width: 80px; text-align: right;">₱${itemTotal}</span>
+                            <span style="font-weight: 600; width: 80px; text-align: right;">&#8369;${itemTotal}</span>
                         </div>
                 `;
             });

@@ -51,7 +51,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                     <div>
                         <h1 style="font-size: 20px; margin-bottom: 2px;">Transaction Log</h1>
-                        <div class="page-description" style="margin-top: 0; font-size: 12px;">Review completed sales, refunds, returns, and update P.O.s.</div>
+                        <div class="page-description" style="margin-top: 0; font-size: 12px;">System-wide audit trail — refunds, returns, voids, P.O. activities and all non-revenue events.</div>
                     </div>
                     <button class="btn" style="background: #FFFFFF; border: 1px solid var(--border); color: var(--text-primary); font-size: 12px; padding: 8px 16px; border-radius: 6px; display: flex; align-items: center; gap: 6px; font-weight: 600;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -93,9 +93,15 @@
                     <!-- Tabs -->
                     <div style="display: flex; gap: 8px; margin-top: 16px;">
                         <button class="status-tab active" data-status="All" onclick="setTab('All')">All</button>
-                        <button class="status-tab" data-status="Refund" onclick="setTab('Refund')">Refund</button>
-                        <button class="status-tab" data-status="Return" onclick="setTab('Return')">Return</button>
-                        <button class="status-tab" data-status="Pending P.O." onclick="setTab('Pending P.O.')">Pending P.O.</button>
+                        <button class="status-tab" data-status="Refund" onclick="setTab('Refund')">🔴 Refund</button>
+                        <button class="status-tab" data-status="Return" onclick="setTab('Return')">↩ Return</button>
+                        <button class="status-tab" data-status="Pending P.O." onclick="setTab('Pending P.O.')">📄 Pending P.O.</button>
+                    </div>
+
+                    <!-- Audit Info Banner -->
+                    <div style="margin-top: 12px; background: #EFF6FF; border: 1px solid #BFDBFE; border-left: 4px solid #3B82F6; border-radius: 6px; padding: 10px 16px; font-size: 11px; color: #1E40AF; display: flex; align-items: center; gap: 8px;">
+                        <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 2;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span><strong>Master Audit Trail:</strong> This log records ALL system activities — including normal sales, refunds, returns, stock additions, and scrap logs. For a revenue-focused view, please see the <strong>Sales Log</strong>.</span>
                     </div>
                 </div>
 
@@ -503,7 +509,7 @@
                 
                 let isTabMatch = false;
                 const statusGrp = (tx.status === 'Completed' || tx.status === 'Paid') ? 'Completed' :
-                                  (tx.status === 'Refund' || tx.status === 'Return') ? tx.status : 
+                                  (tx.status === 'Refund' || tx.status === 'Return' || tx.status === 'Damaged' || tx.status === 'Restocked') ? tx.status : 
                                   (tx.payment && tx.payment.includes('P.O.') && tx.status !== 'Completed') ? 'Pending P.O.' : tx.status;
 
                 if (currentTab === 'All') isTabMatch = true;
@@ -513,19 +519,18 @@
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; color: var(--text-secondary); padding: 20px;">No transactions found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; color: var(--text-secondary); padding: 20px;">No audit records found.</td></tr>';
                 return;
             }
 
             filtered.forEach((tx, idx) => {
                 const statusGrp = (tx.status === 'Completed' || tx.status === 'Paid') ? 'Completed' :
-                                  (tx.status === 'Refund') ? 'Refund' : 
-                                  (tx.status === 'Return') ? 'Return' : 
+                                  (tx.status === 'Refund' || tx.status === 'Return' || tx.status === 'Damaged' || tx.status === 'Restocked') ? tx.status : 
                                   (tx.payment && tx.payment.includes('P.O.') && tx.status !== 'Completed') ? 'Pending' : tx.status;
 
                 let textClass = 'status-text ';
-                if (statusGrp === 'Completed') textClass += 'completed';
-                else if (statusGrp === 'Refund') textClass += 'refund';
+                if (statusGrp === 'Completed' || statusGrp === 'Restocked') textClass += 'completed';
+                else if (statusGrp === 'Refund' || statusGrp === 'Damaged') textClass += 'refund';
                 else if (statusGrp === 'Return') textClass += 'return';
                 else if (statusGrp === 'Pending' || statusGrp === 'Pending P.O.') textClass += 'pending';
 

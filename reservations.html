@@ -181,8 +181,12 @@
                             <h4 style="font-size: 11px; font-weight: 700; color: #64748B; margin-bottom: 12px; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 8px;">PAYMENT DETAILS</h4>
                             
                             <div class="form-group" style="margin-bottom: 12px;">
-                                <label class="form-label" style="font-size: 12px; font-weight: 500; color: #334155;">Deposit Amount <span style="color: var(--danger);">*</span></label>
-                                <input type="number" id="resDeposit" class="form-control" min="0" required placeholder="0.00" oninput="calculateResBalance()" style="border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 12px; font-size: 14px; font-weight: 600;">
+                                <label class="form-label" style="font-size: 12px; font-weight: 500; color: #334155;">
+                                    Deposit Amount 
+                                    <span style="background: #FEF3C7; color: #92400E; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; margin-left: 4px;">50% Required</span>
+                                </label>
+                                <input type="number" id="resDeposit" class="form-control" min="0" required placeholder="Auto-calculated (50% of total)" readonly style="border: 1px solid #FDE68A; border-radius: 6px; padding: 10px 12px; font-size: 14px; font-weight: 700; background: #FFFBEB; color: #92400E; cursor: not-allowed;">
+                                <p style="font-size: 10px; color: #92400E; margin: 4px 0 0; font-weight: 500;">🔒 Deposit is automatically set to 50% of total order value and cannot be changed.</p>
                             </div>
                             
                             <div class="form-group" style="margin-bottom: 12px;">
@@ -714,12 +718,16 @@
             document.getElementById('resTaxDisplay').innerText = `₱${tax.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
             document.getElementById('resTotalDisplay').innerText = `₱${subtotal.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
             
+            // Auto-set deposit to mandatory 50% of total
+            const deposit50 = subtotal * 0.5;
+            document.getElementById('resDeposit').value = deposit50 > 0 ? deposit50.toFixed(2) : '';
             calculateResBalance();
         }
 
         function calculateResBalance() {
             const total = parseFloat(document.getElementById('resTotalVal').value) || 0;
-            const deposit = parseFloat(document.getElementById('resDeposit').value) || 0;
+            // Deposit is always 50% of total
+            const deposit = total * 0.5;
             const balance = Math.max(0, total - deposit);
             document.getElementById('resBalanceDisplay').value = balance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
         }

@@ -122,6 +122,14 @@
                             <input type="text" id="salesSearch" class="form-control form-control-sm" placeholder="Search by receipt #, customer, or cashier..." style="padding-left: 30px;" oninput="renderSalesTable()">
                         </div>
                         <div style="width: 150px;">
+                            <select id="timeFilter" class="form-control form-control-sm" onchange="renderSalesTable()">
+                                <option value="All">All Time</option>
+                                <option value="Today">Today</option>
+                                <option value="This Week">This Week</option>
+                                <option value="This Month">This Month</option>
+                            </select>
+                        </div>
+                        <div style="width: 150px;">
                             <select id="cashierFilter" class="form-control form-control-sm" onchange="renderSalesTable()">
                                 <option value="All">All Cashiers</option>
                             </select>
@@ -159,13 +167,13 @@
                     <div style="overflow-x: auto;">
                         <table style="width: 100%; border-collapse: collapse; text-align: left;">
                             <thead style="border-bottom: 1px solid var(--border); font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">
-                                <tr>
+                            <tr>
                                     <th style="padding: 12px 16px; font-weight: 700;">DATE</th>
                                     <th style="padding: 12px 16px; font-weight: 700;">S.I./C.I./D.R.</th>
                                     <th style="padding: 12px 16px; font-weight: 700;">PART NO.</th>
                                     <th style="padding: 12px 16px; font-weight: 700;">PRODUCT</th>
                                     <th style="padding: 12px 16px; font-weight: 700;">QTY</th>
-                                    <th style="padding: 12px 16px; font-weight: 700;">PRICE 1</th>
+                                    <th style="padding: 12px 16px; font-weight: 700;">AMOUNT</th>
                                     <th style="padding: 12px 16px; font-weight: 700;">CUSTOMER</th>
                                     <th style="padding: 12px 16px; font-weight: 700;">PAYMENT</th>
                                     <th style="padding: 12px 16px; font-weight: 700;">SERVED BY</th>
@@ -233,12 +241,62 @@
             return `<span class="status-badge ${className}">${icon} ${status}</span>`;
         }
 
+        // Parse date string to a Date object for comparison
+        function parseTxDate(dateStr) {
+            if (!dateStr) return null;
+            // Handle ISO format
+            if (dateStr.includes('T') || dateStr.match(/^\d{4}-/)) {
+                return new Date(dateStr);
+            }
+            // Handle "Jun 21, 2026, 3:14 PM" format
+            try {
+                return new Date(Date.parse(dateStr));
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function matchesTimeFilter(t, filterVal) {
+            if (filterVal === 'All') return true;
+            const txDate = parseTxDate(t.date);
+            if (!txDate || isNaN(txDate)) return true; // Can't parse, show it
+
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            if (filterVal === 'Today') {
+                const txDay = new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate());
+                return txDay.getTime() === today.getTime();
+            }
+            if (filterVal === 'This Week') {
+                const dayOfWeek = today.getDay(); // 0=Sun
+                const weekStart = new Date(today);
+                weekStart.setDate(today.getDate() - dayOfWeek);
+                return txDate >= weekStart;
+            }
+            if (filterVal === 'This Month') {
+                return txDate.getFullYear() === now.getFullYear() && txDate.getMonth() === now.getMonth();
+            }
+            return true;
+        }
+
+        // Sales Log: only revenue-impacting transactions
+        function isSalesTransaction(t) {
+            // Explicitly tagged
+            if (t.type === 'sale') return true;
+            if (t.type && t.type !== 'sale') return false;
+            // Status-based fallback for legacy records
+            const s = (t.status || '').toLowerCase();
+            return s === 'completed' || s === 'paid' || s === 'p.o. approved' || s === 'refund' || s === 'return';
+        }
+
         function renderSalesTable() {
             const transactions = db.getTransactions();
             const products = db.getProducts();
             const searchVal = document.getElementById('salesSearch').value.toLowerCase();
             const cashierVal = document.getElementById('cashierFilter').value;
             const paymentVal = document.getElementById('paymentFilter').value;
+            const timeVal = document.getElementById('timeFilter').value;
             const tbody = document.getElementById('salesTableBody');
 
             tbody.innerHTML = '';
@@ -247,14 +305,18 @@
             let totalSales = 0;
             let totalRefunds = 0;
 
+            // Filter to sales-only (revenue-impacting) records first
+            const salesOnly = transactions.filter(t => isSalesTransaction(t));
+
             // Filter logic
-            const filteredTransactions = transactions.filter(t => {
-                const matchesSearch = t.siNo.toLowerCase().includes(searchVal) || 
-                                      t.customer.toLowerCase().includes(searchVal) || 
-                                      t.cashier.toLowerCase().includes(searchVal);
+            const filteredTransactions = salesOnly.filter(t => {
+                const matchesSearch = (t.siNo || '').toLowerCase().includes(searchVal) || 
+                                      (t.customer || '').toLowerCase().includes(searchVal) || 
+                                      (t.cashier || '').toLowerCase().includes(searchVal);
                 
-                const matchesCashier = cashierVal === 'All' || t.cashier.includes(cashierVal);
-                const matchesPayment = paymentVal === 'All' || t.payment.includes(paymentVal);
+                const matchesCashier = cashierVal === 'All' || (t.cashier || '').includes(cashierVal);
+                const matchesPayment = paymentVal === 'All' || (t.payment || '').includes(paymentVal);
+                const matchesTime = matchesTimeFilter(t, timeVal);
 
                 let isTabMatch = false;
                 const statusGrp = (t.status === 'Completed' || t.status === 'Paid' || t.status === 'P.O. Approved') ? 'Completed' :
@@ -263,16 +325,14 @@
                 if (currentTab === 'All') isTabMatch = true;
                 else if (currentTab === statusGrp) isTabMatch = true;
 
-                // KPI calculations (we calculate KPIs over all matching filters, excluding status tab unless specified)
-                // Actually, the KPIs should probably reflect the current tab, or maybe just "Total" ignores tab.
-                // Let's calculate KPIs based on the filtered list
-                if (matchesSearch && matchesCashier && matchesPayment) {
+                // KPI calculations
+                if (matchesSearch && matchesCashier && matchesPayment && matchesTime) {
                     totalTransCount++;
-                    if (statusGrp === 'Completed') totalSales += t.amount;
-                    if (statusGrp === 'Refund') totalRefunds += t.amount;
+                    if (statusGrp === 'Completed') totalSales += (t.amount || 0);
+                    if (statusGrp === 'Refund') totalRefunds += (t.amount || 0);
                 }
 
-                return matchesSearch && matchesCashier && matchesPayment && isTabMatch;
+                return matchesSearch && matchesCashier && matchesPayment && matchesTime && isTabMatch;
             });
 
             const avgSale = totalTransCount > 0 ? totalSales / totalTransCount : 0;
@@ -283,7 +343,7 @@
             document.getElementById('statAvgSale').innerText = `₱${avgSale.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
 
             if (filteredTransactions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 20px;">No transactions found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: var(--text-secondary); padding: 20px;">No sales transactions found.</td></tr>';
                 return;
             }
 
@@ -293,14 +353,20 @@
                 
                 // Format Date & Time
                 let datePart = t.date;
-                let timePart = '09:00 AM'; // Default mock time if missing
-                if (t.date.includes('ago') || t.date.includes('Yesterday') || t.date.includes('Just now')) {
-                    datePart = t.date;
-                    timePart = '';
+                let timePart = '';
+                if (t.date && t.date.includes(',')) {
+                    const parts = t.date.split(',');
+                    if (parts.length >= 3) {
+                        datePart = parts[0] + ',' + parts[1];
+                        timePart = parts[2].trim();
+                    } else if (parts.length === 2) {
+                        datePart = parts[0];
+                        timePart = parts[1].trim();
+                    }
                 }
 
                 // Extract base name to match with products
-                let baseName = t.itemName;
+                let baseName = t.itemName || '';
                 if (baseName.includes(' & ')) {
                     baseName = baseName.split(' & ')[0];
                 }
@@ -310,33 +376,30 @@
                 const partNo = product.partNo || 'N/A';
                 const chineseName = product.chineseName || '';
                 
-                let displayName = `<span style="font-weight: 600; color: var(--text-primary);">${t.itemName}</span>`;
+                let displayName = `<span style="font-weight: 600; color: var(--text-primary);">${t.itemName || '-'}</span>`;
                 if (chineseName) {
                     displayName += `<br><span style="font-size: 12px; color: var(--text-secondary);">${chineseName}</span>`;
                 }
 
-                // Format payment method to include details if present (e.g. "Cash / Deposit (P1000 applied, P1500 paid)")
-                let paymentDisplay = t.payment;
-                if (t.payment.includes('Deposit')) {
+                // Format payment method
+                let paymentDisplay = t.payment || '-';
+                if (t.payment && t.payment.includes('Deposit')) {
                     paymentDisplay = `<span style="color: var(--text-secondary);">${t.payment}</span>`;
                 }
-
-                const statusGrp = (t.status === 'Completed' || t.status === 'Paid' || t.status === 'P.O. Approved') ? 'Completed' :
-                                  (t.status === 'Refund' || t.status === 'Return') ? 'Refund' : 'Pending';
 
                 tr.innerHTML = `
                     <td style="padding: 16px; font-size: 13px;">
                         <span style="display: block; color: var(--text-primary);">${datePart}</span>
                         ${timePart ? `<span style="display: block; font-size: 11px; color: var(--text-secondary);">${timePart}</span>` : ''}
                     </td>
-                    <td style="padding: 16px; font-size: 14px; font-weight: 700; color: var(--text-primary);">${t.siNo}</td>
+                    <td style="padding: 16px; font-size: 14px; font-weight: 700; color: var(--text-primary);">${t.siNo || '-'}</td>
                     <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${partNo}</td>
                     <td style="padding: 16px;">${displayName}</td>
-                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.qty}</td>
-                    <td style="padding: 16px; font-size: 14px; font-weight: 700;">₱${t.amount.toLocaleString(undefined, {minimumFractionDigits: 0})}</td>
+                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.qty || '-'}</td>
+                    <td style="padding: 16px; font-size: 14px; font-weight: 700;">₱${(t.amount || 0).toLocaleString(undefined, {minimumFractionDigits: 0})}</td>
                     <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.customer || 'Guest'}</td>
                     <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${paymentDisplay}</td>
-                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.cashier.split(' ')[0]}</td>
+                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${(t.cashier || '-').split(' ')[0]}</td>
                     <td style="padding: 16px;">${getStatusHtml(t.status)}</td>
                 `;
                 tbody.appendChild(tr);

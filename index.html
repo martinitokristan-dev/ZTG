@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Log In | ZTG Heavy Parts</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body class="login-body">
     <!-- Ambient Background glows -->
@@ -18,12 +18,19 @@
         <form id="loginForm" onsubmit="handleLogin(event)">
             <div class="role-selector">
                 <div class="role-card active" onclick="selectRole('Admin', this)">
-                    <div class="role-icon">💼</div>
+                    <svg class="role-icon" viewBox="0 0 24 24">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                    </svg>
                     <div class="role-name">Admin</div>
                     <div class="role-desc">Full system access</div>
                 </div>
                 <div class="role-card" onclick="selectRole('Cashier', this)">
-                    <div class="role-icon">💻</div>
+                    <svg class="role-icon" viewBox="0 0 24 24">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
                     <div class="role-name">Cashier</div>
                     <div class="role-desc">POS & Sales only</div>
                 </div>
@@ -84,33 +91,42 @@
             event.preventDefault();
             const role = document.getElementById('selectedRole').value;
             const username = document.getElementById('username').value.trim();
-            
-            // Set user profile
-            let name = 'Administrator';
-            let empId = 'EMP-000';
-            
-            if (role === 'Cashier') {
-                // Find or mock cashier details
-                const employees = db.getEmployees() || [];
-                const found = employees.find(e => e.id.toLowerCase() === username.toLowerCase() || e.name.toLowerCase().includes(username.toLowerCase()));
-                if (found) {
-                    name = found.name;
-                    empId = found.id;
-                } else {
-                    name = 'Maria Santos';
-                    empId = 'EMP-001';
-                }
+            const password = document.getElementById('password').value;
+            const employees = db.getEmployees() || [];
+
+            let found = null;
+            if (role === 'Admin') {
+                found = employees.find(e =>
+                    e.role === 'Admin' && e.status !== 'Inactive' && (
+                        (e.username && e.username.toLowerCase() === username.toLowerCase()) ||
+                        e.id.toLowerCase() === username.toLowerCase() ||
+                        username.toLowerCase() === 'admin'
+                    )
+                );
+                if (!found) found = employees.find(e => e.role === 'Admin' && e.status !== 'Inactive');
+            } else {
+                found = employees.find(e =>
+                    (e.role === 'Cashier' || e.role === 'Checker' || e.role === 'Supervisor') && e.status !== 'Inactive' && (
+                        e.id.toLowerCase() === username.toLowerCase() ||
+                        (e.username && e.username.toLowerCase() === username.toLowerCase()) ||
+                        e.name.toLowerCase().includes(username.toLowerCase())
+                    )
+                );
             }
 
-            const userSession = {
-                name: name,
-                role: role,
-                id: empId
-            };
+            if (!found) {
+                alert('Account not found. Check your Employee ID or username.');
+                return;
+            }
 
-            sessionStorage.setItem('ztg_current_user', JSON.stringify(userSession));
-            
-            // Redirect based on role dynamically via SPA transitions
+            const expectedPwd = found.password || found.pin || '';
+            if (expectedPwd && password !== expectedPwd) {
+                alert('Incorrect password. Please try again.');
+                return;
+            }
+
+            updateCurrentUserSession(found);
+
             if (role === 'Admin') {
                 navigateTo('dashboard.html');
             } else {

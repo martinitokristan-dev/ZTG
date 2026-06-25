@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>System Settings | ZTG Heavy Parts</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
     <style>
         .tabs-header {
             display: flex;
@@ -38,8 +38,11 @@
         .tab-content.active {
             display: block;
         }
-        .checkbox-group input[type="checkbox"] {
-            accent-color: var(--primary);
+        .checkbox-group label.toggle-row span.toggle-label {
+            flex: 1;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
         }
         .alert-banner.info {
             background-color: var(--primary-light);
@@ -73,22 +76,109 @@
         <div class="main-workspace">
             <div class="top-bar">
                 <div>
-                    <h1 style="font-size: 20px; margin-bottom: 2px;">System Settings</h1>
-                    <div class="page-description" style="margin-top: 0; font-size: 12px;">Configure inventory thresholds, categories, alerts, and employee access.</div>
+                    <h1 id="settingsPageTitle" style="font-size: 20px; margin-bottom: 2px;">System Settings</h1>
+                    <div id="settingsPageDesc" class="page-description" style="margin-top: 0; font-size: 12px;">Configure inventory thresholds, categories, alerts, and employee access.</div>
                 </div>
             </div>
 
-            <div class="content-body" style="display: flex; flex-direction: column; justify-content: space-between; min-height: calc(100% - 10px);">
-                <div>
+            <div class="content-body settings-page-body">
+                <div class="settings-tabs-wrap">
                     <div class="tabs-header">
-                        <button class="tab-btn active" onclick="switchTab('general')">General</button>
-                        <button class="tab-btn" onclick="switchTab('products')">Products Settings</button>
-                        <button class="tab-btn" onclick="switchTab('alerts')">Alerts</button>
-                        <button class="tab-btn" onclick="switchTab('employees')">Employees</button>
+                        <button class="tab-btn active" data-tab="profile" onclick="switchTab('profile', this)">My Profile</button>
+                        <button class="tab-btn" data-tab="general" onclick="switchTab('general', this)">General</button>
+                        <button class="tab-btn" data-tab="products" onclick="switchTab('products', this)">Products Settings</button>
+                        <button class="tab-btn" data-tab="alerts" onclick="switchTab('alerts', this)">Alerts</button>
+                        <button class="tab-btn" data-tab="employees" onclick="switchTab('employees', this)">Employees</button>
+                    </div>
+
+                    <!-- Tab 0: My Profile -->
+                    <div class="tab-content active" id="tab-profile">
+                        <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3 style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px;">My Profile</h3>
+                                <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">Manage your personal details, photo, and account security.</p>
+                            </div>
+                            <span class="profile-account-badge" id="profileAccountBadge" style="background: var(--primary-light); color: var(--primary); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px;">Administrator</span>
+                        </div>
+                        
+                        <div class="profile-page-grid">
+                            <!-- Photo -->
+                            <section class="profile-section-card profile-photo-section">
+                                <h2 class="profile-section-title">Profile Photo</h2>
+                                <p class="profile-section-desc">This photo appears in the sidebar and across the system.</p>
+                                <div class="profile-photo-center">
+                                    <div id="profilePhotoPreview" class="profile-photo-preview-lg"></div>
+                                    <div class="profile-photo-actions">
+                                        <label class="btn btn-secondary btn-sm profile-upload-btn">
+                                            Upload Photo
+                                            <input type="file" id="profilePhotoInput" accept="image/*" hidden onchange="handleProfilePhotoSelect(event)">
+                                        </label>
+                                        <button type="button" class="btn btn-secondary btn-sm profile-remove-btn" onclick="removeProfilePhoto()">Remove</button>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Personal info -->
+                            <section class="profile-section-card profile-details-section">
+                                <h2 class="profile-section-title">Personal Information</h2>
+                                <p class="profile-section-desc">Your name is shown on the dashboard greeting and reservation records.</p>
+                                <div class="profile-form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label" for="profileName">Name</label>
+                                        <input type="text" id="profileName" class="form-control profile-input" placeholder="e.g. Kyla" oninput="checkProfileDirty()">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="profileEmail">Email</label>
+                                        <input type="email" id="profileEmail" class="form-control profile-input" placeholder="you@ztgheavyparts.com" oninput="checkProfileDirty()">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="profileUsername">Login Username</label>
+                                        <input type="text" id="profileUsername" class="form-control profile-input" placeholder="e.g. admin" oninput="checkProfileDirty()">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Account</label>
+                                        <div class="profile-readonly-field" id="profileAccountType">Administrator</div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Security -->
+                            <section class="profile-section-card profile-security-section">
+                                <div class="profile-security-header">
+                                    <div>
+                                        <h2 class="profile-section-title" style="margin-bottom: 4px;">Password & Security</h2>
+                                        <p class="profile-section-desc" style="margin: 0;">Update your login password. You must enter your current password to confirm.</p>
+                                    </div>
+                                    <button type="button" id="btnTogglePassword" class="btn btn-secondary btn-sm" onclick="togglePasswordSection()">Change Password</button>
+                                </div>
+                                <div id="passwordChangePanel" class="password-change-panel" style="display: none;">
+                                    <div class="profile-form-grid profile-form-grid-3">
+                                        <div class="form-group">
+                                            <label class="form-label" for="profileCurrentPassword">Current Password</label>
+                                            <input type="password" id="profileCurrentPassword" class="form-control profile-input profile-pwd-input" disabled placeholder="Enter current password" oninput="checkProfileDirty()">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="profileNewPassword">New Password</label>
+                                            <input type="password" id="profileNewPassword" class="form-control profile-input profile-pwd-input" disabled placeholder="New password" oninput="checkProfileDirty()">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="profileConfirmPassword">Confirm Password</label>
+                                            <input type="password" id="profileConfirmPassword" class="form-control profile-input profile-pwd-input" disabled placeholder="Confirm new password" oninput="checkProfileDirty()">
+                                        </div>
+                                    </div>
+                                    <p id="passwordHint" class="profile-hint-text" style="display: none;"></p>
+                                </div>
+                            </section>
+                        </div>
+
+                        <div class="profile-actions-bar" style="margin-top: 24px; padding: 16px 0; background: none; border-top: none; position: static; display: flex; justify-content: flex-end; gap: 12px;">
+                            <button type="button" id="btnProfileCancel" class="btn btn-secondary" disabled onclick="cancelProfileChanges()">Cancel Changes</button>
+                            <button type="button" id="btnProfileSave" class="btn btn-primary" disabled onclick="saveMyProfile()">Save Changes</button>
+                        </div>
                     </div>
 
                     <!-- Tab 1: General (General Settings & Inventory Config) -->
-                    <div class="tab-content active" id="tab-general">
+                    <div class="tab-content" id="tab-general">
                         <div class="card" style="margin-bottom: 16px;">
                             <div class="settings-section">
                                 <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">General Settings</h3>
@@ -132,18 +222,18 @@
                                         <input type="number" id="deadStockPeriod" class="form-control" value="90">
                                     </div>
                                 </div>
-                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="autoDeductStock" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Automatically deduct stock after completed sales
+                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 0; margin-top: 16px;">
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Automatically deduct stock after completed sales</span>
+                                        <input type="checkbox" id="autoDeductStock">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="trackDamaged" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Track damaged products counts separately
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Track damaged products counts separately</span>
+                                        <input type="checkbox" id="trackDamaged">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="enableStockAlerts" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Enable low-stock and out-of-stock alerts
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Enable low-stock and out-of-stock alerts</span>
+                                        <input type="checkbox" id="enableStockAlerts">
                                     </label>
                                 </div>
                             </div>
@@ -164,21 +254,21 @@
                                 </div>
 
                                 <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px;">
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="displayChineseNames" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Display Chinese names for products
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Display Chinese names for products</span>
+                                        <input type="checkbox" id="displayChineseNames">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="enableVariants" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Enable product variants (Size, Color, Weight, Height)
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Enable product variants (Size, Color, Weight, Height)</span>
+                                        <input type="checkbox" id="enableVariants">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="enableDualPricing" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Enable dual pricing (Price 1 and Price 2)
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Enable dual pricing (Price 1 and Price 2)</span>
+                                        <input type="checkbox" id="enableDualPricing">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="trackWarehouseLocations" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Track product warehouse locations (Aisle-Center-Hang)
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Track product warehouse locations (Aisle-Center-Hang)</span>
+                                        <input type="checkbox" id="trackWarehouseLocations">
                                     </label>
                                 </div>
                             </div>
@@ -217,9 +307,9 @@
                                     </div>
                                 </div>
                                 <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="autoCalcPrice2" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Automatically calculate Price 2 based on percentage markup
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Automatically calculate Price 2 based on percentage markup</span>
+                                        <input type="checkbox" id="autoCalcPrice2">
                                     </label>
                                 </div>
                                 <div class="form-group" style="max-width: 50%;" id="markupGroup">
@@ -247,17 +337,17 @@
                             <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
                                 <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Product Display Options</h3>
                                 <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px;">
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alwaysDisplayPartNumbers" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Always display part numbers
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Always display part numbers</span>
+                                        <input type="checkbox" id="alwaysDisplayPartNumbers">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="showStockLevelsPos" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Show stock levels in POS
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Show stock levels in POS</span>
+                                        <input type="checkbox" id="showStockLevelsPos">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="hideOutofStockPos" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Hide out-of-stock products from POS
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Hide out-of-stock products from POS</span>
+                                        <input type="checkbox" id="hideOutofStockPos">
                                     </label>
                                 </div>
                             </div>
@@ -282,25 +372,25 @@
                             <div class="settings-section">
                                 <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 6px; margin-bottom: 12px; color: var(--text-primary);">Inventory Alerts</h4>
                                 <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alertLowStock" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Send alerts for low stock items
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Send alerts for low stock items</span>
+                                        <input type="checkbox" id="alertLowStock">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alertOutOfStock" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Send alerts for out-of-stock items
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Send alerts for out-of-stock items</span>
+                                        <input type="checkbox" id="alertOutOfStock">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alertDeadStock" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Send alerts for dead stock (no sales in 90+ days)
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Send alerts for dead stock (no sales in 90+ days)</span>
+                                        <input type="checkbox" id="alertDeadStock">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alertDamaged" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Send alerts when damaged items are recorded
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Send alerts when damaged items are recorded</span>
+                                        <input type="checkbox" id="alertDamaged">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alertShowDashboard" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Show inventory alerts on admin dashboard
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Show inventory alerts on admin dashboard</span>
+                                        <input type="checkbox" id="alertShowDashboard">
                                     </label>
                                 </div>
                             </div>
@@ -309,25 +399,25 @@
                             <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
                                 <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 6px; margin-bottom: 12px; color: var(--text-primary);">Transaction Alerts</h4>
                                 <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alertPOApproval" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Notify admin when new P.O. order awaits approval
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Notify admin when new P.O. order awaits approval</span>
+                                        <input type="checkbox" id="alertPOApproval">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alertPOApproved" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Notify cashier when their P.O. order is approved
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Notify cashier when their P.O. order is approved</span>
+                                        <input type="checkbox" id="alertPOApproved">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alertPORejected" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Notify cashier when their P.O. order is rejected
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Notify cashier when their P.O. order is rejected</span>
+                                        <input type="checkbox" id="alertPORejected">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alertRefunds" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Send alerts when refunds are processed
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Send alerts when refunds are processed</span>
+                                        <input type="checkbox" id="alertRefunds">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alertLargeSales" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Send alerts for large sales (above threshold)
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Send alerts for large sales (above threshold)</span>
+                                        <input type="checkbox" id="alertLargeSales">
                                     </label>
                                 </div>
                                 <div class="form-group" style="max-width: 50%; margin-top: 12px;" id="largeSaleGroup">
@@ -340,13 +430,13 @@
                             <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
                                 <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 6px; margin-bottom: 12px; color: var(--text-primary);">Reservation Alerts</h4>
                                 <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alertResExpiring" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Send alerts for reservations expiring soon (24 hours before)
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Send alerts for reservations expiring soon (24 hours before)</span>
+                                        <input type="checkbox" id="alertResExpiring">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alertResExpired" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Send alerts when reservations expire
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Send alerts when reservations expire</span>
+                                        <input type="checkbox" id="alertResExpired">
                                     </label>
                                 </div>
                             </div>
@@ -355,9 +445,9 @@
                             <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
                                 <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 6px; margin-bottom: 12px; color: var(--text-primary);">Email Notification Settings</h4>
                                 <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alertEnableEmail" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Enable email notifications
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Enable email notifications</span>
+                                        <input type="checkbox" id="alertEnableEmail">
                                     </label>
                                 </div>
                                 <div class="form-group" style="margin-bottom: 16px;">
@@ -374,17 +464,17 @@
                             <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
                                 <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 6px; margin-bottom: 12px; color: var(--text-primary);">Daily & Weekly Reports</h4>
                                 <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 0;">
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alertReportDailySales" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Send daily sales summary report (end of day)
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Send daily sales summary report (end of day)</span>
+                                        <input type="checkbox" id="alertReportDailySales">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alertReportWeeklyInventory" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Send weekly inventory summary report (every Monday)
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Send weekly inventory summary report (every Monday)</span>
+                                        <input type="checkbox" id="alertReportWeeklyInventory">
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--text-primary); cursor: pointer;">
-                                        <input type="checkbox" id="alertReportMonthlyPerformance" style="width: 16px; height: 16px; cursor: pointer;">
-                                        Send monthly performance report (first day of month)
+                                    <label class="toggle-row">
+                                        <span class="toggle-label">Send monthly performance report (first day of month)</span>
+                                        <input type="checkbox" id="alertReportMonthlyPerformance">
                                     </label>
                                 </div>
                             </div>
@@ -427,7 +517,6 @@
                                                 <th>Role</th>
                                                 <th>Employee ID</th>
                                                 <th>Status</th>
-                                                <th>Commission Rate</th>
                                                 <th style="text-align: center;">Actions</th>
                                             </tr>
                                         </thead>
@@ -442,11 +531,10 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Global Action Buttons -->
-                <div class="settings-actions-bar" style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); margin-bottom: 16px;">
-                    <button class="btn btn-secondary" onclick="cancelChanges()">Cancel Changes</button>
-                    <button class="btn btn-primary" onclick="saveAllSettings()">Save Settings</button>
+                <div class="settings-actions-bar" style="display: flex; justify-content: flex-end; gap: 12px;">
+                    <button type="button" id="btnSettingsCancel" class="btn btn-secondary" disabled onclick="cancelChanges()">Cancel Changes</button>
+                    <button type="button" id="btnSettingsSave" class="btn btn-primary" disabled onclick="saveAllSettings()">Save Settings</button>
                 </div>
             </div>
         </div>
@@ -514,29 +602,27 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label class="form-label" for="empIdInput">Employee Access ID</label>
+                        <label class="form-label" for="empIdInput">Username/Access ID</label>
                         <input type="text" id="empIdInput" class="form-control" required placeholder="e.g. EMP-006">
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="empNameInput">Full Name</label>
                         <input type="text" id="empNameInput" class="form-control" required placeholder="e.g. Ferdinand Marcos Jr">
                     </div>
-                    <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group">
-                            <label class="form-label" for="empRoleInput">Assigned Role</label>
-                            <select id="empRoleInput" class="form-control" required onchange="toggleCommissionField()">
-                                <option value="Cashier">Cashier</option>
-                                <option value="Admin">Admin</option>
-                                <option value="Checker">Checker</option>
-                                <option value="Supervisor">Supervisor</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="empCommInput">Commission Rate (%)</label>
-                            <input type="text" id="empCommInput" class="form-control" value="5%" required>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label" for="empPasswordInput">Password</label>
+                        <input type="password" id="empPasswordInput" class="form-control" required placeholder="Enter login password">
                     </div>
-                    <div class="form-group" style="margin-top: 10px;">
+                    <div class="form-group">
+                        <label class="form-label" for="empRoleInput">Assigned Role</label>
+                        <select id="empRoleInput" class="form-control" required onchange="togglePinField()">
+                            <option value="Cashier">Cashier</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Checker">Checker</option>
+                            <option value="Supervisor">Supervisor</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;" id="addEmpPinGroup">
                         <label class="form-label" for="empPinInput">Manager PIN (Required for Admin/Supervisor)</label>
                         <input type="password" id="empPinInput" class="form-control" placeholder="4-digit PIN" maxlength="4" pattern="[0-9]{4}">
                         <small style="color: var(--text-secondary); font-size: 11px;">Only Admin and Supervisor roles need a PIN to approve voids/refunds.</small>
@@ -563,29 +649,27 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label class="form-label">Employee Access ID</label>
+                        <label class="form-label">Username/Access ID</label>
                         <input type="text" id="editEmpIdDisplay" class="form-control" readonly style="background-color: var(--bg-canvas);">
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="editEmpNameInput">Full Name</label>
                         <input type="text" id="editEmpNameInput" class="form-control" required placeholder="e.g. Ferdinand Marcos Jr">
                     </div>
-                    <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group">
-                            <label class="form-label" for="editEmpRoleInput">Assigned Role</label>
-                            <select id="editEmpRoleInput" class="form-control" required onchange="toggleEditCommissionField()">
-                                <option value="Cashier">Cashier</option>
-                                <option value="Admin">Admin</option>
-                                <option value="Checker">Checker</option>
-                                <option value="Supervisor">Supervisor</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="editEmpCommInput">Commission Rate (%)</label>
-                            <input type="text" id="editEmpCommInput" class="form-control" value="5%" required>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editEmpPasswordInput">Password</label>
+                        <input type="password" id="editEmpPasswordInput" class="form-control" required placeholder="Enter login password">
                     </div>
-                    <div class="form-group" style="margin-top: 10px;">
+                    <div class="form-group">
+                        <label class="form-label" for="editEmpRoleInput">Assigned Role</label>
+                        <select id="editEmpRoleInput" class="form-control" required onchange="toggleEditPinField()">
+                            <option value="Cashier">Cashier</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Checker">Checker</option>
+                            <option value="Supervisor">Supervisor</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;" id="editEmpPinGroup">
                         <label class="form-label" for="editEmpPinInput">Manager PIN</label>
                         <input type="password" id="editEmpPinInput" class="form-control" placeholder="4-digit PIN" maxlength="4" pattern="[0-9]{4}">
                         <small style="color: var(--text-secondary); font-size: 11px;">Only Admin and Supervisor roles need a PIN.</small>
@@ -633,27 +717,53 @@
 
     <script src="app.js"></script>
     <script>
-        initSidebar('settings');
+        // Profile state variables
+        let profileSnapshot = {};
+        let pendingProfilePhoto = undefined;
+        let passwordSectionOpen = false;
+
+        function getProfileEmp() {
+            const user = getCurrentUser();
+            return (db.getEmployees() || []).find(e => e.id === user.id);
+        }
 
         // Tab Switching
-        function switchTab(tabName) {
+        function switchTab(tabName, btnEl) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
-            const event = window.event;
-            if (event && event.currentTarget) {
-                event.currentTarget.classList.add('active');
+            if (btnEl) {
+                btnEl.classList.add('active');
             } else {
-                // Fallback finder
-                const buttons = document.querySelectorAll('.tab-btn');
-                buttons.forEach(b => {
-                    if (b.innerText.toLowerCase().includes(tabName)) {
-                        b.classList.add('active');
-                    }
-                });
+                document.querySelector(`.tab-btn[data-tab="${tabName}"]`)?.classList.add('active');
             }
 
-            document.getElementById(`tab-${tabName}`).classList.add('active');
+            const tabPanel = document.getElementById(`tab-${tabName}`);
+            if (tabPanel) tabPanel.classList.add('active');
+
+            // Dynamic header title/description update
+            const pageTitleEl = document.getElementById('settingsPageTitle');
+            const pageDescEl = document.getElementById('settingsPageDesc');
+            if (pageTitleEl && pageDescEl) {
+                if (tabName === 'profile') {
+                    pageTitleEl.textContent = 'My Profile';
+                    pageDescEl.textContent = 'Manage your personal details, photo, and account security.';
+                } else {
+                    pageTitleEl.textContent = 'System Settings';
+                    pageDescEl.textContent = 'Configure inventory thresholds, categories, alerts, and employee access.';
+                }
+            }
+
+            // Toggle global action bar visibility
+            const actionsBar = document.querySelector('.settings-actions-bar');
+            if (actionsBar) {
+                actionsBar.style.display = (tabName === 'profile') ? 'none' : 'flex';
+            }
+
+            // Sync sidebar active state dynamically
+            if (getCurrentUser().role === 'Admin') {
+                initSidebar('settings');
+            }
 
             if (tabName === 'products') {
                 renderVariants();
@@ -661,7 +771,231 @@
                 renderEmployees();
             } else if (tabName === 'alerts') {
                 renderAlertRules();
+            } else if (tabName === 'profile') {
+                loadMyProfile();
             }
+        }
+
+        // Initialize active tab based on role and URL params
+        function initSettingsNavigation() {
+            const user = getCurrentUser();
+            const urlParams = new URLSearchParams(window.location.search);
+            let initialTab = urlParams.get('tab') || 'profile';
+
+            if (user.role !== 'Admin') {
+                // Cashiers only get profile tab
+                initialTab = 'profile';
+                const header = document.querySelector('.tabs-header');
+                if (header) header.style.display = 'none';
+                initSidebar('profile');
+            } else {
+                initSidebar('settings');
+            }
+            switchTab(initialTab);
+        }
+
+        // Profile Helper Functions
+        function loadMyProfile() {
+            const emp = getProfileEmp();
+            if (!emp) return;
+
+            profileSnapshot = {
+                name: emp.realName || emp.name || '',
+                email: emp.email || '',
+                username: emp.username || emp.id || '',
+                profilePhoto: emp.profilePhoto || ''
+            };
+            pendingProfilePhoto = undefined;
+            passwordSectionOpen = false;
+
+            document.getElementById('profileName').value = profileSnapshot.name;
+            document.getElementById('profileEmail').value = profileSnapshot.email;
+            document.getElementById('profileUsername').value = profileSnapshot.username;
+            document.getElementById('profileAccountType').textContent = getAccountRoleLabel(emp.role);
+            document.getElementById('profileAccountBadge').textContent = getAccountRoleLabel(emp.role);
+
+            document.getElementById('profileCurrentPassword').value = '';
+            document.getElementById('profileNewPassword').value = '';
+            document.getElementById('profileConfirmPassword').value = '';
+            document.getElementById('passwordChangePanel').style.display = 'none';
+            document.getElementById('btnTogglePassword').textContent = 'Change Password';
+            const hint = document.getElementById('passwordHint');
+            if (hint) hint.style.display = 'none';
+
+            setPasswordFieldsEnabled(false);
+            renderProfilePhotoPreview(emp);
+            checkProfileDirty();
+        }
+
+        function renderProfilePhotoPreview(emp) {
+            const photo = pendingProfilePhoto !== undefined ? pendingProfilePhoto : (emp.profilePhoto || '');
+            const preview = document.getElementById('profilePhotoPreview');
+            if (!preview) return;
+            if (photo) {
+                preview.innerHTML = `<img src="${photo}" class="profile-photo-avatar-lg user-avatar-img" alt="Profile">`;
+            } else {
+                preview.innerHTML = renderUserAvatar({ ...emp, profilePhoto: '' }, 'profile-photo-avatar-lg');
+            }
+        }
+
+        function setPasswordFieldsEnabled(enabled) {
+            ['profileCurrentPassword', 'profileNewPassword', 'profileConfirmPassword'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.disabled = !enabled;
+                    if (!enabled) el.value = '';
+                }
+            });
+        }
+
+        function togglePasswordSection() {
+            passwordSectionOpen = !passwordSectionOpen;
+            const panel = document.getElementById('passwordChangePanel');
+            const btn = document.getElementById('btnTogglePassword');
+            if (passwordSectionOpen) {
+                if (panel) panel.style.display = 'block';
+                if (btn) btn.textContent = 'Cancel Change';
+                setPasswordFieldsEnabled(true);
+                document.getElementById('profileCurrentPassword')?.focus();
+            } else {
+                if (panel) panel.style.display = 'none';
+                if (btn) btn.textContent = 'Change Password';
+                setPasswordFieldsEnabled(false);
+                const hint = document.getElementById('passwordHint');
+                if (hint) hint.style.display = 'none';
+            }
+            checkProfileDirty();
+        }
+
+        function checkProfileDirty() {
+            const nameEl = document.getElementById('profileName');
+            const emailEl = document.getElementById('profileEmail');
+            const usernameEl = document.getElementById('profileUsername');
+            if (!nameEl || !usernameEl) return;
+
+            const name = nameEl.value.trim();
+            const email = emailEl.value.trim();
+            const username = usernameEl.value.trim();
+            const currentPwd = document.getElementById('profileCurrentPassword')?.value || '';
+            const newPwd = document.getElementById('profileNewPassword')?.value || '';
+            const confirmPwd = document.getElementById('profileConfirmPassword')?.value || '';
+
+            const photoChanged = pendingProfilePhoto !== undefined && pendingProfilePhoto !== profileSnapshot.profilePhoto;
+            const fieldsChanged = name !== profileSnapshot.name || email !== profileSnapshot.email || username !== profileSnapshot.username;
+            const pwdChanged = passwordSectionOpen && (currentPwd || newPwd || confirmPwd);
+
+            const dirty = photoChanged || fieldsChanged || pwdChanged;
+            const btnSave = document.getElementById('btnProfileSave');
+            const btnCancel = document.getElementById('btnProfileCancel');
+            if (btnSave) btnSave.disabled = !dirty;
+            if (btnCancel) btnCancel.disabled = !dirty;
+        }
+
+        function handleProfilePhotoSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 800000) {
+                showToast('Photo must be under 800 KB.', 'error');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = e => {
+                pendingProfilePhoto = e.target.result;
+                const emp = getProfileEmp();
+                renderProfilePhotoPreview(emp);
+                checkProfileDirty();
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        function removeProfilePhoto() {
+            pendingProfilePhoto = '';
+            const emp = getProfileEmp();
+            renderProfilePhotoPreview(emp);
+            checkProfileDirty();
+        }
+
+        function cancelProfileChanges() {
+            loadMyProfile();
+            showToast('Changes discarded.');
+        }
+
+        function saveMyProfile() {
+            const emp = getProfileEmp();
+            if (!emp) return;
+
+            const name = document.getElementById('profileName').value.trim();
+            const email = document.getElementById('profileEmail').value.trim();
+            const username = document.getElementById('profileUsername').value.trim();
+            const currentPwd = document.getElementById('profileCurrentPassword').value;
+            const newPwd = document.getElementById('profileNewPassword').value;
+            const confirmPwd = document.getElementById('profileConfirmPassword').value;
+            const employees = db.getEmployees() || [];
+
+            if (!name) {
+                showToast('Please enter your name.', 'error');
+                return;
+            }
+            if (!username) {
+                showToast('Please enter a login username.', 'error');
+                return;
+            }
+            if (employees.some(e => e.id !== emp.id && e.username && e.username.toLowerCase() === username.toLowerCase())) {
+                showToast('Username is already taken.', 'error');
+                return;
+            }
+
+            const wantsPasswordChange = passwordSectionOpen && (currentPwd || newPwd || confirmPwd);
+            if (wantsPasswordChange) {
+                if (!currentPwd || !newPwd || !confirmPwd) {
+                    showToast('Fill in current, new, and confirm password.', 'error');
+                    return;
+                }
+                const expected = emp.password || emp.pin || '';
+                if (currentPwd !== expected) {
+                    const hint = document.getElementById('passwordHint');
+                    if (hint) {
+                        hint.textContent = 'Current password is incorrect.';
+                        hint.style.display = 'block';
+                        hint.style.color = '#DC2626';
+                    }
+                    showToast('Current password is incorrect.', 'error');
+                    return;
+                }
+                if (newPwd !== confirmPwd) {
+                    showToast('New passwords do not match.', 'error');
+                    return;
+                }
+                if (newPwd.length < 4) {
+                    showToast('Password must be at least 4 characters.', 'error');
+                    return;
+                }
+                emp.password = newPwd;
+            }
+
+            emp.realName = name;
+            emp.email = email;
+            emp.username = username;
+            if (emp.role === 'Admin') emp.name = 'Administrator';
+            else emp.name = name;
+
+            if (pendingProfilePhoto !== undefined) {
+                emp.profilePhoto = pendingProfilePhoto;
+            }
+
+            db.saveEmployees(employees);
+            updateCurrentUserSession(emp);
+            
+            // Switch sidebar dynamically
+            if (getCurrentUser().role === 'Admin') {
+                initSidebar('settings');
+            } else {
+                initSidebar('profile');
+            }
+            
+            loadMyProfile();
+            showToast('Profile saved successfully.');
         }
 
         // ================== PRODUCT VARIANTS CONFIGURATION ==================
@@ -847,11 +1181,10 @@
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="font-weight: 600; color: var(--text-primary);">${emp.name}</td>
+                    <td style="font-weight: 600; color: var(--text-primary);">${getEmployeeDisplayName(emp)}</td>
                     <td><span class="badge badge-secondary">${emp.role}</span></td>
                     <td class="font-bold">${emp.id}</td>
                     <td><span class="badge ${statusClass}">${emp.status}</span></td>
-                    <td>${emp.commissionRate}</td>
                     <td style="text-align: center;">
                         <button class="btn btn-secondary btn-sm" onclick="openEditEmpModal('${emp.id}')">Edit</button>
                         <button class="btn btn-secondary btn-sm" style="${toggleBtnStyle}" onclick="toggleEmployeeStatus('${emp.id}')">${toggleBtnText}</button>
@@ -861,39 +1194,39 @@
             });
         }
 
-        function toggleCommissionField() {
+        // Toggle switches use shared CSS — no extra init needed
+
+        function togglePinField() {
             const role = document.getElementById('empRoleInput').value;
-            const comm = document.getElementById('empCommInput');
-            if (role === 'Cashier') {
-                comm.value = '5%';
-                comm.readOnly = false;
+            const pinGroup = document.getElementById('addEmpPinGroup');
+            const pinInput = document.getElementById('empPinInput');
+            if (role === 'Admin' || role === 'Supervisor') {
+                pinGroup.style.display = 'block';
+                pinInput.required = true;
             } else {
-                comm.value = 'N/A';
-                comm.readOnly = true;
+                pinGroup.style.display = 'none';
+                pinInput.required = false;
+                pinInput.value = '';
             }
         }
 
-        function toggleEditCommissionField() {
+        function toggleEditPinField() {
             const role = document.getElementById('editEmpRoleInput').value;
-            const comm = document.getElementById('editEmpCommInput');
-            if (role === 'Cashier') {
-                if (comm.value === 'N/A') comm.value = '5%';
-                comm.readOnly = false;
+            const pinGroup = document.getElementById('editEmpPinGroup');
+            const pinInput = document.getElementById('editEmpPinInput');
+            if (role === 'Admin' || role === 'Supervisor') {
+                pinGroup.style.display = 'block';
+                pinInput.required = true;
             } else {
-                comm.value = 'N/A';
-                comm.readOnly = true;
+                pinGroup.style.display = 'none';
+                pinInput.required = false;
+                pinInput.value = '';
             }
         }
-
-        // Load custom styles for checking checkboxes styling
-        const checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
-        checkboxes.forEach(chk => {
-            chk.style.accentColor = 'var(--primary)';
-        });
 
         function openAddEmpModal() {
             document.getElementById('addEmpForm').reset();
-            toggleCommissionField();
+            togglePinField();
             openModal('addEmpModal');
         }
 
@@ -906,24 +1239,31 @@
             document.getElementById('editEmpIdDisplay').value = emp.id;
             document.getElementById('editEmpNameInput').value = emp.name;
             document.getElementById('editEmpRoleInput').value = emp.role;
-            document.getElementById('editEmpCommInput').value = emp.commissionRate;
+            document.getElementById('editEmpPasswordInput').value = emp.password || '';
             document.getElementById('editEmpPinInput').value = emp.pin || '';
             
-            toggleEditCommissionField();
+            toggleEditPinField();
             openModal('editEmpModal');
         }
 
         function handleAddEmployee(event) {
             event.preventDefault();
             const employees = db.getEmployees();
+            const role = document.getElementById('empRoleInput').value;
+            const pinValue = document.getElementById('empPinInput').value.trim();
+            const passwordValue = document.getElementById('empPasswordInput').value.trim();
 
             const newEmp = {
                 id: document.getElementById('empIdInput').value.trim(),
                 name: document.getElementById('empNameInput').value.trim(),
-                role: document.getElementById('empRoleInput').value,
+                realName: document.getElementById('empNameInput').value.trim(),
+                email: '',
+                username: document.getElementById('empIdInput').value.trim(),
+                password: passwordValue,
+                role: role,
                 status: 'Active',
-                commissionRate: document.getElementById('empCommInput').value.trim(),
-                pin: document.getElementById('empPinInput').value.trim()
+                pin: (role === 'Admin' || role === 'Supervisor') ? pinValue : '',
+                profilePhoto: ''
             };
 
             if ((newEmp.role === 'Admin' || newEmp.role === 'Supervisor') && newEmp.pin.length !== 4) {
@@ -951,10 +1291,15 @@
             const emp = employees.find(x => x.id === id);
             if (!emp) return;
 
+            const role = document.getElementById('editEmpRoleInput').value;
+            const pinValue = document.getElementById('editEmpPinInput').value.trim();
+            const passwordValue = document.getElementById('editEmpPasswordInput').value.trim();
+
             emp.name = document.getElementById('editEmpNameInput').value.trim();
-            emp.role = document.getElementById('editEmpRoleInput').value;
-            emp.commissionRate = document.getElementById('editEmpCommInput').value.trim();
-            emp.pin = document.getElementById('editEmpPinInput').value.trim();
+            emp.realName = document.getElementById('editEmpNameInput').value.trim();
+            emp.role = role;
+            emp.password = passwordValue;
+            emp.pin = (role === 'Admin' || role === 'Supervisor') ? pinValue : '';
 
             if ((emp.role === 'Admin' || emp.role === 'Supervisor') && emp.pin.length !== 4) {
                 alert('Admin and Supervisor roles require a 4-digit PIN.');
@@ -964,6 +1309,10 @@
             db.saveEmployees(employees);
             closeModal('editEmpModal');
             renderEmployees();
+            if (emp.id === getCurrentUser().id) {
+                updateCurrentUserSession(emp);
+                initSidebar('settings');
+            }
             alert('Employee profile updated successfully.');
         }
 
@@ -982,6 +1331,12 @@
         function toggleMarkupField() {
             const isChecked = document.getElementById('autoCalcPrice2').checked;
             document.getElementById('markupGroup').style.display = isChecked ? 'block' : 'none';
+        }
+
+        function toggleLargeSaleGroup() {
+            const el = document.getElementById('largeSaleGroup');
+            const checked = document.getElementById('alertLargeSales').checked;
+            if (el) el.style.display = checked ? 'block' : 'none';
         }
 
         function loadAllSettings() {
@@ -1132,16 +1487,36 @@
             localStorage.setItem('ztg_config_variants_data', JSON.stringify(tempVariantsData));
 
             alert('Settings saved successfully!');
+            markSettingsClean();
+        }
+
+        function markSettingsDirty(e) {
+            if (e && e.target && e.target.closest('#tab-profile')) {
+                return;
+            }
+            document.getElementById('btnSettingsSave').disabled = false;
+            document.getElementById('btnSettingsCancel').disabled = false;
+        }
+
+        function markSettingsClean() {
+            document.getElementById('btnSettingsSave').disabled = true;
+            document.getElementById('btnSettingsCancel').disabled = true;
         }
 
         function cancelChanges() {
             loadAllSettings();
-            alert('Changes discarded. Restored saved settings.');
+            markSettingsClean();
+            showToast('Changes discarded.');
         }
+
+        document.querySelector('.settings-page-body')?.addEventListener('input', markSettingsDirty);
+        document.querySelector('.settings-page-body')?.addEventListener('change', markSettingsDirty);
 
         document.getElementById('autoCalcPrice2').addEventListener('change', toggleMarkupField);
         document.getElementById('alertLargeSales').addEventListener('change', toggleLargeSaleGroup);
         loadAllSettings();
+        initSettingsNavigation();
+        markSettingsClean();
     </script>
 </body>
 </html>

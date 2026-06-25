@@ -13,12 +13,12 @@ const DEFAULT_PRODUCTS = [
 ];
 
 const DEFAULT_EMPLOYEES = [
-    { id: 'EMP-000', name: 'Administrator', role: 'Admin', status: 'Active', commissionRate: 'N/A', pin: '1234' },
-    { id: 'EMP-001', name: 'Maria Santos', role: 'Cashier', status: 'Active', commissionRate: '5%', pin: '' },
-    { id: 'EMP-002', name: 'Carlos Dizon', role: 'Cashier', status: 'Active', commissionRate: '5%', pin: '' },
-    { id: 'EMP-003', name: 'Joey Ramos', role: 'Cashier', status: 'Active', commissionRate: '5%', pin: '' },
-    { id: 'EMP-004', name: 'Ana Cruz', role: 'Cashier', status: 'Active', commissionRate: '5%', pin: '' },
-    { id: 'EMP-005', name: 'Pedro Gonzales', role: 'Checker', status: 'Active', commissionRate: 'N/A', pin: '' }
+    { id: 'EMP-000', name: 'Administrator', realName: 'Kyla', email: 'admin@ztgheavyparts.com', username: 'admin', password: 'admin123', role: 'Admin', status: 'Active', pin: '1234', profilePhoto: '' },
+    { id: 'EMP-001', name: 'Maria Santos', realName: 'Maria Santos', email: 'maria@ztgheavyparts.com', username: 'EMP-001', password: 'cashier1', role: 'Cashier', status: 'Active', pin: '', profilePhoto: '' },
+    { id: 'EMP-002', name: 'Carlos Dizon', realName: 'Carlos Dizon', email: '', username: 'EMP-002', password: 'cashier2', role: 'Cashier', status: 'Active', pin: '', profilePhoto: '' },
+    { id: 'EMP-003', name: 'Joey Ramos', realName: 'Joey Ramos', email: '', username: 'EMP-003', password: 'cashier3', role: 'Cashier', status: 'Active', pin: '', profilePhoto: '' },
+    { id: 'EMP-004', name: 'Ana Cruz', realName: 'Ana Cruz', email: '', username: 'EMP-004', password: 'cashier4', role: 'Cashier', status: 'Active', pin: '', profilePhoto: '' },
+    { id: 'EMP-005', name: 'Pedro Gonzales', realName: 'Pedro Gonzales', email: '', username: 'EMP-005', password: '', role: 'Checker', status: 'Active', pin: '', profilePhoto: '' }
 ];
 
 const DEFAULT_PENDING_POS = [
@@ -44,10 +44,6 @@ const DEFAULT_RESERVATIONS = [
     { id: 'RES-002', item: 'Rubber Track 400mm', customer: 'Golden State Builders', phone: '0922-333-4444', qty: 2, deposit: 5000, total: 17000, date: 'Jun 13, 2026', pickupDate: 'Jun 20, 2026', status: 'Completed' }
 ];
 
-const DEFAULT_ARCHIVES = [
-    { id: 'RES-009', type: 'Reservation Cancellation', details: 'Customer: Juan Dela Cruz cancelled reservation for Hydraulic Pump (Qty 1). Deposit returned: ₱1,000. Reason: Project budget constraints.', dateArchived: 'Jun 14, 2026' },
-    { id: 'PO-2026-004', type: 'PO Rejection', details: 'Supervisor rejected PO-2026-004 issued by Carlos Dizon. Reason: Incorrect pricing applied on Engine Oil Filter bulk.', dateArchived: 'Jun 13, 2026' }
-];
 
 // 2. LocalStorage Initializer
 function dbInit() {
@@ -66,9 +62,6 @@ function dbInit() {
     if (!localStorage.getItem('ztg_reservations')) {
         localStorage.setItem('ztg_reservations', JSON.stringify(DEFAULT_RESERVATIONS));
     }
-    if (!localStorage.getItem('ztg_archives')) {
-        localStorage.setItem('ztg_archives', JSON.stringify(DEFAULT_ARCHIVES));
-    }
     if (!localStorage.getItem('ztg_categories')) {
         localStorage.setItem('ztg_categories', JSON.stringify(['Hydraulics', 'Filters', 'Undercarriage', 'Engine', 'Electrical', 'Brake Systems']));
     }
@@ -76,14 +69,23 @@ function dbInit() {
     const existingEmps = JSON.parse(localStorage.getItem('ztg_employees') || '[]');
     let patched = false;
     existingEmps.forEach(emp => {
-        if (emp.pin === undefined) {
-            emp.pin = '';
+        if (emp.pin === undefined) { emp.pin = ''; patched = true; }
+        if (emp.realName === undefined) { emp.realName = emp.name || ''; patched = true; }
+        if (emp.username === undefined) {
+            emp.username = emp.id === 'EMP-000' ? 'admin' : emp.id;
             patched = true;
         }
+        if (emp.password === undefined) {
+            emp.password = emp.id === 'EMP-000' ? 'admin123' : (emp.pin || '');
+            patched = true;
+        }
+        if (emp.profilePhoto === undefined) { emp.profilePhoto = ''; patched = true; }
+        if (emp.email === undefined) { emp.email = ''; patched = true; }
+        if (emp.commissionRate !== undefined) { delete emp.commissionRate; patched = true; }
     });
     // Ensure default admin exists
     if (!existingEmps.find(e => e.id === 'EMP-000')) {
-        existingEmps.unshift({ id: 'EMP-000', name: 'Administrator', role: 'Admin', status: 'Active', commissionRate: 'N/A', pin: '1234' });
+        existingEmps.unshift({ id: 'EMP-000', name: 'Administrator', realName: 'Kyla', email: 'admin@ztgheavyparts.com', username: 'admin', password: 'admin123', role: 'Admin', status: 'Active', pin: '1234', profilePhoto: '' });
         patched = true;
     }
     if (patched) {
@@ -110,8 +112,6 @@ const db = {
     getReservations: () => JSON.parse(localStorage.getItem('ztg_reservations')),
     saveReservations: (r) => localStorage.setItem('ztg_reservations', JSON.stringify(r)),
 
-    getArchives: () => JSON.parse(localStorage.getItem('ztg_archives')),
-    saveArchives: (a) => localStorage.setItem('ztg_archives', JSON.stringify(a)),
     
     getCategories: () => JSON.parse(localStorage.getItem('ztg_categories')),
     saveCategories: (c) => localStorage.setItem('ztg_categories', JSON.stringify(c))
@@ -137,7 +137,6 @@ const dbKeys = {
     savePendingPOs: 'ztg_pending_pos',
     saveTransactions: 'ztg_transactions',
     saveReservations: 'ztg_reservations',
-    saveArchives: 'ztg_archives',
     saveCategories: 'ztg_categories'
 };
 
@@ -181,9 +180,6 @@ window.addEventListener('storage', (event) => {
         if (typeof renderPOSProducts === 'function') {
             renderPOSProducts();
         }
-        if (typeof renderArchives === 'function') {
-            renderArchives();
-        }
         if (typeof updateDashboard === 'function') {
             updateDashboard();
         }
@@ -191,13 +187,92 @@ window.addEventListener('storage', (event) => {
 });
 
 // 3. User & Authentication Logic
+function getTimeGreeting() {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+}
+
+function getEmployeeDisplayName(userOrEmp) {
+    if (!userOrEmp) return '—';
+    return (userOrEmp.realName && userOrEmp.realName.trim()) || userOrEmp.name || '—';
+}
+
+function getEmployeeInitials(userOrEmp) {
+    const name = getEmployeeDisplayName(userOrEmp);
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase() || '?';
+}
+
+function renderUserAvatar(userOrEmp, className) {
+    const cls = className || 'user-avatar';
+    if (userOrEmp && userOrEmp.profilePhoto) {
+        return `<img src="${userOrEmp.profilePhoto}" class="${cls} user-avatar-img" alt="${getEmployeeDisplayName(userOrEmp)}">`;
+    }
+    return `<div class="${cls}">${getEmployeeInitials(userOrEmp)}</div>`;
+}
+
+function getAccountRoleLabel(role) {
+    if (role === 'Admin') return 'Administrator';
+    if (role === 'Cashier') return 'Cashier';
+    if (role === 'Checker') return 'Checker';
+    if (role === 'Supervisor') return 'Supervisor';
+    return role || 'Staff';
+}
+
+function getReservationActorLabel(userOrEmp) {
+    if (!userOrEmp) return '—';
+    if (userOrEmp.role === 'Admin') return 'Administrator';
+    return getEmployeeDisplayName(userOrEmp);
+}
+
+function updateCurrentUserSession(emp) {
+    if (!emp) return;
+    sessionStorage.setItem('ztg_current_user', JSON.stringify({
+        id: emp.id,
+        name: emp.name,
+        realName: emp.realName || emp.name,
+        email: emp.email || '',
+        role: emp.role,
+        profilePhoto: emp.profilePhoto || ''
+    }));
+}
+
+function formatReservedByDisplay(r) {
+    if (!r) return '—';
+    if (r.reservedBy) return r.reservedBy;
+    const employees = db.getEmployees() || [];
+    const byId = r.reservedById && employees.find(e => e.id === r.reservedById);
+    if (byId) return getReservationActorLabel(byId);
+    return '—';
+}
+
 function getCurrentUser() {
     const userJson = sessionStorage.getItem('ztg_current_user');
     if (!userJson) {
-        // Fallback default admin
-        return { name: 'Administrator', role: 'Admin', id: 'EMP-000' };
+        return { id: 'EMP-000', name: 'Administrator', realName: 'Kyla', role: 'Admin', profilePhoto: '' };
     }
-    return JSON.parse(userJson);
+    const session = JSON.parse(userJson);
+    const employees = db.getEmployees() || [];
+    const emp = employees.find(e => e.id === session.id);
+    if (emp) {
+        return {
+            id: emp.id,
+            name: emp.name,
+            realName: emp.realName || emp.name,
+            role: emp.role,
+            profilePhoto: emp.profilePhoto || '',
+            email: emp.email || '',
+            username: emp.username || ''
+        };
+    }
+    return {
+        ...session,
+        realName: session.realName || session.name || 'User',
+        profilePhoto: session.profilePhoto || ''
+    };
 }
 
 function checkLogin() {
@@ -270,10 +345,10 @@ function initSidebar(activePage) {
                 <div class="nav-group-label">Records</div>
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a href="transaction-log.html?v=${Date.now()}" class="nav-link ${activePage === 'transactions' ? 'active' : ''}">
+                        <a href="history-logs.html?v=${Date.now()}" class="nav-link ${activePage === 'transactions' ? 'active' : ''}">
                             <div class="nav-link-content">
                                 <svg><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                Transaction Log
+                                History Logs
                             </div>
                         </a>
                     </li>
@@ -282,14 +357,6 @@ function initSidebar(activePage) {
                             <div class="nav-link-content">
                                 <svg><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 Sales Log
-                            </div>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="archives.html" class="nav-link ${activePage === 'archives' ? 'active' : ''}">
-                            <div class="nav-link-content">
-                                <svg><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
-                                Archives
                             </div>
                         </a>
                     </li>
@@ -307,10 +374,10 @@ function initSidebar(activePage) {
                 <div class="nav-group-label">Config</div>
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a href="settings.html" class="nav-link ${activePage === 'settings' ? 'active' : ''}">
+                        <a href="settings.html" class="nav-link ${activePage === 'settings' || activePage === 'profile' ? 'active' : ''}">
                             <div class="nav-link-content">
                                 <svg><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                Settings
+                                System Settings
                             </div>
                         </a>
                     </li>
@@ -361,6 +428,19 @@ function initSidebar(activePage) {
                     </li>
                 </ul>
             </div>
+            <div class="nav-group">
+                <div class="nav-group-label">Account</div>
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="settings.html?tab=profile" class="nav-link ${activePage === 'profile' ? 'active' : ''}">
+                            <div class="nav-link-content">
+                                <svg><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>
+                                My Profile
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
         `;
     }
 
@@ -376,13 +456,13 @@ function initSidebar(activePage) {
             ${navItemsHTML}
         </div>
         <div class="sidebar-footer">
-            <div class="user-info">
-                <div class="user-avatar">${user.name.split(' ').map(n => n[0]).join('')}</div>
+            <a href="settings.html?tab=profile" class="user-info user-info-link">
+                ${renderUserAvatar(user, 'user-avatar')}
                 <div class="user-details">
-                    <div class="user-name">${user.name}</div>
-                    <div class="user-role">${user.role}</div>
+                    <div class="user-name">${getEmployeeDisplayName(user)}</div>
+                    <div class="user-role">${getAccountRoleLabel(user.role)}</div>
                 </div>
-            </div>
+            </a>
             <a href="#" class="logout-link" onclick="logout(event)">
                 <svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                 Sign Out
@@ -413,11 +493,373 @@ function closeModal(modalId) {
     }
 }
 
+function ensureToastContainer() {
+    if (!document.getElementById('toast-container')) {
+        const el = document.createElement('div');
+        el.id = 'toast-container';
+        el.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:10px;pointer-events:none;';
+        document.body.appendChild(el);
+    }
+}
+
+function showToast(message, type = 'success') {
+    ensureToastContainer();
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    const bgColor = type === 'success' ? '#10B981' : '#EF4444';
+    const icon = type === 'success'
+        ? '<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;"><path d="M5 13l4 4L19 7"/></svg>'
+        : '<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;"><path d="M6 18L18 6M6 6l12 12"/></svg>';
+    toast.style.cssText = `background:${bgColor};color:white;padding:12px 20px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;align-items:center;gap:12px;font-size:14px;font-weight:500;pointer-events:auto;opacity:0;transform:translateY(12px);transition:all 0.3s ease;`;
+    toast.innerHTML = `${icon}<span>${message}</span>`;
+    container.appendChild(toast);
+    requestAnimationFrame(() => { toast.style.opacity = '1'; toast.style.transform = 'translateY(0)'; });
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(12px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+ensureToastContainer();
+
 // 6. Global Shared Functions (CRUD / Helpers)
 function getStockStatus(qty) {
     if (qty === 0) return { text: 'No Stock', class: 'badge-danger' };
     if (qty <= 5) return { text: 'Low Stock', class: 'badge-warning' };
     return { text: 'Active', class: 'badge-success' };
+}
+
+// Reusable product search autocomplete (POS / reservations / restock pattern)
+window.productSearchState = window.productSearchState || {};
+
+function setupProductAutocomplete(inputId, suggestionsId, options = {}) {
+    const input = document.getElementById(inputId);
+    const list = document.getElementById(suggestionsId);
+    if (!input || !list) return;
+
+    const blockOutOfStock = options.blockOutOfStock !== false;
+    window.productSearchState[inputId] = { selectedId: null };
+
+    const renderSuggestions = () => {
+        const val = input.value.toLowerCase().trim();
+        list.innerHTML = '';
+        window.productSearchState[inputId].selectedId = null;
+
+        if (!val) {
+            list.style.display = 'none';
+            return;
+        }
+
+        const products = db.getProducts().filter(p =>
+            p.name.toLowerCase().includes(val) || p.partNo.toLowerCase().includes(val)
+        ).slice(0, 10);
+
+        if (products.length === 0) {
+            list.innerHTML = '<div class="suggest-item suggest-empty">No matching products</div>';
+            list.style.display = 'block';
+            return;
+        }
+
+        products.forEach(p => {
+            const outOfStock = p.stock <= 0;
+            const item = document.createElement('div');
+            item.className = 'suggest-item' + (outOfStock && blockOutOfStock ? ' suggest-disabled' : '');
+            const stockText = outOfStock ? 'No stock' : `${p.stock} in stock`;
+            const stockClass = outOfStock ? 'stock-none' : (p.stock <= 5 ? 'stock-low' : 'stock-ok');
+            item.innerHTML = `
+                <div class="suggest-main"><strong>${p.partNo}</strong> — ${p.name}</div>
+                <div class="suggest-meta"><span class="suggest-price">₱${Number(p.price1).toLocaleString()}</span><span class="suggest-stock ${stockClass}">${stockText}</span></div>
+            `;
+            if (!outOfStock || !blockOutOfStock) {
+                item.onclick = () => {
+                    input.value = `${p.partNo} — ${p.name}`;
+                    window.productSearchState[inputId].selectedId = p.id;
+                    list.style.display = 'none';
+                    if (typeof options.onSelect === 'function') options.onSelect(p);
+                };
+            }
+            list.appendChild(item);
+        });
+        list.style.display = 'block';
+    };
+
+    input.addEventListener('input', renderSuggestions);
+    input.addEventListener('focus', renderSuggestions);
+
+    if (!window._productSearchClickBound) {
+        document.addEventListener('click', (e) => {
+            document.querySelectorAll('.product-suggestions').forEach(el => {
+                const relatedInput = el.previousElementSibling || el.parentElement?.querySelector('input');
+                if (relatedInput && e.target !== relatedInput && !el.contains(e.target)) {
+                    el.style.display = 'none';
+                }
+            });
+        });
+        window._productSearchClickBound = true;
+    }
+}
+
+function getSelectedProductId(inputId) {
+    return window.productSearchState[inputId]?.selectedId ?? null;
+}
+
+function clearProductSearch(inputId, suggestionsId) {
+    const input = document.getElementById(inputId);
+    const list = document.getElementById(suggestionsId);
+    if (input) input.value = '';
+    if (list) list.style.display = 'none';
+    if (window.productSearchState[inputId]) window.productSearchState[inputId].selectedId = null;
+}
+
+/**
+ * printUnifiedReceipt — Shared PH BIR/EOPT-compliant receipt printer.
+ * Handles all transaction types: Sales, Refund, Return, Void.
+ *
+ * @param {Object} options
+ *   type          {string}   'Sales' | 'Refund' | 'Return' | 'Void'
+ *   invoiceNo     {string}   Primary invoice/OR number shown on receipt
+ *   date          {string}   Transaction date string
+ *   customer      {string}   Customer name
+ *   phone         {string}   Customer phone (optional)
+ *   items         {Array}    [{name, partNo, qty, price, total}]
+ *   subtotal      {number}   Sum of items (VAT-inclusive total / 1.12 for Non-VAT display)
+ *   total         {number}   Grand total amount
+ *   payment       {string}   Payment method string
+ *   tendered      {number}   Cash tendered (optional)
+ *   change        {number}   Change given (optional)
+ *   servedBy      {string}   Employee who processed
+ *   docType       {string}   'S.I.' | 'D.R.' | 'C.I.' (Sales only)
+ *   // Non-Sales extras:
+ *   originalInvoice {string} SI number being referenced
+ *   reason        {string}   Refund/Return/Void reason
+ *   approver      {string}   Name of admin who approved
+ *   approvalCode  {string}   PIN/approval code used
+ *   splitDetails  {string}   Optional HTML for split payment detail lines
+ *   openWindow    {boolean}  If true, opens in new window (for Refund/Return/Void)
+ */
+function printUnifiedReceipt(options) {
+    const {
+        type = 'Sales',
+        invoiceNo = '',
+        date = '',
+        customer = 'Walk-in',
+        phone = '',
+        buyerTin = '',
+        buyerAddress = '',
+        items = [],
+        subtotal = 0,
+        total = 0,
+        payment = '',
+        tendered = 0,
+        change = 0,
+        servedBy = '',
+        docType = 'S.I.',
+        originalInvoice = '',
+        reason = '',
+        approver = '',
+        approvalCode = '',
+        splitDetails = ''
+    } = options;
+
+    // ── Type-specific styling ────────────────────────────────────────────────
+    const typeConfig = {
+        Sales: {
+            color: '#059669',
+            bgLight: '#ECFDF5',
+            border: '#6EE7B7',
+            label: docType === 'D.R.' ? 'DELIVERY RECEIPT' : docType === 'C.I.' ? 'CHARGE INVOICE' : 'SALES INVOICE',
+            badge: docType === 'D.R.' ? 'D.R.' : docType === 'C.I.' ? 'C.I.' : 'S.I.',
+        },
+        Refund: {
+            color: '#DC2626',
+            bgLight: '#FEF2F2',
+            border: '#FCA5A5',
+            label: 'REFUND INVOICE',
+            badge: 'REFUND',
+        },
+        Return: {
+            color: '#D97706',
+            bgLight: '#FFFBEB',
+            border: '#FDE68A',
+            label: 'RETURN / EXCHANGE INVOICE',
+            badge: 'RETURN',
+        },
+        Void: {
+            color: '#7F1D1D',
+            bgLight: '#FEF2F2',
+            border: '#FECACA',
+            label: 'VOID NOTICE',
+            badge: 'VOID',
+        }
+    };
+    const cfg = typeConfig[type] || typeConfig['Sales'];
+
+    // ── Items table rows ─────────────────────────────────────────────────────
+    const itemsRows = items.map(item => `
+        <tr style="border-bottom: 1px dashed #E5E7EB;">
+            <td style="padding: 5px 4px; font-size: 11px; line-height: 1.4;">
+                ${item.name || '—'}<br>
+                <span style="color: #6B7280; font-size: 10px;">Part #: ${item.partNo || '—'}</span>
+            </td>
+            <td style="padding: 5px 4px; text-align: center; font-size: 11px; width: 28px;">${item.unit || 'pc'}</td>
+            <td style="padding: 5px 4px; text-align: center; font-size: 11px; width: 28px;">${item.qty}</td>
+            <td style="padding: 5px 4px; text-align: right; font-size: 11px; width: 68px;">&#8369;${Number(item.price || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            <td style="padding: 5px 4px; text-align: right; font-weight: 700; font-size: 11px; width: 72px;">&#8369;${Number(item.total || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        </tr>
+    `).join('');
+
+    // ── Payment summary lines ────────────────────────────────────────────────
+    let paymentLines = '';
+    if (splitDetails) {
+        paymentLines = splitDetails;
+    } else {
+        paymentLines += `<tr><td style="padding:3px 0;font-size:11px;color:#374151;">Payment Method:</td><td style="padding:3px 0;font-size:11px;text-align:right;font-weight:600;">${payment || '—'}</td></tr>`;
+        if (tendered > 0 && type === 'Sales') {
+            paymentLines += `<tr><td style="padding:3px 0;font-size:11px;color:#374151;">Cash Tendered:</td><td style="padding:3px 0;font-size:11px;text-align:right;">&#8369;${Number(tendered).toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>`;
+            paymentLines += `<tr><td style="padding:3px 0;font-size:11px;color:#374151;">Change:</td><td style="padding:3px 0;font-size:11px;text-align:right;">&#8369;${Number(change).toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>`;
+        }
+    }
+
+    // ── Reference block (non-Sales types) ───────────────────────────────────
+    const refBlock = (type !== 'Sales') ? `
+        <tr style="border-top: 1px dashed #ccc;"><td colspan="2" style="padding-top: 8px;"></td></tr>
+        <tr><td style="font-size:11px;color:#6B7280;padding:3px 0;">Original Invoice:</td><td style="font-size:11px;font-weight:700;text-align:right;">${originalInvoice || '—'}</td></tr>
+        <tr><td style="font-size:11px;color:#6B7280;padding:3px 0;">Reason:</td><td style="font-size:11px;text-align:right;">${reason || '—'}</td></tr>
+        <tr><td style="font-size:11px;color:#6B7280;padding:3px 0;">Processed By:</td><td style="font-size:11px;font-weight:600;text-align:right;">${approver || '—'}</td></tr>
+        ${approvalCode ? `<tr><td style="font-size:11px;color:#6B7280;padding:3px 0;">Approval Code:</td><td style="font-size:11px;text-align:right;">${approvalCode}</td></tr>` : ''}
+    ` : '';
+
+    // ── Full receipt HTML ────────────────────────────────────────────────────
+    const receiptHtml = `
+        <div style="font-family: 'Courier New', Courier, monospace; width: 320px; margin: 0 auto; padding: 20px; color: #111; font-size: 12px; line-height: 1.5;">
+
+            <!-- Company Header -->
+            <div style="text-align: center; margin-bottom: 12px;">
+                <div style="font-size: 16px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">ZTG HEAVY PARTS</div>
+                <div style="font-size: 10px; color: #374151; margin-top: 2px;">VAT Registered</div>
+                <div style="font-size: 10px; color: #374151;">TIN: 000-123-456-000</div>
+                <div style="font-size: 10px; color: #374151;">123 Industrial Ave., Brgy. San Jose</div>
+                <div style="font-size: 10px; color: #374151;">Quezon City, Metro Manila</div>
+                <div style="font-size: 10px; color: #374151;">Tel: (02) 8888-0000</div>
+            </div>
+
+            <!-- Type Badge -->
+            <div style="text-align: center; border: 2px solid ${cfg.color}; background: ${cfg.bgLight}; color: ${cfg.color}; padding: 6px 0; margin: 10px 0; font-size: 14px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">
+                ${cfg.label}
+            </div>
+
+            <!-- Invoice Number & Date -->
+            <div style="border: 1px dashed #ccc; padding: 8px; margin-bottom: 10px;">
+                <table style="width:100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="font-size:11px; color:#6B7280;">Invoice No.:</td>
+                        <td style="font-size:12px; font-weight:900; text-align:right; color:${cfg.color};">${invoiceNo}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:11px; color:#6B7280;">Date & Time:</td>
+                        <td style="font-size:11px; text-align:right;">${date}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:11px; color:#6B7280;">Served By:</td>
+                        <td style="font-size:11px; text-align:right; font-weight:600;">${servedBy || '—'}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Sold To Block -->
+            <div style="border: 1px dashed #ccc; padding: 8px; margin-bottom: 10px;">
+                <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:4px;">Sold To / Customer</div>
+                <table style="width:100%; border-collapse:collapse;">
+                    <tr><td style="font-size:10px;color:#6B7280;width:55px;">Name:</td><td style="font-size:11px;font-weight:700;">${customer || 'Walk-in'}</td></tr>
+                    <tr><td style="font-size:10px;color:#6B7280;">Address:</td><td style="font-size:11px;">${buyerAddress || '—'}</td></tr>
+                    <tr><td style="font-size:10px;color:#6B7280;">TIN:</td><td style="font-size:11px;font-weight:600;">${buyerTin || 'N/A (Walk-in)'}</td></tr>
+                    ${phone ? `<tr><td style="font-size:10px;color:#6B7280;">Tel:</td><td style="font-size:11px;">${phone}</td></tr>` : ''}
+                </table>
+            </div>
+
+            <!-- Items Table -->
+            <div style="margin-bottom: 10px;">
+                <table style="width:100%; border-collapse: collapse; border-top: 2px solid #111; border-bottom: 1px dashed #ccc;">
+                    <thead>
+                        <tr style="border-bottom: 1px dashed #999;">
+                            <th style="padding:5px 4px; text-align:left; font-size:10px; font-weight:700; text-transform:uppercase;">Description</th>
+                            <th style="padding:5px 4px; text-align:center; font-size:10px; font-weight:700; width:28px;">Unit</th>
+                            <th style="padding:5px 4px; text-align:center; font-size:10px; font-weight:700; width:28px;">Qty</th>
+                            <th style="padding:5px 4px; text-align:right; font-size:10px; font-weight:700; width:68px;">Unit Price</th>
+                            <th style="padding:5px 4px; text-align:right; font-size:10px; font-weight:700; width:72px;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsRows || '<tr><td colspan="5" style="padding:8px 4px; text-align:center; font-size:11px; color:#6B7280;">No items</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- VAT Breakdown + Totals -->
+            <div style="margin-bottom: 10px;">
+                <table style="width:100%; border-collapse: collapse;">
+                    <tr><td style="padding:2px 0;font-size:10px;color:#6B7280;">VATable Sales:</td><td style="padding:2px 0;font-size:10px;text-align:right;color:#6B7280;">&#8369;${(Number(total)/1.12).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+                    <tr><td style="padding:2px 0;font-size:10px;color:#6B7280;">VAT Amount (12%):</td><td style="padding:2px 0;font-size:10px;text-align:right;color:#6B7280;">&#8369;${(Number(total)-Number(total)/1.12).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+                    <tr><td style="padding:2px 0;font-size:10px;color:#6B7280;">VAT-Exempt Sales:</td><td style="padding:2px 0;font-size:10px;text-align:right;color:#6B7280;">&#8369;0.00</td></tr>
+                    <tr><td style="padding:2px 0;font-size:10px;color:#6B7280;">Zero-Rated Sales:</td><td style="padding:2px 0;font-size:10px;text-align:right;color:#6B7280;">&#8369;0.00</td></tr>
+                    <tr style="border-top: 2px solid #111; border-bottom: 2px solid #111;">
+                        <td style="padding:5px 0;font-size:13px;font-weight:900;">${type==='Refund'?'TOTAL REFUND:':type==='Return'?'TOTAL RETURN:':type==='Void'?'VOIDED AMOUNT:':'TOTAL AMOUNT DUE:'}</td>
+                        <td style="padding:5px 0;font-size:13px;font-weight:900;text-align:right;color:${cfg.color};">&#8369;${Number(total).toLocaleString(undefined,{minimumFractionDigits:2})}</td>
+                    </tr>
+                    ${paymentLines}
+                    ${refBlock}
+                </table>
+            </div>
+
+            <!-- Footer -->
+            <div style="text-align: center; border-top: 1px dashed #999; padding-top: 10px; margin-top: 10px;">
+                <div style="font-size: 9px; color: #6B7280; line-height: 1.6;">
+                    <div>ATP No.: ZTG-ATP-2024-001</div>
+                    <div>Valid Until: December 31, 2029</div>
+                    <div>Acknowledgement Certificate No.: AC-2024-ZTG-001</div>
+                    <div style="margin-top:3px;">Software Provider: ZTG POS System v2.0</div>
+                    <div style="margin-top: 6px; font-size: 11px; font-style: italic; color: #374151;">Thank you for your business!</div>
+                    <div style="margin-top: 2px;">— ZTG Heavy Parts —</div>
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    // ── Render via print-section (same-page approach consistent across all types) ──
+    const printStyle = document.createElement('style');
+    printStyle.id = 'print-style-receipt';
+    printStyle.innerHTML = `
+        @media print {
+            body * { visibility: hidden !important; }
+            #ztg-print-receipt, #ztg-print-receipt * { visibility: visible !important; }
+            #ztg-print-receipt {
+                position: fixed; left: 0; top: 0; width: 100%; height: auto;
+                background: #fff; z-index: 999999; display: flex;
+                justify-content: center; padding: 0; margin: 0;
+            }
+        }
+        @page { margin: 0.5cm; }
+    `;
+    document.head.appendChild(printStyle);
+
+    const printDiv = document.createElement('div');
+    printDiv.id = 'ztg-print-receipt';
+    printDiv.innerHTML = receiptHtml;
+    document.body.appendChild(printDiv);
+
+    window.print();
+
+    setTimeout(() => {
+        printStyle.remove();
+        printDiv.remove();
+    }, 1500);
+}
+
+// Keep legacy alias for backward compatibility
+function printZtgReceipt(receiptNo, receiptContentHtml, docTitle) {
+    printUnifiedReceipt({ type: 'Sales', invoiceNo: receiptNo, date: new Date().toLocaleString() });
 }
 
 // Run basic login validation
@@ -597,7 +1039,12 @@ async function navigateTo(url, push = true) {
         // 5. Run page scripts
         const inlineScripts = parsedDoc.querySelectorAll('script:not([src])');
         inlineScripts.forEach(script => {
-            executeSubpageScript(script.textContent);
+            const content = script.textContent;
+            // Skip Live Server injection scripts to prevent refreshCSS ReferenceErrors
+            if (content.includes('Live reload enabled') || content.includes('refreshCSS') || content.includes('WebSocket')) {
+                return;
+            }
+            executeSubpageScript(content);
         });
 
     } catch (e) {
@@ -751,7 +1198,7 @@ window.playChime = function() {
     }
 };
 
-window.showToast = function(n) {
+window.showNotificationToast = function(n) {
     let container = document.getElementById('toastContainer');
     if (!container) {
         container = document.createElement('div');
@@ -785,6 +1232,18 @@ window.showToast = function(n) {
         iconBg = '#ECFDF5';
         iconColor = '#10B981';
         iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`;
+    } else if (n.txSubType === 'inventory_restock') {
+        iconBg = '#ECFDF5';
+        iconColor = '#059669';
+        iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M12 5v14M5 12h14"/></svg>`;
+    } else if (n.txSubType === 'inventory_damaged') {
+        iconBg = '#FEF2F2';
+        iconColor = '#DC2626';
+        iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>`;
+    } else if (n.type === 'transaction') {
+        iconBg = '#F0FDF4';
+        iconColor = '#16A34A';
+        iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`;
     }
     
     toast.innerHTML = `
@@ -792,8 +1251,8 @@ window.showToast = function(n) {
             ${iconSvg}
         </div>
         <div class="notif-toast-content">
-            <div class="notif-toast-title">${n.title}</div>
-            <div class="notif-toast-msg">${n.message}</div>
+            <div class="notif-toast-title">${n.title || 'Notification'}</div>
+            <div class="notif-toast-msg">${n.message || ''}</div>
         </div>
     `;
     
@@ -812,7 +1271,7 @@ window.showToast = function(n) {
         const toastRole = toastUser ? toastUser.role : 'Admin';
         let dest = null;
         if (n.type === 'transaction') {
-            dest = toastRole === 'Admin' ? `transaction-log.html?v=${Date.now()}` : `daily-sales.html?v=${Date.now()}`;
+            dest = n.link || (toastRole === 'Admin' ? `history-logs.html?v=${Date.now()}` : `daily-sales.html?v=${Date.now()}`);
         } else if (n.type === 'low_stock') {
             dest = toastRole === 'Admin' ? 'product-management.html' : 'pos.html';
         } else if (n.type === 'insight') {
@@ -831,6 +1290,94 @@ window.showToast = function(n) {
             }, 400);
         }
     }, 5000);
+};
+
+function buildTxNotificationContent(t, role) {
+    const txId = t.siNo || t.id || 'TX';
+    const cashier = t.cashier || 'Staff';
+    const qty = t.qty || 0;
+    const amount = t.amount || 0;
+    const customer = t.customer || 'Walk-in';
+
+    switch (t.status) {
+        case 'Restocked':
+            return {
+                subType: 'inventory_restock',
+                title: 'Inventory Restocked',
+                message: `${cashier} added ${qty} unit(s). ${t.reason || t.itemName || ''}`,
+                link: 'history-logs.html'
+            };
+        case 'Damaged':
+            return {
+                subType: 'inventory_damaged',
+                title: 'Damaged Stock Logged',
+                message: `${qty} unit(s) of ${t.itemName || 'item'} moved to damaged. ${t.refundReason || ''}`,
+                link: 'history-logs.html'
+            };
+        case 'Deposit':
+            return {
+                subType: 'reservation',
+                title: 'Reservation Deposit',
+                message: `${cashier} recorded deposit for ${customer} (${txId}).`,
+                link: 'history-logs.html'
+            };
+        case 'Paid':
+            return {
+                subType: 'reservation',
+                title: 'Full Payment Received',
+                message: `${customer} paid in full — ${txId}.`,
+                link: 'history-logs.html'
+            };
+        case 'Completed':
+            return {
+                subType: 'sale',
+                title: role === 'Admin' ? 'Sale Completed' : 'Transaction Completed',
+                message: `${cashier} completed ${txId} for ${customer} (₱${amount.toLocaleString()}).`,
+                link: null
+            };
+        case 'Refund':
+        case 'Return':
+            return {
+                subType: 'refund',
+                title: t.status === 'Refund' ? 'Refund Processed' : 'Return Processed',
+                message: `${txId} — ₱${amount.toLocaleString()}. ${t.refundReason || ''}`,
+                link: 'history-logs.html'
+            };
+        case 'Void':
+            return {
+                subType: 'void',
+                title: 'Transaction Voided',
+                message: `${txId} voided. ${t.voidReason || t.refundReason || ''}`,
+                link: 'history-logs.html'
+            };
+        default:
+            if (t.type === 'inventory') {
+                return {
+                    subType: 'inventory',
+                    title: `Inventory Update`,
+                    message: `${txId} — ${t.itemName || t.status || 'Stock change'}.`,
+                    link: 'history-logs.html'
+                };
+            }
+            return {
+                subType: 'transaction',
+                title: role === 'Admin' ? 'New Transaction' : 'Transaction Recorded',
+                message: `${cashier} — ${txId} (${t.status || 'Updated'}).`,
+                link: null
+            };
+    }
+}
+
+window.getTransactionReason = function(tx) {
+    if (!tx) return '—';
+    if (tx.reason) return tx.reason;
+    if (tx.refundReason) return tx.refundReason;
+    if (tx.voidReason) return tx.voidReason;
+    if (tx.status === 'Restocked' && tx.qty) {
+        return `Added stock (${tx.qty} unit${tx.qty !== 1 ? 's' : ''})`;
+    }
+    if (tx.internalNotes) return tx.internalNotes;
+    return '—';
 };
 
 window.updateNotificationsFromDB = function() {
@@ -875,26 +1422,24 @@ window.updateNotificationsFromDB = function() {
         changed = true;
     }
     
-    // 2. Process Completed Transactions (Real-time notifications for Admin and Cashier)
+    // 2. Process Transactions (real-time notifications)
     const completedTxIds = new Set(transactions.map(t => t.siNo || t.id));
     transactions.forEach(t => {
         const txId = t.siNo || t.id;
+        if (!txId) return;
         const hasNotif = notifications.some(n => n.type === 'transaction' && n.txId === txId);
         if (!hasNotif) {
-            const title = role === 'Admin' ? 'New Completed Sale' : 'Transaction Completed';
-            const message = role === 'Admin' 
-                ? `${t.cashier} processed sale ${txId} for ${t.customer} (₱${t.amount.toLocaleString()}).`
-                : `Sale ${txId} was processed successfully (₱${t.amount.toLocaleString()}).`;
-            
+            const content = buildTxNotificationContent(t, role);
             notifications.unshift({
                 id: 'notif-tx-' + txId,
                 type: 'transaction',
+                txSubType: content.subType,
                 txId: txId,
-                title: title,
-                message: message,
+                title: content.title,
+                message: content.message,
+                link: content.link,
                 timestamp: Date.now(),
                 read: false
-                // link resolved at click time based on current user role
             });
             changed = true;
         }
@@ -1027,6 +1572,14 @@ window.renderNotificationsUI = function(notifications) {
             iconBg = '#ECFDF5';
             iconColor = '#10B981';
             iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`;
+        } else if (n.txSubType === 'inventory_restock') {
+            iconBg = '#ECFDF5';
+            iconColor = '#059669';
+            iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M12 5v14M5 12h14"/></svg>`;
+        } else if (n.txSubType === 'inventory_damaged') {
+            iconBg = '#FEF2F2';
+            iconColor = '#DC2626';
+            iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>`;
         } else if (n.type === 'transaction') {
             iconBg = '#F0FDF4';
             iconColor = '#16A34A';
@@ -1055,10 +1608,10 @@ window.renderNotificationsUI = function(notifications) {
             </div>
             <div style="flex: 1; min-width: 0;">
                 <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 4px; margin-bottom: 2px;">
-                    <strong style="font-size: 13px; font-weight: 700; color: var(--text-primary, #0F172A); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${n.title}</strong>
+                    <strong style="font-size: 13px; font-weight: 700; color: var(--text-primary, #0F172A); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${n.title || 'Notification'}</strong>
                     <span style="font-size: 10px; color: var(--text-secondary, #64748B); flex-shrink: 0;">${timeStr}</span>
                 </div>
-                <div style="font-size: 11px; color: var(--text-secondary, #64748B); line-height: 1.4; word-break: break-word;">${n.message}</div>
+                <div style="font-size: 11px; color: var(--text-secondary, #64748B); line-height: 1.4; word-break: break-word;">${n.message || ''}</div>
             </div>
             ${n.read ? '' : '<div class="unread-dot" style="width: 6px; height: 6px; background: #3B82F6; border-radius: 50%; align-self: center; flex-shrink: 0; margin-left: 8px;"></div>'}
         `;
@@ -1073,7 +1626,7 @@ window.renderNotificationsUI = function(notifications) {
             const clickRole = clickUser ? clickUser.role : 'Admin';
             let dest = null;
             if (n.type === 'transaction') {
-                dest = clickRole === 'Admin' ? `transaction-log.html?v=${Date.now()}` : `daily-sales.html?v=${Date.now()}`;
+                dest = n.link || (clickRole === 'Admin' ? `history-logs.html?v=${Date.now()}` : `daily-sales.html?v=${Date.now()}`);
             } else if (n.type === 'low_stock') {
                 dest = clickRole === 'Admin' ? 'product-management.html' : 'pos.html';
             } else if (n.type === 'insight') {
@@ -1098,7 +1651,7 @@ window.triggerNotificationsUpdate = function() {
     notifications.forEach(n => {
         if (!n.read && !notifiedIds.has(n.id)) {
             if (window.isNotificationsLoaded) {
-                window.showToast(n);
+                window.showNotificationToast(n);
                 hasNew = true;
             }
             notifiedIds.add(n.id);
@@ -1311,4 +1864,20 @@ window.addEventListener('storage', (e) => {
         }
     }, 3000);
 })();
+
+
+
+// Unified toast: string messages for app actions, objects for notification pop-ups
+const originalShowToast = window.showToast || (typeof showToast !== 'undefined' ? showToast : null);
+window.showToast = function(messageOrNotif, type) {
+    if (messageOrNotif && typeof messageOrNotif === 'object' && (messageOrNotif.title || messageOrNotif.message)) {
+        window.showNotificationToast(messageOrNotif);
+        return;
+    }
+    if (originalShowToast && originalShowToast !== window.showToast) {
+        originalShowToast(String(messageOrNotif || ''), type);
+    } else {
+        console.log('Toast:', messageOrNotif, type);
+    }
+};
 

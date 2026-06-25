@@ -73,9 +73,9 @@
     <div class="modal-overlay" id="addResModal">
         <div class="modal-card" style="max-width: 1050px; border-radius: 8px; overflow: hidden; font-family: 'Inter', sans-serif; display: flex; flex-direction: column;">
             
-            <div class="modal-header" style="background: #EBF5FF; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #BFDBFE;">
-                <h3 style="color: #1E40AF; font-size: 16px; font-weight: 700; margin: 0;">New Order-Based</h3>
-                <button type="button" class="modal-close" onclick="closeModal('addResModal')" style="color: #64748B; background: none; border: none; cursor: pointer; font-size: 18px; font-weight: 300;">
+            <div class="modal-header modal-header-compact" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 class="modal-title">New Order-Based</h3>
+                <button type="button" class="modal-close" onclick="closeModal('addResModal')">
                     <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -135,11 +135,12 @@
                         <div style="display: flex; flex-direction: column;">
                             <h4 style="font-size: 11px; font-weight: 700; color: #64748B; margin-bottom: 12px; letter-spacing: 0.5px; text-transform: uppercase;">ITEMS TO ORDER</h4>
                             
-                            <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-                                <select id="resItemSelect" class="form-control" style="flex: 1; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 12px; font-size: 13px;">
-                                    <!-- Options populated by JS -->
-                                </select>
-                                <button type="button" class="btn btn-primary" onclick="addResCartItem()" style="background: #3B82F6; border: none; padding: 10px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;">+ Add Item</button>
+                            <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: flex-start;">
+                                <div style="flex: 1; position: relative;">
+                                    <input type="text" id="resProductSearch" class="form-control" placeholder="Search by name or part number..." autocomplete="off" style="border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 12px; font-size: 13px;">
+                                    <div id="resProductSuggestions" class="product-suggestions"></div>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="addResCartItem()" style="background: #3B82F6; border: none; padding: 10px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; white-space: nowrap;">+ Add Item</button>
                             </div>
                             
                             <div style="border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; margin-bottom: 16px;">
@@ -179,14 +180,22 @@
 
                         <div>
                             <h4 style="font-size: 11px; font-weight: 700; color: #64748B; margin-bottom: 12px; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 8px;">PAYMENT DETAILS</h4>
+
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label class="form-label" style="font-size: 12px; font-weight: 500; color: #334155;">Payment Type</label>
+                                <select id="resPaymentType" class="form-control" onchange="onResPaymentTypeChange()" style="border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 12px; font-size: 13px;">
+                                    <option value="deposit50">50% Deposit (Balance on Pickup)</option>
+                                    <option value="full">Full Payment (100%)</option>
+                                </select>
+                            </div>
                             
                             <div class="form-group" style="margin-bottom: 12px;">
                                 <label class="form-label" style="font-size: 12px; font-weight: 500; color: #334155;">
-                                    Deposit Amount 
-                                    <span style="background: #FEF3C7; color: #92400E; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; margin-left: 4px;">50% Required</span>
+                                    Amount Collected
+                                    <span id="resDepositBadge" style="background: #FEF3C7; color: #92400E; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; margin-left: 4px;">50% Required</span>
                                 </label>
-                                <input type="number" id="resDeposit" class="form-control" min="0" required placeholder="Auto-calculated (50% of total)" readonly style="border: 1px solid #FDE68A; border-radius: 6px; padding: 10px 12px; font-size: 14px; font-weight: 700; background: #FFFBEB; color: #92400E; cursor: not-allowed;">
-                                <p style="font-size: 10px; color: #92400E; margin: 4px 0 0; font-weight: 500;">🔒 Deposit is automatically set to 50% of total order value and cannot be changed.</p>
+                                <input type="number" id="resDeposit" class="form-control" min="0" required placeholder="Auto-calculated" readonly style="border: 1px solid #FDE68A; border-radius: 6px; padding: 10px 12px; font-size: 14px; font-weight: 700; background: #FFFBEB; color: #92400E; cursor: not-allowed;">
+                                <p id="resDepositHint" style="font-size: 10px; color: #92400E; margin: 4px 0 0; font-weight: 500;">Auto-calculated as 50% of total. Balance due on pickup.</p>
                             </div>
                             
                             <div class="form-group" style="margin-bottom: 12px;">
@@ -217,9 +226,9 @@
     <div class="modal-overlay" id="fulfillOrderModal">
         <div class="modal-card" style="max-width: 1050px; border-radius: 8px; overflow: hidden; font-family: 'Inter', sans-serif; display: flex; flex-direction: column;">
             
-            <div class="modal-header" style="background: #DCFCE7; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #BBF7D0;">
-                <h3 style="color: #166534; font-size: 16px; font-weight: 700; margin: 0;">Fulfill Order - Customer Pickup</h3>
-                <button type="button" class="modal-close" onclick="closeModal('fulfillOrderModal')" style="color: #166534; background: none; border: none; cursor: pointer; font-size: 18px; font-weight: 300;">
+            <div class="modal-header modal-header-compact" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 class="modal-title">Fulfill Order — Customer Pickup</h3>
+                <button type="button" class="modal-close" onclick="closeModal('fulfillOrderModal')">
                     <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -391,16 +400,18 @@
 
     <!-- Modal: Order Created Successfully -->
     <div class="modal-overlay" id="orderSuccessModal">
-        <div class="modal-card" style="max-width: 500px; border-radius: 12px; overflow: hidden; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
-            <div style="background: #10B981; padding: 32px 24px; text-align: center; color: white;">
-                <div style="width: 48px; height: 48px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-                    <svg viewBox="0 0 24 24" style="width: 28px; height: 28px; fill: none; stroke: #10B981; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <div class="modal-card" style="max-width: 520px; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+            <div class="modal-header modal-header-compact" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 class="modal-title" style="margin: 0;">Order Created</h3>
+                    <p style="margin: 2px 0 0; font-size: 12px; color: var(--text-secondary);">50% deposit collected — items held until pickup</p>
                 </div>
-                <h3 style="font-size: 20px; font-weight: 700; margin: 0 0 8px;">Order Created Successfully!</h3>
-                <p style="font-size: 13px; margin: 0; opacity: 0.9;">Customer order has been recorded and items are now held.</p>
+                <button type="button" class="modal-close" onclick="closeModal('orderSuccessModal')">
+                    <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
             
-            <div class="modal-body" style="padding: 24px; background: #FFFFFF; display: flex; flex-direction: column; gap: 16px; max-height: 70vh; overflow-y: auto;">
+            <div class="modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 14px; max-height: 65vh; overflow-y: auto;">
                 
                 <!-- Order Number -->
                 <div style="background: #ECFDF5; border: 2px dashed #34D399; border-radius: 8px; padding: 16px; text-align: center;">
@@ -465,24 +476,26 @@
 
             </div>
 
-            <div style="padding: 16px 24px; background: #FFFFFF; border-top: 1px solid #F1F5F9; display: flex; gap: 12px;">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('orderSuccessModal')" style="flex: 1; background: #FFFFFF; border: 1px solid #E2E8F0; color: #334155; padding: 12px; font-weight: 600; border-radius: 8px;">Print Receipt</button>
-                <button type="button" class="btn btn-primary" onclick="closeModal('orderSuccessModal')" style="flex: 1; background: #10B981; border: none; padding: 12px; font-weight: 600; border-radius: 8px;">View Order Details</button>
+            <div style="padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="printDepositReceipt()" style="flex: 1;">Print Receipt</button>
+                <button type="button" class="btn btn-primary" onclick="closeModal('orderSuccessModal')" style="flex: 1;">Done</button>
             </div>
         </div>
     </div>
     <!-- Modal: Order Fulfilled Successfully -->
     <div class="modal-overlay" id="orderFulfilledModal">
-        <div class="modal-card" style="max-width: 500px; border-radius: 12px; overflow: hidden; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
-            <div style="background: #16A34A; padding: 32px 24px; text-align: center; color: white;">
-                <div style="width: 48px; height: 48px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-                    <svg viewBox="0 0 24 24" style="width: 28px; height: 28px; fill: none; stroke: #16A34A; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <div class="modal-card" style="max-width: 520px; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+            <div class="modal-header modal-header-compact" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 class="modal-title" style="margin: 0;">Order Fulfilled</h3>
+                    <p style="margin: 2px 0 0; font-size: 12px; color: var(--text-secondary);">Pickup completed — items released from inventory</p>
                 </div>
-                <h3 style="font-size: 20px; font-weight: 700; margin: 0 0 8px;">Order Fulfilled Successfully!</h3>
-                <p style="font-size: 13px; margin: 0; opacity: 0.9;">Customer pickup completed. Items have been released from inventory.</p>
+                <button type="button" class="modal-close" onclick="closeModal('orderFulfilledModal')">
+                    <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
             
-            <div class="modal-body" style="padding: 24px; background: #FFFFFF; display: flex; flex-direction: column; gap: 16px; max-height: 70vh; overflow-y: auto;">
+            <div class="modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 14px; max-height: 65vh; overflow-y: auto;">
                 
                 <!-- Order Number Block -->
                 <div style="border: 1px solid #22C55E; border-radius: 8px; padding: 16px; text-align: center; background: #F0FDF4;">
@@ -563,9 +576,37 @@
 
             </div>
 
-            <div style="padding: 16px 24px; background: #FFFFFF; border-top: 1px solid #F1F5F9; display: flex; gap: 12px;">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('orderFulfilledModal')" style="flex: 1; background: #F8FAFC; border: 1px solid #E2E8F0; color: #0F172A; padding: 12px; font-weight: 600; border-radius: 8px;">Print Receipt</button>
-                <button type="button" class="btn btn-primary" onclick="closeModal('orderFulfilledModal')" style="flex: 1; background: #16A34A; border: none; padding: 12px; font-weight: 600; border-radius: 8px;">View Transaction</button>
+            <div style="padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="printFulfillmentReceipt()" style="flex: 1;">Print Receipt</button>
+                <button type="button" class="btn btn-primary" onclick="closeModal('orderFulfilledModal')" style="flex: 1;">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Modal (POS-style) -->
+    <div id="resReceiptModal" class="modal-overlay">
+        <div style="background: white; border-radius: 16px; width: 100%; max-width: 520px; margin: 20px; box-shadow: var(--shadow-lg); overflow: hidden;">
+            <div class="modal-header modal-header-compact" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 class="modal-title" style="margin: 0;">Transaction Successful</h3>
+                    <p style="margin: 2px 0 0; font-size: 12px; color: var(--text-secondary);">Receipt No: <strong id="resReceiptNo" style="color: var(--text-primary);"></strong></p>
+                </div>
+                <button type="button" class="modal-close" onclick="closeModal('resReceiptModal')">
+                    <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div style="padding: 16px 20px 20px;">
+                <div style="background: #FAFAFA; border: 1px solid #E8ECF0; border-radius: 12px; margin-bottom: 14px; overflow: hidden;">
+                    <div style="background: #F1F5F9; padding: 10px 16px; text-align: center; border-bottom: 1px dashed #CBD5E1;">
+                        <p style="font-size: 13px; font-weight: 800; color: #1E293B; text-transform: uppercase; letter-spacing: 1px; margin: 0;">ZTG Heavy Parts</p>
+                        <p style="font-size: 11px; color: #64748B; margin: 2px 0 0;">Official Sales Receipt</p>
+                    </div>
+                    <div id="resReceiptContent" style="padding: 14px 16px; max-height: 300px; overflow-y: auto;"></div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('resReceiptModal')" style="flex: 1;">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="printResReceipt()" style="flex: 2;">Print Receipt</button>
+                </div>
             </div>
         </div>
     </div>
@@ -576,71 +617,102 @@
     <script src="app.js"></script>
     <script>
         initSidebar('reservations');
+        setupProductAutocomplete('resProductSearch', 'resProductSuggestions', { blockOutOfStock: true });
 
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            
-            const bgColor = type === 'success' ? '#10B981' : '#EF4444';
-            const icon = type === 'success' 
-                ? `<svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M5 13l4 4L19 7"/></svg>`
-                : `<svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>`;
+        let lastDepositReceipt = null;
+        let lastFulfillmentReceipt = null;
 
-            toast.style.cssText = `
-                background: ${bgColor};
-                color: white;
-                padding: 12px 20px;
-                border-radius: 8px;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                font-family: 'Inter', sans-serif;
-                font-size: 14px;
-                font-weight: 500;
-                opacity: 0;
-                transform: translateY(100%);
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        function onResPaymentTypeChange() {
+            updateResPricing();
+        }
+
+        function getResPaymentType() {
+            return document.getElementById('resPaymentType')?.value || 'deposit50';
+        }
+
+        function formatTxDateTime() {
+            const now = new Date();
+            return now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ', ' +
+                now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        }
+
+        function buildResReceiptHtml(data) {
+            let itemsHtml = (data.items || []).map(i => `
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;">
+                    <span style="flex:1;padding-right:8px;">${i.name}</span>
+                    <span style="width:36px;text-align:center;color:#64748B;">x${i.qty}</span>
+                    <span style="width:80px;text-align:right;font-weight:600;">₱${(i.price * i.qty).toLocaleString()}</span>
+                </div>
+            `).join('');
+            return `
+                <div style="font-size:13px;color:var(--text-primary);">
+                    <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin-bottom:12px;font-size:12px;color:#64748B;">
+                        <span>Date:</span><span style="text-align:right;color:#0F172A;">${data.date}</span>
+                        <span>Customer:</span><span style="text-align:right;color:#0F172A;">${data.customer}</span>
+                        <span>Reserved by:</span><span style="text-align:right;color:#0F172A;">${data.reservedBy} (${data.reservedByRole})</span>
+                        ${data.fulfilledBy ? `<span>Fulfilled by:</span><span style="text-align:right;color:#0F172A;">${data.fulfilledBy} (${data.fulfilledByRole})</span>` : ''}
+                        <span>Payment:</span><span style="text-align:right;color:#0F172A;">${data.paymentMethod}</span>
+                    </div>
+                    <div style="border-top:1px dashed #CBD5E1;margin:12px 0;"></div>
+                    ${itemsHtml}
+                    <div style="border-top:1px dashed #CBD5E1;margin:12px 0;"></div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Total Order</span><strong>₱${data.total.toLocaleString()}</strong></div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#059669;"><span>Deposit Paid (50%)</span><strong>₱${data.deposit.toLocaleString()}</strong></div>
+                    ${data.balancePaid != null ? `<div style="display:flex;justify-content:space-between;font-weight:700;color:#2563EB;"><span>Balance Collected</span><span>₱${data.balancePaid.toLocaleString()}</span></div>` : ''}
+                    ${data.change != null ? `<div style="display:flex;justify-content:space-between;"><span>Change</span><span>₱${data.change.toLocaleString()}</span></div>` : ''}
+                </div>
             `;
-            
-            toast.innerHTML = `
-                ${icon}
-                <span>${message}</span>
-            `;
-            
-            container.appendChild(toast);
-            
-            requestAnimationFrame(() => {
-                toast.style.opacity = '1';
-                toast.style.transform = 'translateY(0)';
-            });
-            
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(100%)';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+        }
+
+        function showResReceipt(receiptNo, receiptData, docTitle) {
+            document.getElementById('resReceiptNo').innerText = receiptNo;
+            document.getElementById('resReceiptContent').innerHTML = buildResReceiptHtml(receiptData);
+            window._resReceiptDocTitle = docTitle || 'ORDER RECEIPT';
+            openModal('resReceiptModal');
+        }
+
+        function printResReceipt() {
+            const receiptNo = document.getElementById('resReceiptNo').innerText;
+            const content = document.getElementById('resReceiptContent').innerHTML;
+            printZtgReceipt(receiptNo, content, window._resReceiptDocTitle || 'ORDER RECEIPT');
+        }
+
+        function printDepositReceipt() {
+            if (!lastDepositReceipt) return;
+            const html = buildResReceiptHtml(lastDepositReceipt.data);
+            printZtgReceipt(lastDepositReceipt.receiptNo, html, lastDepositReceipt.docTitle || 'DEPOSIT RECEIPT (50%)');
+        }
+
+        function printFulfillmentReceipt() {
+            if (!lastFulfillmentReceipt) return;
+            const html = buildResReceiptHtml(lastFulfillmentReceipt.data);
+            printZtgReceipt(lastFulfillmentReceipt.receiptNo, html, lastFulfillmentReceipt.docTitle || 'SALES INVOICE');
         }
 
         let resCartItems = [];
 
-        function loadProductSelect() {
-            const products = db.getProducts();
-            const select = document.getElementById('resItemSelect');
-            select.innerHTML = '<option value="">Search product...</option>';
-            products.forEach(p => {
-                select.innerHTML += `<option value="${p.id}">${p.name} (${p.partNo}) - ₱${p.price1.toLocaleString()}</option>`;
-            });
-        }
-
         function addResCartItem() {
-            const pId = parseInt(document.getElementById('resItemSelect').value);
-            if (!pId) return;
+            const pId = getSelectedProductId('resProductSearch');
+            if (!pId) {
+                showToast('Select a product from the search suggestions first.', 'error');
+                return;
+            }
 
             const product = db.getProducts().find(p => p.id === pId);
             if (!product) return;
 
+            if (product.stock <= 0) {
+                showToast('Cannot add — this item has no stock.', 'error');
+                return;
+            }
+
             const existing = resCartItems.find(i => i.id === pId);
+            const newQty = existing ? existing.qty + 1 : 1;
+            if (newQty > product.stock) {
+                showToast(`Only ${product.stock} unit(s) available in stock.`, 'error');
+                return;
+            }
+
             if (existing) {
                 existing.qty++;
             } else {
@@ -652,8 +724,8 @@
                     qty: 1
                 });
             }
-            
-            document.getElementById('resItemSelect').value = '';
+
+            clearProductSearch('resProductSearch', 'resProductSuggestions');
             renderResCart();
         }
 
@@ -664,10 +736,16 @@
 
         function updateResCartQty(index, newQty) {
             const qty = parseInt(newQty);
-            if (qty > 0) {
-                resCartItems[index].qty = qty;
-            } else {
+            if (qty <= 0) {
                 resCartItems[index].qty = 1;
+            } else {
+                const product = db.getProducts().find(p => p.id === resCartItems[index].id);
+                if (product && qty > product.stock) {
+                    showToast(`Only ${product.stock} unit(s) in stock.`, 'error');
+                    resCartItems[index].qty = product.stock;
+                } else {
+                    resCartItems[index].qty = qty;
+                }
             }
             renderResCart();
         }
@@ -712,22 +790,30 @@
             const subtotal = resCartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
             const tax = subtotal * 0.12;
             const subtotalWithoutTax = subtotal - tax;
+            const isFull = getResPaymentType() === 'full';
 
             document.getElementById('resTotalVal').value = subtotal;
             document.getElementById('resSubtotalDisplay').innerText = `₱${subtotalWithoutTax.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
             document.getElementById('resTaxDisplay').innerText = `₱${tax.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
             document.getElementById('resTotalDisplay').innerText = `₱${subtotal.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
-            
-            // Auto-set deposit to mandatory 50% of total
-            const deposit50 = subtotal * 0.5;
-            document.getElementById('resDeposit').value = deposit50 > 0 ? deposit50.toFixed(2) : '';
+
+            const collected = isFull ? subtotal : subtotal * 0.5;
+            document.getElementById('resDeposit').value = collected > 0 ? collected.toFixed(2) : '';
+
+            const badge = document.getElementById('resDepositBadge');
+            const hint = document.getElementById('resDepositHint');
+            if (badge) badge.textContent = isFull ? '100% Full' : '50% Required';
+            if (hint) hint.textContent = isFull
+                ? 'Full payment collected now. No balance due on pickup.'
+                : 'Auto-calculated as 50% of total. Balance due on pickup.';
+
             calculateResBalance();
         }
 
         function calculateResBalance() {
             const total = parseFloat(document.getElementById('resTotalVal').value) || 0;
-            // Deposit is always 50% of total
-            const deposit = total * 0.5;
+            const isFull = getResPaymentType() === 'full';
+            const deposit = isFull ? total : total * 0.5;
             const balance = Math.max(0, total - deposit);
             document.getElementById('resBalanceDisplay').value = balance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0});
         }
@@ -781,7 +867,11 @@
                     <td class="font-bold">₱${r.total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                     <td>${r.date}</td>
                     <td><code>${r.pickupDate}</code></td>
-                    <td style="font-size: 13px; color: var(--text-secondary); font-weight: 500;">${r.reservedBy || 'Admin'}</td>
+                    <td style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">
+                        <div>${formatReservedByDisplay(r)}</div>
+                        ${r.paymentType === 'full' ? `<div style="font-size:10px;margin-top:2px;color:#059669;">Full payment</div>` : ''}
+                        ${r.status === 'Completed' && r.fulfilledBy ? `<div style="font-size:10px;margin-top:2px;color:#059669;">Fulfilled: ${r.fulfilledBy}</div>` : ''}
+                    </td>
                     <td><span class="badge ${badgeClass}">${r.status}</span></td>
                     <td style="text-align: center;">
                         <div class="btn-group" style="display: flex; gap: 4px; justify-content: center;">
@@ -800,8 +890,8 @@
         function openAddResModal() {
             document.getElementById('addResForm').reset();
             resCartItems = [];
+            clearProductSearch('resProductSearch', 'resProductSuggestions');
             renderResCart();
-            loadProductSelect();
             // Default expected date to tomorrow
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -811,6 +901,8 @@
             document.getElementById('resTaxDisplay').innerText = '₱0.00';
             document.getElementById('resTotalDisplay').innerText = '₱0.00';
             document.getElementById('resBalanceDisplay').value = '0';
+            document.getElementById('resPaymentType').value = 'deposit50';
+            onResPaymentTypeChange();
             
             openModal('addResModal');
         }
@@ -826,6 +918,10 @@
 
             const deposit = parseFloat(document.getElementById('resDeposit').value) || 0;
             const total = parseFloat(document.getElementById('resTotalVal').value);
+            const paymentType = getResPaymentType();
+            const isFullPayment = paymentType === 'full';
+            const user = getCurrentUser();
+            const actorLabel = getReservationActorLabel(user);
 
             const newRes = {
                 id: 'ORD-' + Date.now(),
@@ -835,17 +931,62 @@
                 email: document.getElementById('resCustEmail').value.trim(),
                 notes: document.getElementById('resNotes').value.trim(),
                 paymentMethod: document.getElementById('resPaymentMethod').value,
+                paymentType: paymentType,
                 deposit: deposit,
                 total: total,
                 date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                 pickupDate: document.getElementById('resDate').value,
                 pickupTime: document.getElementById('resTime').value,
-                reservedBy: getCurrentUser().name,
+                reservedBy: actorLabel,
+                reservedByRealName: getEmployeeDisplayName(user),
+                reservedById: user.id,
+                reservedByRole: user.role,
                 status: 'Pending'
             };
 
             reservations.push(newRes);
             db.saveReservations(reservations);
+
+            const transactions = db.getTransactions();
+            const itemLabel = newRes.items.length > 1
+                ? `Reservation — ${newRes.items.length} items`
+                : newRes.items[0].name;
+            const totalQty = newRes.items.reduce((s, i) => s + i.qty, 0);
+
+            transactions.unshift({
+                siNo: newRes.id,
+                date: formatTxDateTime(),
+                itemName: itemLabel,
+                customer: newRes.customer,
+                qty: totalQty,
+                amount: newRes.deposit,
+                payment: newRes.paymentMethod,
+                cashier: actorLabel,
+                status: isFullPayment ? 'Paid' : 'Deposit',
+                phone: newRes.phone,
+                reason: isFullPayment ? 'Full Payment' : '50% Deposit Payment',
+                orderRef: newRes.id,
+                reservedBy: actorLabel,
+                reservedByRole: user.role
+            });
+            db.saveTransactions(transactions);
+
+            lastDepositReceipt = {
+                receiptNo: newRes.id,
+                docTitle: isFullPayment ? 'FULL PAYMENT RECEIPT' : 'DEPOSIT RECEIPT (50%)',
+                data: {
+                    date: formatTxDateTime(),
+                    customer: newRes.customer,
+                    reservedBy: actorLabel,
+                    reservedByRole: user.role,
+                    paymentMethod: newRes.paymentMethod,
+                    items: newRes.items,
+                    total: newRes.total,
+                    deposit: newRes.deposit,
+                    isFullPayment: isFullPayment
+                }
+            };
+
             closeModal('addResModal');
             renderReservations();
             
@@ -966,16 +1107,14 @@
             document.getElementById('ffBalanceHiddenVal').value = balance;
 
             // Populate Right Column
-            document.getElementById('fulfillPayment').value = balance; // Default to exact amount
-            document.getElementById('fulfillPayment').min = balance;
+            document.getElementById('fulfillPayment').value = balance;
+            document.getElementById('fulfillPayment').min = 0;
+            document.getElementById('fulfillPayment').readOnly = balance === 0;
             calculateFFChange();
             
             // User info
-            let currentUser = { name: 'Admin' };
-            if (typeof getCurrentUser === 'function') {
-                currentUser = getCurrentUser() || currentUser;
-            }
-            document.getElementById('ffServedBy').value = currentUser.name;
+            const currentUser = getCurrentUser() || { name: 'Unknown', role: 'Staff' };
+            document.getElementById('ffServedBy').value = `${currentUser.name} (${currentUser.role})`;
 
             // Commission
             const commission = totalGross * 0.05;
@@ -1026,8 +1165,10 @@
             const balance = Math.max(0, res.total - res.deposit);
             const paymentMethod = document.getElementById('ffPaymentMethod').value;
             const docType = document.getElementById('ffDocType').value;
+            const user = getCurrentUser() || { name: 'Unknown', role: 'Staff' };
+            const displayName = getReservationActorLabel(user);
             
-            if (payment < balance) {
+            if (balance > 0 && payment < balance) {
                 showToast(`Minimum payment required is ₱${balance.toLocaleString()}`, 'error');
                 return;
             }
@@ -1068,17 +1209,24 @@
                 txQty = res.qty || 1;
             }
 
+            const pickupReason = balance > 0 ? 'Pickup Payment' : 'Order Release (Pre-paid)';
+
             const newTx = {
                 siNo: invoiceNo,
-                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                date: formatTxDateTime(),
                 itemName: txItemName,
                 customer: res.customer,
                 qty: txQty,
-                amount: res.total, 
-                payment: `${paymentMethod} / Deposit (₱${res.deposit} applied, ₱${payment} paid)`,
-                cashier: document.getElementById('ffServedBy').value,
+                amount: balance,
+                payment: balance > 0 ? paymentMethod : 'Pre-paid',
+                cashier: displayName,
                 status: 'Completed',
-                phone: res.phone
+                phone: res.phone,
+                reason: pickupReason,
+                orderRef: res.id,
+                orNo: invoiceNo,
+                reservedBy: res.reservedByRealName || res.reservedBy || '',
+                fulfilledBy: displayName
             };
 
             transactions.unshift(newTx);
@@ -1086,6 +1234,9 @@
 
             // Complete reservation status
             reservations[resIndex].status = 'Completed';
+            reservations[resIndex].fulfilledBy = displayName;
+            reservations[resIndex].fulfilledByRealName = displayName;
+            reservations[resIndex].fulfilledByRole = user.role;
             db.saveReservations(reservations);
 
             closeModal('fulfillOrderModal');
@@ -1126,6 +1277,26 @@
             `).join('');
             
             document.getElementById('fulfilledDocType').innerText = docType;
+
+            const fulfillItems = res.items && res.items.length > 0 ? res.items : [{ name: res.item, qty: res.qty || 1, price: res.total / (res.qty || 1) }];
+            lastFulfillmentReceipt = {
+                receiptNo: invoiceNo,
+                docTitle: docType.includes('Invoice') ? 'SALES INVOICE' : 'OFFICIAL RECEIPT',
+                data: {
+                    date: formatTxDateTime(),
+                    customer: res.customer,
+                    reservedBy: res.reservedBy || '—',
+                    reservedByRole: res.reservedByRole || 'Staff',
+                    fulfilledBy: displayName,
+                    fulfilledByRole: user.role,
+                    paymentMethod: paymentMethod,
+                    items: fulfillItems,
+                    total: res.total,
+                    deposit: res.deposit,
+                    balancePaid: balance,
+                    change: change
+                }
+            };
             
             openModal('orderFulfilledModal');
         }
@@ -1176,6 +1347,7 @@
         }
 
         renderReservations();
+        window.renderReservations = renderReservations;
     </script>
 </body>
 </html>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory Management | ZTG Heavy Parts</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
     <div class="app-container">
@@ -29,8 +29,11 @@
                 <!-- Filters -->
                 <div class="card" style="margin-bottom: 16px;">
                     <div class="table-filters" style="display: flex; gap: 12px; flex-wrap: wrap;">
-                        <div style="flex: 1; min-width: 200px;">
-                            <input type="text" id="searchBar" class="form-control form-control-sm" placeholder="Search product description, part number, category, or address..." oninput="renderInventoryTable()">
+                        <div style="flex: 1; min-width: 200px; position: relative;">
+                            <svg style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--text-muted);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            <input type="text" id="searchBar" class="form-control form-control-sm" placeholder="Search product description, part number, category, or address..." style="padding-left: 44px;" oninput="renderInventoryTable()">
                         </div>
                         <div style="width: 180px;">
                             <select id="categoryFilter" class="form-control form-control-sm" onchange="renderInventoryTable()">

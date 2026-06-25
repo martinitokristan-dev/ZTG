@@ -4,7 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | ZTG Heavy Parts</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
+    <style>
+        .reports-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .reports-table th {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            font-weight: 700;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+        }
+        .reports-table td {
+            font-size: 13px;
+            color: var(--text-primary);
+            padding: 14px 16px;
+            border-bottom: 1px solid #F1F5F9;
+            vertical-align: middle;
+        }
+        .reports-table tr:last-child td {
+            border-bottom: none;
+        }
+        .rank-cell {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .perf-bar-track {
+            width: 100%;
+            max-width: 160px;
+            height: 6px;
+            background: #E2E8F0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .perf-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: #3B82F6;
+            transition: width 0.4s ease;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -14,9 +59,9 @@
         <!-- Main Workspace -->
         <div class="main-workspace">
             <div class="top-bar">
-                <div class="top-bar-title">Dashboard Overview</div>
-                <div class="top-bar-actions">
-                    <span class="page-description">Welcome back, <strong id="adminName">Administrator</strong>. Here is your store at a glance.</span>
+                <div>
+                    <div class="top-bar-title" id="dashboardGreeting" style="font-size: 22px; font-weight: 700; letter-spacing: -0.02em;">Good morning</div>
+                    <div class="page-description" id="dashboardWelcomeSub" style="margin-top: 4px;">Here's your store at a glance.</div>
                 </div>
             </div>
 
@@ -122,28 +167,27 @@
                     </div>
                 </div>
 
-                <!-- Recent Transactions Table Card -->
+                <!-- Top Selling Products Table Card -->
                 <div class="card table-card" style="margin-top: 24px;">
                     <div class="table-header-bar">
-                        <h3 style="font-size: 16px; font-weight: 700;">Recent Transactions</h3>
-                        <a href="transaction-log.html" class="btn btn-secondary btn-sm">View All Invoices</a>
+                        <h3 style="font-size: 16px; font-weight: 700;">Top Selling Products</h3>
+                        <a href="reports.html" class="btn btn-secondary btn-sm">View Full Reports</a>
                     </div>
                     <div style="overflow-x: auto;">
-                        <table>
+                        <table class="reports-table">
                             <thead>
                                 <tr>
-                                    <th>S.I. / C.I.</th>
-                                    <th>Part Name</th>
-                                    <th>Customer</th>
-                                    <th>Qty</th>
-                                    <th>Amount</th>
-                                    <th>Payment</th>
-                                    <th>Served By</th>
-                                    <th>Status</th>
+                                    <th>Rank</th>
+                                    <th>Product</th>
+                                    <th>Part Number</th>
+                                    <th>Category</th>
+                                    <th>Units Sold</th>
+                                    <th>Revenue</th>
+                                    <th>Sales Performance</th>
                                 </tr>
                             </thead>
-                            <tbody id="recentTransactionsTableBody">
-                                <!-- Populated dynamically from app.js -->
+                            <tbody id="topSellingTableBody">
+                                <!-- Populated dynamically -->
                             </tbody>
                         </table>
                     </div>
@@ -152,32 +196,15 @@
         </div>
     </div>
 
-    <!-- Modal to show detailed transaction summary -->
-    <div class="modal-overlay" id="txDetailModal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3 class="modal-title" id="mTxTitle">Transaction Details</h3>
-                <button class="modal-close" onclick="closeModal('txDetailModal')">
-                    <svg viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-            <div class="modal-body" id="mTxBody">
-                <!-- Populated by JS -->
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('txDetailModal')">Close</button>
-            </div>
-        </div>
-    </div>
-
     <script src="app.js"></script>
     <script>
         function updateDashboard() {
-            // Set user info on top bar
             const currentUser = getCurrentUser();
-            document.getElementById('adminName').innerText = currentUser.name;
+            const displayName = getEmployeeDisplayName(currentUser);
+            const greeting = getTimeGreeting();
+            document.getElementById('dashboardGreeting').innerText = `${greeting}, ${displayName}`;
+            document.getElementById('dashboardWelcomeSub').innerHTML = `You're signed in as <strong>${currentUser.role}</strong>. Here's your store at a glance.`;
 
-            // Load sidebar active link
             initSidebar('dashboard');
 
             const products = db.getProducts();
@@ -262,101 +289,57 @@
                 criticalList.innerHTML = '<div style="font-size: 13px; color: var(--text-secondary); text-align: center; padding: 12px 0;">All stocks healthy.</div>';
             }
 
-            // 3. Populate recent transactions table
-            const tbody = document.getElementById('recentTransactionsTableBody');
-            tbody.innerHTML = '';
+            // 3. Populate Top Selling Products
+            const topBody = document.getElementById('topSellingTableBody');
+            topBody.innerHTML = '';
 
-            // Take the 5 most recent transactions
-            const recent = transactions.slice(0, 5);
-            recent.forEach(tx => {
-                const tr = document.createElement('tr');
-                tr.style.cursor = 'pointer';
-                tr.onclick = () => showTransactionDetails(tx);
-                
-                let badgeClass = 'badge-secondary';
-                if (tx.status === 'Completed') badgeClass = 'badge-success';
-                if (tx.status === 'Refund') badgeClass = 'badge-danger';
-                if (tx.status === 'Return') badgeClass = 'badge-warning';
+            const demoTopSelling = [
+                { name: 'Engine Oil Filter',    partNo: 'EOF-102', category: 'Filters',       qty: 127, revenue: 107950 },
+                { name: 'Hydraulic Pump',       partNo: 'HP-001',  category: 'Hydraulics',    qty: 85,  revenue: 212500 },
+                { name: 'Fuel Filter Primary',  partNo: 'FLT-008', category: 'Filters',       qty: 68,  revenue: 30600  },
+                { name: 'Bucket Cylinder',      partNo: 'BC-104',  category: 'Hydraulics',    qty: 42,  revenue: 189000 },
+                { name: 'Rubber Track 400mm',   partNo: 'RT-400',  category: 'Undercarriage', qty: 28,  revenue: 238000 }
+            ];
 
-                tr.innerHTML = `
-                    <td class="font-bold">${tx.siNo}</td>
-                    <td>${tx.itemName}</td>
-                    <td>${tx.customer || 'Guest'}</td>
-                    <td>${tx.qty}</td>
-                    <td class="font-bold">₱${tx.amount.toLocaleString()}</td>
-                    <td>${tx.payment}</td>
-                    <td>${tx.cashier.split(' ')[0]}</td>
-                    <td><span class="badge ${badgeClass}">${tx.status}</span></td>
-                `;
-                tbody.appendChild(tr);
+            const completed = transactions.filter(t => t.status === 'Completed' || t.status === 'Paid' || t.status === 'P.O. Approved');
+            
+            // Build from real transactions, fall back to demo
+            let topArr = [];
+            const productSalesMap = {};
+
+            completed.forEach(t => {
+                const prod = products.find(p => p.name === t.itemName);
+                if (!prod) return;
+                if (!productSalesMap[prod.id]) {
+                    productSalesMap[prod.id] = { name: prod.name, partNo: prod.partNo, category: prod.category, qty: 0, revenue: 0 };
+                }
+                productSalesMap[prod.id].qty     += t.qty;
+                productSalesMap[prod.id].revenue += t.amount;
             });
 
-            if (recent.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 20px;">No transactions recorded yet.</td></tr>';
-            }
-        }
+            topArr = Object.values(productSalesMap).sort((a, b) => b.qty - a.qty).slice(0, 5);
+            if (topArr.length < 3) topArr = demoTopSelling;
 
-        function showTransactionDetails(tx) {
-            const mTitle = document.getElementById('mTxTitle');
-            const mBody = document.getElementById('mTxBody');
-            
-            mTitle.innerText = `Invoice ${tx.siNo}`;
-            
-            let statusBadge = `<span class="badge badge-secondary">${tx.status}</span>`;
-            if (tx.status === 'Completed') statusBadge = `<span class="badge badge-success">${tx.status}</span>`;
-            if (tx.status === 'Refund') statusBadge = `<span class="badge badge-danger">${tx.status}</span>`;
-            if (tx.status === 'Return') statusBadge = `<span class="badge badge-warning">${tx.status}</span>`;
+            const maxRev = topArr[0] ? topArr[0].revenue : 1;
 
-            let refundMeta = '';
-            if (tx.refundReason) {
-                refundMeta = `
-                    <div style="margin-top: 16px; padding: 12px; background-color: var(--danger-light); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.1);">
-                        <strong style="color: var(--danger); font-size: 13px; display: block; margin-bottom: 4px;">Refund Details</strong>
-                        <p style="font-size: 13px; color: var(--text-secondary);">Reason: ${tx.refundReason}</p>
-                        <p style="font-size: 13px; color: var(--text-secondary);">Action Taken: ${tx.actionType}</p>
-                        <p style="font-size: 13px; color: var(--text-secondary);">Inventory: ${tx.invAction}</p>
-                    </div>
+            topArr.forEach((item, idx) => {
+                const pct = Math.round((item.revenue / maxRev) * 100);
+                const tr  = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="rank-cell">${idx + 1}</td>
+                    <td style="font-weight: 700;">${item.name}</td>
+                    <td style="color: var(--text-secondary);">${item.partNo}</td>
+                    <td>${item.category}</td>
+                    <td>${item.qty.toLocaleString()}</td>
+                    <td style="font-weight: 700;">₱${item.revenue.toLocaleString()}</td>
+                    <td>
+                        <div class="perf-bar-track">
+                            <div class="perf-bar-fill" style="width: ${pct}%;"></div>
+                        </div>
+                    </td>
                 `;
-            }
-
-            mBody.innerHTML = `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                    <div>
-                        <span style="font-size: 12px; color: var(--text-secondary); display: block;">Date</span>
-                        <strong>${tx.date}</strong>
-                    </div>
-                    <div>
-                        <span style="font-size: 12px; color: var(--text-secondary); display: block; text-align: right;">Status</span>
-                        <div style="text-align: right;">${statusBadge}</div>
-                    </div>
-                </div>
-
-                <div style="margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
-                    <span style="font-size: 12px; color: var(--text-secondary); display: block;">Customer Info</span>
-                    <strong>${tx.customer}</strong>
-                    <span style="display: block; font-size: 13px; color: var(--text-secondary);">${tx.phone || 'No phone provided'}</span>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <div>
-                        <strong>${tx.itemName}</strong>
-                        <span style="display: block; font-size: 12px; color: var(--text-secondary);">Qty: ${tx.qty}</span>
-                    </div>
-                    <strong style="font-size: 16px; color: var(--primary);">₱${tx.amount.toLocaleString()}</strong>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 12px;">
-                    <span style="color: var(--text-secondary);">Payment Mode:</span>
-                    <strong>${tx.payment}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 6px;">
-                    <span style="color: var(--text-secondary);">Served By:</span>
-                    <strong>${tx.cashier}</strong>
-                </div>
-
-                ${refundMeta}
-            `;
-            openModal('txDetailModal');
+                topBody.appendChild(tr);
+            });
         }
 
         // Run on load

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sales Log | ZTG Heavy Parts</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
     <style>
         .status-tab {
             padding: 6px 12px;
@@ -78,10 +78,6 @@
                         <h1 style="font-size: 20px; margin-bottom: 2px;">Sales Log</h1>
                         <div class="page-description" style="margin-top: 0; font-size: 12px;">Track all sales transactions with detailed filtering and analytics.</div>
                     </div>
-                    <button class="btn" style="background: #FFFFFF; border: 1px solid var(--border); color: var(--text-primary); font-size: 12px; padding: 8px 16px; border-radius: 6px; display: flex; align-items: center; gap: 6px; font-weight: 600;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                        Export CSV
-                    </button>
                 </div>
             </div>
 
@@ -118,13 +114,15 @@
                 <div class="card" style="margin-bottom: 16px;">
                     <div class="table-filters" style="display: flex; gap: 12px; flex-wrap: wrap;">
                         <div style="flex: 1; min-width: 250px; position: relative;">
-                            <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);">🔍</span>
-                            <input type="text" id="salesSearch" class="form-control form-control-sm" placeholder="Search by receipt #, customer, or cashier..." style="padding-left: 30px;" oninput="renderSalesTable()">
+                            <svg style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--text-muted);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            <input type="text" id="salesSearch" class="form-control form-control-sm" placeholder="Search by receipt #, customer, or cashier..." style="padding-left: 44px;" oninput="renderSalesTable()">
                         </div>
                         <div style="width: 150px;">
                             <select id="timeFilter" class="form-control form-control-sm" onchange="renderSalesTable()">
+                                <option value="Today" selected>Today</option>
                                 <option value="All">All Time</option>
-                                <option value="Today">Today</option>
                                 <option value="This Week">This Week</option>
                                 <option value="This Month">This Month</option>
                             </select>
@@ -155,10 +153,10 @@
                     
                     <!-- Tabs -->
                     <div style="display: flex; gap: 8px; margin-top: 16px;">
-                        <button class="status-tab active" data-status="All" onclick="setTab('All')">📋 All</button>
-                        <button class="status-tab" data-status="Completed" onclick="setTab('Completed')">✅ Completed</button>
-                        <button class="status-tab" data-status="Refund" onclick="setTab('Refund')">🔴 Refund</button>
-                        <button class="status-tab" data-status="Pending" onclick="setTab('Pending')">⏳ Pending</button>
+                        <button class="status-tab active" data-status="All" onclick="setTab('All')">All</button>
+                        <button class="status-tab" data-status="Completed" onclick="setTab('Completed')">Completed</button>
+                        <button class="status-tab" data-status="Refund" onclick="setTab('Refund')">Refund</button>
+                        <button class="status-tab" data-status="Pending" onclick="setTab('Pending')">Pending</button>
                     </div>
                 </div>
 
@@ -217,28 +215,19 @@
             });
         }
 
-        function getPaymentEmoji(paymentType) {
-            if (paymentType.toLowerCase().includes('cash')) return '💵';
-            if (paymentType.toLowerCase().includes('gcash')) return '📱';
-            if (paymentType.toLowerCase().includes('card')) return '💳';
-            if (paymentType.toLowerCase().includes('bank')) return '🏦';
-            if (paymentType.toLowerCase().includes('p.o.')) return '📄';
-            return '💰';
-        }
-
         function getStatusHtml(status) {
             let className = 'pending';
-            let icon = '⏳';
+            let iconSvg = `<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2.5" style="flex-shrink: 0; display: inline-block; vertical-align: middle;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
             if (status === 'Completed' || status === 'Paid' || status === 'P.O. Approved') {
                 className = 'completed';
-                icon = '✅';
+                iconSvg = `<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2.5" style="flex-shrink: 0; display: inline-block; vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>`;
                 status = 'Completed';
             } else if (status === 'Refund' || status === 'Return') {
                 className = 'refund';
-                icon = '🔴';
+                iconSvg = `<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2.5" style="flex-shrink: 0; display: inline-block; vertical-align: middle;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
                 status = 'Refund';
             }
-            return `<span class="status-badge ${className}">${icon} ${status}</span>`;
+            return `<span class="status-badge ${className}">${iconSvg} ${status}</span>`;
         }
 
         // Parse date string to a Date object for comparison
@@ -348,61 +337,120 @@
             }
 
             filteredTransactions.forEach(t => {
-                const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid var(--border)';
-                
-                // Format Date & Time
-                let datePart = t.date;
-                let timePart = '';
-                if (t.date && t.date.includes(',')) {
-                    const parts = t.date.split(',');
-                    if (parts.length >= 3) {
-                        datePart = parts[0] + ',' + parts[1];
-                        timePart = parts[2].trim();
-                    } else if (parts.length === 2) {
-                        datePart = parts[0];
-                        timePart = parts[1].trim();
+                let rowItems = [];
+                if (t.items && t.items.length > 0) {
+                    rowItems = t.items;
+                } else {
+                    rowItems = [{
+                        id: null,
+                        name: t.itemName,
+                        partNo: 'N/A',
+                        qty: t.qty,
+                        price: null
+                    }];
+                }
+
+                rowItems.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid var(--border)';
+                    
+                    // Format Date & Time
+                    let datePart = t.date;
+                    let timePart = '';
+                    if (t.date && t.date.includes(',')) {
+                        const parts = t.date.split(',');
+                        if (parts.length >= 3) {
+                            datePart = parts[0] + ',' + parts[1];
+                            timePart = parts[2].trim();
+                        } else if (parts.length === 2) {
+                            datePart = parts[0];
+                            timePart = parts[1].trim();
+                        }
                     }
-                }
 
-                // Extract base name to match with products
-                let baseName = t.itemName || '';
-                if (baseName.includes(' & ')) {
-                    baseName = baseName.split(' & ')[0];
-                }
-                baseName = baseName.replace(' (Order Release)', '').trim();
-                
-                const product = products.find(p => p.name === baseName) || {};
-                const partNo = product.partNo || 'N/A';
-                const chineseName = product.chineseName || '';
-                
-                let displayName = `<span style="font-weight: 600; color: var(--text-primary);">${t.itemName || '-'}</span>`;
-                if (chineseName) {
-                    displayName += `<br><span style="font-size: 12px; color: var(--text-secondary);">${chineseName}</span>`;
-                }
+                    // Resolve Part Number and Product details
+                    let partNo = item.partNo || '';
+                    let product = null;
 
-                // Format payment method
-                let paymentDisplay = t.payment || '-';
-                if (t.payment && t.payment.includes('Deposit')) {
-                    paymentDisplay = `<span style="color: var(--text-secondary);">${t.payment}</span>`;
-                }
+                    if (item.id) {
+                        product = products.find(p => p.id === item.id);
+                    }
+                    
+                    if (!partNo || partNo === 'N/A' || partNo === '—') {
+                        let baseName = item.name || t.itemName || '';
+                        if (baseName.includes(' & ')) {
+                            baseName = baseName.split(' & ')[0];
+                        }
+                        baseName = baseName.replace(' (Order Release)', '').trim();
+                        
+                        product = products.find(p => p.name === baseName);
+                        
+                        if (!product && baseName.includes(' (')) {
+                            const noVariantName = baseName.split(' (')[0].trim();
+                            product = products.find(p => p.name === noVariantName);
+                        }
+                        
+                        if (!product) {
+                            const sortedProducts = [...products].sort((a, b) => b.name.length - a.name.length);
+                            product = sortedProducts.find(p => baseName.startsWith(p.name));
+                        }
+                        
+                        partNo = (product && product.partNo) ? product.partNo : 'N/A';
+                    }
 
-                tr.innerHTML = `
-                    <td style="padding: 16px; font-size: 13px;">
-                        <span style="display: block; color: var(--text-primary);">${datePart}</span>
-                        ${timePart ? `<span style="display: block; font-size: 11px; color: var(--text-secondary);">${timePart}</span>` : ''}
-                    </td>
-                    <td style="padding: 16px; font-size: 14px; font-weight: 700; color: var(--text-primary);">${t.siNo || '-'}</td>
-                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${partNo}</td>
-                    <td style="padding: 16px;">${displayName}</td>
-                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.qty || '-'}</td>
-                    <td style="padding: 16px; font-size: 14px; font-weight: 700;">₱${(t.amount || 0).toLocaleString(undefined, {minimumFractionDigits: 0})}</td>
-                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.customer || 'Guest'}</td>
-                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${paymentDisplay}</td>
-                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${(t.cashier || '-').split(' ')[0]}</td>
-                    <td style="padding: 16px;">${getStatusHtml(t.status)}</td>
-                `;
-                tbody.appendChild(tr);
+                    if (!product) {
+                        product = {};
+                    }
+                    const chineseName = product.chineseName || '';
+                    
+                    let resolvedName = item.name || t.itemName || '-';
+                    if (item.variant) {
+                        if (!resolvedName.includes(`(${item.variant})`)) {
+                            resolvedName += ` (${item.variant})`;
+                        }
+                    }
+                    
+                    let displayName = `<span style="font-weight: 600; color: var(--text-primary);">${resolvedName}</span>`;
+                    if (chineseName) {
+                        displayName += `<br><span style="font-size: 12px; color: var(--text-secondary);">${chineseName}</span>`;
+                    }
+
+                    // Format payment method
+                    let paymentDisplay = t.payment || '-';
+                    if (t.payment && t.payment.includes('Deposit')) {
+                        paymentDisplay = `<span style="color: var(--text-secondary);">${t.payment}</span>`;
+                    }
+
+                    // Amount Color Coding
+                    const isDeduction = (t.status === 'Refund' || t.status === 'Return' || t.status === 'Void');
+                    const amountColor = isDeduction ? 'var(--danger)' : 'var(--success)';
+                    const amountPrefix = isDeduction ? '- ' : '';
+
+                    // Calculate row amount
+                    let rowAmount = 0;
+                    if (item.price !== null && item.price !== undefined) {
+                        rowAmount = item.price * item.qty;
+                    } else {
+                        rowAmount = t.amount || 0;
+                    }
+
+                    tr.innerHTML = `
+                        <td style="padding: 16px; font-size: 13px;">
+                            <span style="display: block; color: var(--text-primary);">${datePart}</span>
+                            ${timePart ? `<span style="display: block; font-size: 11px; color: var(--text-secondary);">${timePart}</span>` : ''}
+                        </td>
+                        <td style="padding: 16px; font-size: 14px; font-weight: 700; color: var(--text-primary);">${t.siNo || '-'}</td>
+                        <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${partNo}</td>
+                        <td style="padding: 16px;">${displayName}</td>
+                        <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${item.qty || '-'}</td>
+                        <td style="padding: 16px; font-size: 14px; font-weight: 700; color: ${amountColor};">${amountPrefix}₱${(rowAmount).toLocaleString(undefined, {minimumFractionDigits: 0})}</td>
+                        <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.customer || 'Guest'}</td>
+                        <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${paymentDisplay}</td>
+                        <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${(t.cashier || '-').split(' ')[0]}</td>
+                        <td style="padding: 16px;">${getStatusHtml(t.status)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
             });
         }
 

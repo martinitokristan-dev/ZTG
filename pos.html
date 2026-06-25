@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Point of Sale (POS) | ZTG Heavy Parts</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
     <style>
         .pos-table th {
             padding: 12px 14px;
@@ -315,9 +315,10 @@
         /* Custom styles for POS Layout grid */
         .pos-split-grid {
             display: grid;
-            grid-template-columns: 1fr 420px;
+            grid-template-columns: 1fr 480px;
             gap: 20px;
-            height: calc(100vh - 190px);
+            flex: 1;
+            min-height: 0;
             overflow: hidden;
             padding: 20px;
         }
@@ -369,8 +370,8 @@
                                         <th style="text-align: left;">Category</th>
                                         <th style="text-align: left;">Address</th>
                                         <th style="text-align: left;">Stock</th>
-                                        <th style="text-align: right; padding-right: 16px; color: #3B82F6;">Price 1</th>
-                                        <th style="text-align: right; padding-right: 20px; color: #8B5CF6;">Price 2</th>
+                                        <th style="text-align: right; padding-right: 16px; color: #64748B;">Price 1</th>
+                                        <th style="text-align: right; padding-right: 20px; color: #1E293B;">Price 2</th>
                                     </tr>
                                 </thead>
                                 <tbody id="posProductsTableBody">
@@ -406,6 +407,12 @@
                                 <div>
                                     <input type="text" id="posCustomerPhone" class="form-control form-control-sm" placeholder="Contact Number (Optional)">
                                 </div>
+                                <div>
+                                    <input type="text" id="posCustomerTin" class="form-control form-control-sm" placeholder="Buyer's TIN (e.g. 123-456-789-000) — Required for B2B">
+                                </div>
+                                <div>
+                                    <input type="text" id="posCustomerAddress" class="form-control form-control-sm" placeholder="Buyer's Business Address (Optional for walk-in)">
+                                </div>
                             </div>
                         </div>
 
@@ -431,94 +438,140 @@
                                     <strong id="cartTotal" style="color: var(--text-primary);">₱0</strong>
                                 </div>
                             </div>
-                                                   <!-- Document & Serving Cashier Info -->
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label class="form-label" style="font-size: 10px; margin-bottom: 2px; color: var(--text-muted);">Doc Type</label>
-                                    <select id="posDocType" class="form-control form-control-sm">
-                                        <option value="S.I.">S.I. (Sales Invoice)</option>
-                                        <option value="D.R.">D.R. (Delivery Receipt)</option>
-                                        <option value="C.I.">C.I. (Charge Invoice)</option>
-                                    </select>
-                                </div>
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label class="form-label" style="font-size: 10px; margin-bottom: 2px; color: var(--text-muted);">Served By</label>
-                                    <select id="posServedBy" class="form-control form-control-sm">
-                                        <option value="Maria Santos">Maria Santos</option>
-                                        <option value="Juan Dela Cruz">Juan Dela Cruz</option>
-                                        <option value="Pedro Penduko">Pedro Penduko</option>
-                                        <option value="Ana Reyes">Ana Reyes</option>
-                                        <option value="Mark Bautista">Mark Bautista</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <!-- Payment Info -->
-                            <div class="form-group" style="margin-bottom: 12px;">
-                                <label class="form-label" style="font-size: 10px; margin-bottom: 2px; color: var(--text-muted);">Payment Method</label>
-                                <select id="posPaymentMethod" class="form-control form-control-sm">
-                                    <option value="Cash">Cash</option>
-                                    <option value="GCash">GCash</option>
-                                    <option value="Bank Transfer">Bank Transfer</option>
-                                </select>
-                            </div>
-
-                            <!-- Cash Payment Card -->
-                            <div style="background: #F8FAFC; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                    <div class="form-group" style="margin-bottom: 0;">
-                                        <label class="form-label" style="font-size: 10px; margin-bottom: 2px; color: var(--text-muted); font-weight: 600;">CASH TENDERED *</label>
-                                        <input type="number" id="amountTendered" class="form-control form-control-sm" placeholder="₱0.00" style="font-size: 14px; font-weight: 700;" oninput="calculateChange()">
-                                    </div>
-                                    <div class="form-group" style="margin-bottom: 0;">
-                                        <label class="form-label" style="font-size: 10px; margin-bottom: 2px; color: var(--text-muted); font-weight: 600;">CHANGE DUE</label>
-                                        <input type="text" id="amountChange" class="form-control form-control-sm" placeholder="₱0.00" readonly style="font-size: 14px; font-weight: 700; color: var(--danger); background-color: #FEF2F2;">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button id="processSaleBtn" class="btn btn-success" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 600; border-radius: 8px;" onclick="processDirectCheckout()">Complete Checkout</button>
-                            <p style="text-align: center; font-size: 10px; color: var(--text-muted); margin-top: 6px; margin-bottom: 0;">Admin holds physical cash drawer. Match transaction details with cash.</p>
+                            <!-- Review & Checkout Action Button -->
+                            <button id="openCheckoutReviewBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 14.5px; font-weight: 700; border-radius: 8px; background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); border: none; box-shadow: 0 4px 12px rgba(37,99,235,0.2); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(37,99,235,0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(37,99,235,0.2)';" onclick="openCheckoutReviewModal()">
+                                Review & Checkout
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- P.O. Approvals Decommissioned -->
-
-    <!-- MODAL: ADD TO CART -->
-    <div class="modal-overlay" id="addCartModal">
-        <div class="modal-card" style="max-width: 400px; width: 90%;">
-            <div class="modal-header" style="background-color: var(--primary); border-bottom: none; padding: 16px 20px;">
-                <h3 class="modal-title" style="color: #FFFFFF; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-                    <svg style="width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2.5;" viewBox="0 0 24 24"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                    Add Product to Item List
-                </h3>
-                <button type="button" class="modal-close" style="color: #FFFFFF; opacity: 0.8; background: none; border: none; cursor: pointer;" onclick="closeModal('addCartModal')">
-                    <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.5;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+    <!-- Review & Checkout Modal (Kiosk Style) -->
+    <div id="checkoutReviewModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 1000px; width: 95%; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: #FFFFFF; box-shadow: var(--shadow-lg);">
+            <!-- Header -->
+            <div class="modal-header" style="padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #FAFAFA;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; fill: none; stroke: var(--primary); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <h3 class="modal-title" style="margin: 0; font-size: 18px; font-weight: 700; color: var(--text-primary); font-family: 'Outfit', sans-serif;">Order Review & Checkout</h3>
+                </div>
+                <button class="modal-close" onclick="closeModal('checkoutReviewModal')" style="background: none; border: none; cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 50%; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#F1F5F9'" onmouseout="this.style.backgroundColor='transparent'">
+                    <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
             </div>
-            <div class="modal-body" style="padding: 20px;">
-                <div style="margin-bottom: 16px;">
-                    <strong style="color: var(--text-primary); font-size: 16px; display: block;" id="addCartModalProductName">Product Name</strong>
-                    <span style="font-size: 12px; color: var(--text-secondary); display: block;" id="addCartModalPartNo">Part No</span>
-                    <span class="badge badge-success" style="margin-top: 8px; display: inline-block;" id="addCartModalStock">Stock</span>
+            
+            <!-- Body -->
+            <div class="modal-body" style="padding: 0; display: grid; grid-template-columns: 1.2fr 1fr; min-height: 0; overflow: hidden; height: 72vh;">
+                <!-- Left Pane: Order Review -->
+                <div style="padding: 24px; border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; background: #F8FAFC;">
+                    <h4 style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0; margin-bottom: 12px; font-family: 'Outfit', sans-serif;">Items in Cart</h4>
+                    
+                    <!-- Review Cart Items List -->
+                    <div id="reviewCartItemsList" style="flex: 1; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; overflow-y: auto; padding-right: 4px;">
+                        <!-- Dynamically populated review list of items -->
+                    </div>
+                    
+                    <!-- Totals Summary -->
+                    <div style="background: #FFFFFF; border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow-sm); flex-shrink: 0;">
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary);">
+                            <span>Subtotal</span>
+                            <span id="reviewCartSubtotal" style="font-weight: 600; color: var(--text-primary);">₱0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">
+                            <span>Tax (12%)</span>
+                            <span id="reviewCartTax" style="font-weight: 600; color: var(--text-primary);">₱0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; color: #FFFFFF; background: var(--primary); padding: 10px 14px; border-radius: 8px; margin-top: 4px; align-items: center;">
+                            <span>Grand Total</span>
+                            <span id="reviewCartTotal" style="color: #FFFFFF;">₱0.00</span>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="form-group" id="addCartModalVariantContainer" style="display: block; margin-bottom: 16px;">
-                    <label class="form-label" style="font-weight: 600;">Select Variant</label>
-                    <select id="addCartModalVariant" class="form-control">
-                        <!-- Variants populated dynamically -->
-                    </select>
-                </div>
+                <!-- Right Pane: Checkout Configuration -->
+                <div style="padding: 24px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; background: #FFFFFF;">
+                    <h4 style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0; margin-bottom: 2px; font-family: 'Outfit', sans-serif;">Payment & Invoice Details</h4>
+                    
+                    <!-- Document & Serving Cashier Info -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-size: 10px; margin-bottom: 4px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Doc Type</label>
+                            <select id="posDocType" class="form-control form-control-sm" style="font-weight: 600;">
+                                <option value="S.I.">S.I. (Sales Invoice)</option>
+                                <option value="D.R.">D.R. (Delivery Receipt)</option>
+                                <option value="C.I.">C.I. (Charge Invoice)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-size: 10px; margin-bottom: 4px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Served By</label>
+                            <select id="posServedBy" class="form-control form-control-sm" style="font-weight: 600;">
+                                <option value="Maria Santos">Maria Santos</option>
+                                <option value="Juan Dela Cruz">Juan Dela Cruz</option>
+                                <option value="Pedro Penduko">Pedro Penduko</option>
+                                <option value="Ana Reyes">Ana Reyes</option>
+                                <option value="Mark Bautista">Mark Bautista</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Info -->
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" style="font-size: 10px; margin-bottom: 4px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Payment Method</label>
+                        <select id="posPaymentMethod" class="form-control form-control-sm" style="font-weight: 600;" onchange="togglePaymentModeInline()">
+                            <option value="Cash">Cash</option>
+                            <option value="GCash">GCash</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Split">Split Payment</option>
+                        </select>
+                    </div>
 
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label" style="font-weight: 600;">Quantity</label>
-                    <input type="number" id="addCartModalQty" class="form-control" value="1" min="1" style="font-size: 16px; font-weight: 600;">
+                    <!-- Split Payment Details Card -->
+                    <div id="splitPaymentRow" style="display: none; background: #F8FAFC; border: 1px solid var(--border); border-radius: 8px; padding: 12px; flex-direction: column; gap: 8px;">
+                        <div style="font-size: 9px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Split Payment Details</div>
+                        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 8px; align-items: center;">
+                            <select id="splitMethod1" class="form-control form-control-sm" onchange="onSplitMethodChange()" style="font-weight: 600;">
+                                <option value="Cash">Cash</option>
+                                <option value="GCash" selected>GCash</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                            </select>
+                            <input type="number" id="splitAmount1" class="form-control form-control-sm" placeholder="Amount 1" style="font-weight: 700; text-align: right;" oninput="calculateSplitAmounts(1)">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 8px; align-items: center;">
+                            <select id="splitMethod2" class="form-control form-control-sm" onchange="onSplitMethodChange()" style="font-weight: 600;">
+                                <option value="Cash" selected>Cash</option>
+                                <option value="GCash">GCash</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                            </select>
+                            <input type="number" id="splitAmount2" class="form-control form-control-sm" placeholder="Amount 2" style="font-weight: 700; text-align: right;" oninput="calculateSplitAmounts(2)">
+                        </div>
+                    </div>
+
+                    <!-- Cash Payment Card -->
+                    <div id="cashPaymentCard" style="background: #F8FAFC; border: 1px solid var(--border); border-radius: 8px; padding: 12px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 9px; margin-bottom: 4px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Cash Tendered *</label>
+                                <input type="number" id="amountTendered" class="form-control form-control-sm" placeholder="₱0.00" style="font-size: 13px; font-weight: 700; text-align: right;" oninput="calculateChange()">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 9px; margin-bottom: 4px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Change Due</label>
+                                <input type="text" id="amountChange" class="form-control form-control-sm" placeholder="₱0.00" readonly style="font-size: 13px; font-weight: 700; text-align: right; color: var(--danger); background-color: #FEF2F2;">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer" style="padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: #F8FAFC;">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('addCartModal')">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="confirmAddToCart()" style="padding: 8px 18px; border-radius: 6px;">Add Item</button>
+            
+            <!-- Footer -->
+            <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border); background-color: #FAFAFA; display: flex; justify-content: flex-end; gap: 12px; align-items: center; flex-shrink: 0;">
+                <p style="font-size: 10px; color: var(--text-muted); margin: 0; margin-right: auto;">Drawer: Admin holds physical drawer. Match transaction details with cash.</p>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('checkoutReviewModal')" style="padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 8px;">Close</button>
+                <button type="button" id="processSaleBtn" class="btn btn-success" onclick="processDirectCheckout()" style="padding: 8px 20px; font-size: 13px; font-weight: 700; border-radius: 8px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border: none; box-shadow: 0 4px 12px rgba(16,185,129,0.2);">Complete Checkout</button>
             </div>
         </div>
     </div>
@@ -536,57 +589,61 @@
             position: relative;
             animation: modalSlideIn 0.3s ease;
         ">
-            <!-- Success Header Banner -->
+            <!-- Success Header Banner (Compact & Professional) -->
             <div style="
-                background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-                padding: 36px 40px 28px;
-                text-align: center;
+                padding: 16px 24px;
+                background: #F8FAFC;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
                 position: relative;
             ">
-                <button type="button" onclick="closeModal('receiptModal')" style="
-                    position: absolute; top: 16px; right: 16px;
-                    background: rgba(255,255,255,0.2); border: none;
-                    border-radius: 50%; width: 32px; height: 32px;
-                    display: flex; align-items: center; justify-content: center;
-                    cursor: pointer; color: white; transition: background 0.2s;
-                " onmouseover="this.style.background='rgba(255,255,255,0.35)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
-                    <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.5;"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
-
-                <div style="
-                    width: 72px; height: 72px;
-                    background: rgba(255,255,255,0.2);
-                    border-radius: 50%;
-                    display: flex; align-items: center; justify-content: center;
-                    margin: 0 auto 16px;
-                    border: 2px solid rgba(255,255,255,0.4);
-                ">
-                    <svg viewBox="0 0 24 24" style="width: 36px; height: 36px; fill: none; stroke: white; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                    </svg>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="
+                        width: 24px; height: 24px;
+                        background: #F0FDF4;
+                        border-radius: 50%;
+                        display: flex; align-items: center; justify-content: center;
+                        border: 1px solid #22C55E;
+                        flex-shrink: 0;
+                    ">
+                        <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: #15803D; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round;">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--text-primary); font-family: 'Outfit', sans-serif;">Transaction Successful</h3>
+                        <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);">
+                            Receipt No: <strong id="receiptNo" style="color: var(--text-primary); font-weight: 700;"></strong>
+                        </p>
+                    </div>
                 </div>
-                <h2 style="color: white; font-size: 22px; font-weight: 700; margin: 0 0 6px;">Transaction Successful!</h2>
-                <p style="color: rgba(255,255,255,0.85); font-size: 14px; margin: 0;">
-                    Receipt No: <strong id="receiptNo" style="color: white; font-size: 15px;"></strong>
-                </p>
+                <button type="button" onclick="closeModal('receiptModal')" style="
+                    background: none; border: none;
+                    border-radius: 50%; width: 28px; height: 28px;
+                    display: flex; align-items: center; justify-content: center;
+                    cursor: pointer; color: var(--text-secondary); transition: background-color 0.2s;
+                " onmouseover="this.style.backgroundColor='#E2E8F0'" onmouseout="this.style.backgroundColor='transparent'">
+                    <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
             </div>
 
-            <!-- Receipt Body -->
-            <div style="padding: 0 40px 32px;">
+            <!-- Receipt Body (Optimized Spacing) -->
+            <div style="padding: 16px 24px 20px;">
 
                 <!-- Receipt Paper Style -->
                 <div style="
                     background: #FAFAFA;
                     border: 1px solid #E8ECF0;
                     border-radius: 12px;
-                    margin: 28px 0 24px;
+                    margin-bottom: 16px;
                     overflow: hidden;
                 ">
                     <!-- Company Header on Receipt -->
                     <div style="
                         background: #F1F5F9;
-                        padding: 16px 24px;
+                        padding: 12px 20px;
                         text-align: center;
                         border-bottom: 1px dashed #CBD5E1;
                     ">
@@ -595,7 +652,7 @@
                     </div>
 
                     <!-- Receipt Content Injected Here -->
-                    <div id="receiptContent" style="padding: 20px 24px; max-height: 320px; overflow-y: auto;">
+                    <div id="receiptContent" style="padding: 16px 20px; max-height: 320px; overflow-y: auto;">
                         <!-- Details go here -->
                     </div>
                 </div>
@@ -603,23 +660,23 @@
                 <!-- Action Buttons -->
                 <div style="display: flex; gap: 12px;">
                     <button type="button" onclick="closeModal('receiptModal')" style="
-                        flex: 1; padding: 14px; border-radius: 10px;
+                        flex: 1; padding: 10px 16px; border-radius: 8px;
                         border: 1.5px solid #E2E8F0; background: white;
-                        font-size: 14px; font-weight: 600; color: #64748B;
+                        font-size: 13px; font-weight: 600; color: #64748B;
                         cursor: pointer; transition: all 0.2s;
                     " onmouseover="this.style.background='#F8FAFC'; this.style.borderColor='#CBD5E1';"
                        onmouseout="this.style.background='white'; this.style.borderColor='#E2E8F0';">
                         Close
                     </button>
                     <button type="button" onclick="printReceipt()" style="
-                        flex: 2; padding: 14px; border-radius: 10px;
+                        flex: 2; padding: 10px 16px; border-radius: 8px;
                         border: none; background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
-                        font-size: 14px; font-weight: 600; color: white;
+                        font-size: 13px; font-weight: 700; color: white;
                         cursor: pointer; display: flex; align-items: center; justify-content: center;
-                        gap: 8px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(37,99,235,0.3);
-                    " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(37,99,235,0.4)';"
-                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(37,99,235,0.3)';">
-                        <svg viewBox="0 0 24 24" style="width: 17px; height: 17px; fill: none; stroke: white; stroke-width: 2;">
+                        gap: 8px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+                    " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(37,99,235,0.35)';"
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(37,99,235,0.25)';">
+                        <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: white; stroke-width: 2.5;">
                             <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/>
                         </svg>
                         Print Receipt
@@ -698,29 +755,29 @@
                 
                 const disabledIcon = isDisabled ? `<svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: var(--danger); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; margin-left: 6px;" title="Disabled"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>` : '';
 
-                tr.innerHTML = `
-                    <td style="text-align: left; padding: 12px 16px;" onclick="${(!isDisabled && !isOutOfStock) ? `openAddToCartModal(${p.id}, 'price1')` : ''}">
-                        <strong style="color: var(--text-primary); font-size: 13.5px; display: flex; align-items: center;">${p.name} ${disabledIcon}</strong>
-                        <span class="chinese-subtitle" style="font-size: 11px; color: var(--text-secondary); display: block; margin-top: 1px;">${p.chineseName || ''}</span>
-                    </td>
-                    <td class="font-bold" style="font-size: 13px; text-align: left; padding: 12px 16px;" onclick="${(!isDisabled && !isOutOfStock) ? `openAddToCartModal(${p.id}, 'price1')` : ''}">${p.partNo}</td>
-                    <td style="text-align: left; padding: 12px 16px;" onclick="${(!isDisabled && !isOutOfStock) ? `openAddToCartModal(${p.id}, 'price1')` : ''}">${p.category}</td>
-                    <td style="text-align: left; padding: 12px 16px;" onclick="${(!isDisabled && !isOutOfStock) ? `openAddToCartModal(${p.id}, 'price1')` : ''}">${p.address}</td>
-                    <td style="text-align: left; padding: 12px 16px;" onclick="${(!isDisabled && !isOutOfStock) ? `openAddToCartModal(${p.id}, 'price1')` : ''}">
-                        ${isDisabled ? `<span style="color: var(--danger); background: #FEF2F2; padding: 2px 10px; border-radius: 12px; font-weight: 600; display: inline-block;">Disabled</span>` : 
-                        `<span style="color: ${stockColor}; background: ${p.stock === 0 ? '#FEF2F2' : (p.stock <= 5 ? '#FEFCE8' : '#F0FDF4')}; padding: 2px 10px; border-radius: 12px; font-weight: 600; display: inline-block;">${p.stock}</span>`}
-                    </td>
-                    <td style="text-align: right; padding: 12px 16px;">
-                        ${(!isDisabled && !isOutOfStock) ? `
-                        <button onclick="openAddToCartModal(${p.id}, 'price1')" style="background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;" title="Add with Price 1">₱${price1}</button>
-                        ` : `<span style="color: var(--text-muted); font-size: 13px;">₱${price1}</span>`}
-                    </td>
-                    <td style="text-align: right; padding: 12px 16px; padding-right: 20px;">
-                        ${(!isDisabled && !isOutOfStock) ? `
-                        <button onclick="openAddToCartModal(${p.id}, 'price2')" style="background: #F5F3FF; color: #7C3AED; border: 1px solid #DDD6FE; border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;" title="Add with Price 2">₱${price2}</button>
-                        ` : `<span style="color: var(--text-muted); font-size: 13px;">₱${price2}</span>`}
-                    </td>
-                `;
+                 tr.innerHTML = `
+                     <td style="text-align: left; padding: 12px 16px;" onclick="${(!isDisabled && !isOutOfStock) ? `addDirectToCart(${p.id}, 'price1')` : ''}">
+                         <strong style="color: var(--text-primary); font-size: 13.5px; display: flex; align-items: center;">${p.name} ${disabledIcon}</strong>
+                         <span class="chinese-subtitle" style="font-size: 11px; color: var(--text-secondary); display: block; margin-top: 1px;">${p.chineseName || ''}</span>
+                     </td>
+                     <td class="font-bold" style="font-size: 13px; text-align: left; padding: 12px 16px;" onclick="${(!isDisabled && !isOutOfStock) ? `addDirectToCart(${p.id}, 'price1')` : ''}">${p.partNo}</td>
+                     <td style="text-align: left; padding: 12px 16px;" onclick="${(!isDisabled && !isOutOfStock) ? `addDirectToCart(${p.id}, 'price1')` : ''}">${p.category}</td>
+                     <td style="text-align: left; padding: 12px 16px;" onclick="${(!isDisabled && !isOutOfStock) ? `addDirectToCart(${p.id}, 'price1')` : ''}">${p.address}</td>
+                     <td style="text-align: left; padding: 12px 16px;" onclick="${(!isDisabled && !isOutOfStock) ? `addDirectToCart(${p.id}, 'price1')` : ''}">
+                         ${isDisabled ? `<span style="color: var(--danger); background: #FEF2F2; padding: 2px 10px; border-radius: 12px; font-weight: 600; display: inline-block;">Disabled</span>` : 
+                         `<span style="color: ${stockColor}; background: ${p.stock === 0 ? '#FEF2F2' : (p.stock <= 5 ? '#FEFCE8' : '#F0FDF4')}; padding: 2px 10px; border-radius: 12px; font-weight: 600; display: inline-block;">${p.stock}</span>`}
+                     </td>
+                     <td style="text-align: right; padding: 12px 16px;">
+                         ${(!isDisabled && !isOutOfStock) ? `
+                         <span onclick="addDirectToCart(${p.id}, 'price1')" style="color: #64748B; font-weight: 700; cursor: pointer; font-size: 13px; text-decoration: none; display: inline-block;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">₱${price1}</span>
+                         ` : `<span style="color: var(--text-muted); font-size: 13px;">₱${price1}</span>`}
+                     </td>
+                     <td style="text-align: right; padding: 12px 16px; padding-right: 20px;">
+                         ${(!isDisabled && !isOutOfStock) ? `
+                         <span onclick="addDirectToCart(${p.id}, 'price2')" style="color: #1E293B; font-weight: 700; cursor: pointer; font-size: 13px; text-decoration: none; display: inline-block;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">₱${price2}</span>
+                         ` : `<span style="color: var(--text-muted); font-size: 13px;">₱${price2}</span>`}
+                     </td>
+                 `;
                 tbody.appendChild(tr);
             });
         }
@@ -742,119 +799,139 @@
             document.getElementById('docCiBtn').classList.toggle('active', type === 'C.I.');
         }
 
-        // Toggle payment mode view inline
-        function togglePaymentModeInline() {
-            const modeEl = document.getElementById('paymentMode');
-            if (!modeEl) return;
-            const mode = modeEl.value;
-            const tenderedRow = document.getElementById('cashTenderedRow');
-            const processBtn = document.getElementById('processSaleBtn');
-            if (!tenderedRow || !processBtn) return;
+        function getCartTotalAmount() {
+            const products = db.getProducts();
+            return cart.reduce((sum, item) => {
+                const product = products.find(p => p.id === item.id);
+                if (!product) return sum;
+                const price = (item.priceTier === 'price2') ? product.price2 : product.price1;
+                return sum + price * item.qty;
+            }, 0);
+        }
 
-            if (mode === 'P.O. (Pending)') {
-                tenderedRow.style.display = 'none';
-                processBtn.innerText = 'Submit P.O. Approval Request';
-                processBtn.className = 'btn btn-primary';
+        function updateCashTenderedVisibility() {
+            const m1 = document.getElementById('splitMethod1').value;
+            const m2 = document.getElementById('splitMethod2').value;
+            const cashCard = document.getElementById('cashPaymentCard');
+            const tenderedInput = document.getElementById('amountTendered');
+            
+            if (m1 === 'Cash' || m2 === 'Cash') {
+                cashCard.style.display = 'block';
+                tenderedInput.value = '';
+                tenderedInput.readOnly = false;
             } else {
-                tenderedRow.style.display = 'grid';
-                processBtn.innerText = 'Process Sale';
-                processBtn.className = 'btn btn-success';
-                const tenderedEl = document.getElementById('amountTendered');
-                const changeEl = document.getElementById('amountChange');
-                if (mode !== 'Cash') {
-                    // E-wallet / Bank usually exact amount
-                    const totalStr = document.getElementById('cartTotal').innerText.replace('₱', '').replace(/,/g, '');
-                    if (tenderedEl) tenderedEl.value = totalStr;
-                    calculateChange();
-                } else {
-                    if (tenderedEl) tenderedEl.value = '';
-                    if (changeEl) changeEl.value = '₱0.00';
-                }
+                cashCard.style.display = 'none';
+                tenderedInput.value = '0';
+                tenderedInput.readOnly = true;
             }
         }
 
-        // Calculate change in real-time
-        function calculateChange() {
-            const totalStr = document.getElementById('cartTotal').innerText.replace('₱', '').replace(/,/g, '');
-            const total = parseFloat(totalStr) || 0;
-            const tendered = parseFloat(document.getElementById('amountTendered').value) || 0;
-            const change = Math.max(0, tendered - total);
-            document.getElementById('amountChange').value = `₱${change.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        function onSplitMethodChange() {
+            updateCashTenderedVisibility();
+            calculateChange();
+        }
+
+        function calculateSplitAmounts(activeInput) {
+            const total = getCartTotalAmount();
+            const amt1El = document.getElementById('splitAmount1');
+            const amt2El = document.getElementById('splitAmount2');
+            
+            if (activeInput === 1) {
+                let val1 = parseFloat(amt1El.value) || 0;
+                if (val1 < 0) val1 = 0;
+                if (val1 > total) {
+                    val1 = total;
+                    amt1El.value = total;
+                }
+                amt2El.value = (total - val1);
+            } else {
+                let val2 = parseFloat(amt2El.value) || 0;
+                if (val2 < 0) val2 = 0;
+                if (val2 > total) {
+                    val2 = total;
+                    amt2El.value = total;
+                }
+                amt1El.value = (total - val2);
+            }
+            calculateChange();
+        }
+
+        // Toggle payment mode view inline
+        function togglePaymentModeInline() {
+            const mode = document.getElementById('posPaymentMethod').value;
+            const splitRow = document.getElementById('splitPaymentRow');
+            const cashCard = document.getElementById('cashPaymentCard');
+            const tenderedInput = document.getElementById('amountTendered');
+            
+            const total = getCartTotalAmount();
+
+            if (mode === 'Split') {
+                splitRow.style.display = 'flex';
+                // Initialize split amounts (e.g. half-half)
+                const half = Math.round(total / 2);
+                document.getElementById('splitAmount1').value = half;
+                document.getElementById('splitAmount2').value = total - half;
+                updateCashTenderedVisibility();
+            } else {
+                splitRow.style.display = 'none';
+                if (mode === 'Cash') {
+                    cashCard.style.display = 'block';
+                    tenderedInput.value = '';
+                    tenderedInput.readOnly = false;
+                } else {
+                    // GCash or Bank Transfer (exact payment)
+                    cashCard.style.display = 'none';
+                    tenderedInput.value = total;
+                    tenderedInput.readOnly = true;
+                }
+            }
+            calculateChange();
         }
 
         // Cart Actions
-        let currentModalProductId = null;
-        let currentModalPriceTier = 'price1';
-
-        function openAddToCartModal(id, priceTier) {
+        function addDirectToCart(id, priceTier) {
             const products = db.getProducts();
             const product = products.find(p => p.id === id);
             if (!product) return;
 
-            currentModalProductId = id;
-            currentModalPriceTier = priceTier || 'price1';
-
-            const selectedPrice = currentModalPriceTier === 'price2' ? product.price2 : product.price1;
-            const tierLabel = currentModalPriceTier === 'price2' ? 'Price 2 (Wholesale)' : 'Price 1 (Retail)';
-            const tierColor = currentModalPriceTier === 'price2' ? '#7C3AED' : '#2563EB';
-
-            document.getElementById('addCartModalProductName').innerText = product.name;
-            document.getElementById('addCartModalPartNo').innerHTML = `${product.partNo} &nbsp;<span style="background:${currentModalPriceTier === 'price2' ? '#F5F3FF' : '#EFF6FF'}; color:${tierColor}; font-size:11px; padding:2px 8px; border-radius:10px; font-weight:700;">${tierLabel}: &#8369;${selectedPrice.toLocaleString()}</span>`;
-            document.getElementById('addCartModalStock').innerText = product.stock + ' units available';
-            
-            const variantContainer = document.getElementById('addCartModalVariantContainer');
-            const variantSelect = document.getElementById('addCartModalVariant');
-            
-            if (product.variants && product.variants.length > 0) {
-                variantContainer.style.display = 'block';
-                variantSelect.disabled = false;
-                variantSelect.innerHTML = product.variants.map(v => `<option value="${v}">${v}</option>`).join('');
-            } else {
-                variantContainer.style.display = 'none';
-                variantSelect.disabled = true;
-                variantSelect.innerHTML = '<option value="">No variants available</option>';
-            }
-
-            document.getElementById('addCartModalQty').value = 1;
-            document.getElementById('addCartModalQty').max = product.stock;
-
-            openModal('addCartModal');
-        }
-
-        function confirmAddToCart() {
-            const qty = parseInt(document.getElementById('addCartModalQty').value) || 1;
-            const variantSelect = document.getElementById('addCartModalVariant');
-            const variant = !variantSelect.disabled ? variantSelect.value : null;
-            
-            const products = db.getProducts();
-            const product = products.find(p => p.id === currentModalProductId);
-            if (!product) return;
-
-            if (qty <= 0) {
-                alert('Quantity must be at least 1.');
+            if (product.status === 'Disabled') {
+                alert('This product is disabled.');
                 return;
             }
+            if (product.stock === 0) {
+                alert('This product is out of stock.');
+                return;
+            }
+
+            const variant = (product.variants && product.variants.length > 0) ? product.variants[0] : null;
+            const tier = priceTier || 'price1';
+
+            const existingIndex = cart.findIndex(item => item.id === product.id && item.variant === variant && item.priceTier === tier);
 
             let currentCartQty = 0;
             cart.filter(item => item.id === product.id).forEach(item => {
                 currentCartQty += item.qty;
             });
 
-            if (currentCartQty + qty > product.stock) {
-                alert(`Cannot exceed available stock levels! Available: ${product.stock - currentCartQty}`);
+            if (currentCartQty + 1 > product.stock) {
+                alert(`Cannot exceed available stock levels! Stock limit is ${product.stock}.`);
                 return;
             }
 
-            const existingIndex = cart.findIndex(item => item.id === product.id && item.variant === variant && item.priceTier === currentModalPriceTier);
-            
             if (existingIndex > -1) {
-                cart[existingIndex].qty += qty;
+                cart[existingIndex].qty += 1;
             } else {
-                cart.push({ id: product.id, name: product.name, partNo: product.partNo, qty: qty, variant: variant, priceTier: currentModalPriceTier });
+                cart.push({
+                    id: product.id,
+                    name: product.name,
+                    partNo: product.partNo,
+                    qty: 1,
+                    variant: variant,
+                    priceTier: tier
+                });
             }
 
             updateCartSummary();
-            closeModal('addCartModal');
         }
 
         function updateCartQty(index, newQty) {
@@ -918,34 +995,53 @@
                 if (!product) return;
 
                 const price = (item.priceTier === 'price2') ? product.price2 : product.price1;
-                const tierLabel = (item.priceTier === 'price2') ? 'P2' : 'P1';
                 const tierColor = (item.priceTier === 'price2') ? '#7C3AED' : '#2563EB';
                 const cost = price * item.qty;
                 subtotal += cost;
 
                 const row = document.createElement('div');
                 row.style.display = 'flex';
-                row.style.justifyContent = 'space-between';
-                row.style.alignItems = 'center';
-                row.style.padding = '8px 12px';
+                row.style.flexDirection = 'column';
+                row.style.gap = '6px';
+                row.style.padding = '12px';
                 row.style.background = '#F8FAFC';
                 row.style.border = '1px solid var(--border)';
                 row.style.borderRadius = '8px';
-                row.style.marginBottom = '6px';
+                row.style.marginBottom = '8px';
+                row.style.position = 'relative';
 
                 row.innerHTML = `
-                    <div style="flex: 1; min-width: 0; padding-right: 8px;">
-                        <span class="font-bold" style="font-size: 12px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); margin-bottom: 2px;">${item.name}</span>
-                        <span style="font-size: 10px; color: var(--text-secondary); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.partNo}${item.variant ? ` &bull; ${item.variant}` : ''} &nbsp;<span style="background: ${item.priceTier === 'price2' ? '#F5F3FF' : '#EFF6FF'}; color: ${tierColor}; padding: 1px 5px; border-radius: 8px; font-weight: 700;">${tierLabel}</span></span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; background: #FFFFFF;">
-                            <span onclick="changeQtyInline(${index}, -1)" style="cursor: pointer; padding: 2px 8px; font-size: 14px; color: var(--text-secondary); user-select: none;">-</span>
-                            <input type="number" style="width: 30px; text-align: center; font-size: 12px; border: none; outline: none; padding: 2px 0; -moz-appearance: textfield;" value="${item.qty}" onchange="updateCartQty(${index}, this.value)">
-                            <span onclick="changeQtyInline(${index}, 1)" style="cursor: pointer; padding: 2px 8px; font-size: 14px; color: var(--text-secondary); user-select: none;">+</span>
+                    <!-- Top Row: Name & Part Info + Delete Button -->
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                        <div style="min-width: 0; flex: 1;">
+                            <strong style="font-size: 13px; color: var(--text-primary); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Outfit', sans-serif;">${item.name}</strong>
+                            <span style="font-size: 11px; color: var(--text-secondary); display: block; margin-top: 1px;">Part No: ${item.partNo}</span>
                         </div>
-                        <span class="font-bold" style="width: 60px; text-align: right; font-size: 12px; color: var(--text-primary);">&#8369;${cost.toLocaleString()}</span>
-                        <button style="padding: 2px 8px; color: var(--danger); background-color: #FEF2F2; font-size: 12px; border:none; cursor:pointer; border-radius: 4px; font-weight: bold; margin-left: 4px; align-self: center;" onclick="removeFromCart(${index})">&times;</button>
+                        <button style="padding: 2px 6px; color: var(--danger); background-color: #FEF2F2; font-size: 14px; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; align-self: flex-start;" onclick="removeFromCart(${index})">&times;</button>
+                    </div>
+
+                    <!-- Bottom Row: Selectors + Qty & Subtotal -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 4px; border-top: 1px dashed #E2E8F0; padding-top: 8px;">
+                        <!-- Selectors (Price) -->
+                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 4px; background: #FFFFFF; border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; height: 26px; box-sizing: border-box;">
+                                <span style="font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Price:</span>
+                                <select onchange="updateCartItemPriceTier(${index}, this.value)" style="border: none; background: transparent; font-size: 11px; font-weight: 700; color: ${tierColor}; outline: none; cursor: pointer; padding: 0;">
+                                    <option value="price1" ${item.priceTier === 'price1' ? 'selected' : ''} style="color: #64748B;">Price 1</option>
+                                    <option value="price2" ${item.priceTier === 'price2' ? 'selected' : ''} style="color: #1E293B;">Price 2</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Qty & Cost -->
+                        <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
+                            <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #FFFFFF; height: 26px; box-sizing: border-box;">
+                                <span onclick="changeQtyInline(${index}, -1)" style="cursor: pointer; padding: 0 8px; font-size: 14px; font-weight: bold; color: var(--text-secondary); user-select: none; display: flex; align-items: center; height: 100%;">-</span>
+                                <input type="number" style="width: 30px; text-align: center; font-size: 12px; font-weight: 600; border: none; outline: none; padding: 0; -moz-appearance: textfield; height: 100%; margin: 0;" value="${item.qty}" onchange="updateCartQty(${index}, this.value)">
+                                <span onclick="changeQtyInline(${index}, 1)" style="cursor: pointer; padding: 0 8px; font-size: 14px; font-weight: bold; color: var(--text-secondary); user-select: none; display: flex; align-items: center; height: 100%;">+</span>
+                            </div>
+                            <span class="font-bold" style="font-size: 13px; color: var(--text-primary); text-align: right; min-width: 65px;">₱${cost.toLocaleString()}</span>
+                        </div>
                     </div>
                 `;
                 list.appendChild(row);
@@ -964,28 +1060,127 @@
             calculateChange();
         }
 
-        function calculateChange() {
-            const products = db.getProducts();
-            const subtotal = cart.reduce((sum, item) => {
-                const product = products.find(p => p.id === item.id);
-                if (!product) return sum;
-                const price = (item.priceTier === 'price2') ? product.price2 : product.price1;
-                return sum + price * item.qty;
-            }, 0);
+        function updateCartItemPriceTier(index, newTier) {
+            const item = cart[index];
+            if (!item) return;
 
+            item.priceTier = newTier;
+
+            // Merge if there is another item with same id, variant and new price tier
+            const matchIndex = cart.findIndex((c, i) => i !== index && c.id === item.id && c.variant === item.variant && c.priceTier === item.priceTier);
+            if (matchIndex > -1) {
+                cart[matchIndex].qty += item.qty;
+                cart.splice(index, 1);
+            }
+
+            updateCartSummary();
+        }
+
+
+        function calculateChange() {
+            const method = document.getElementById('posPaymentMethod').value;
+            const subtotal = getCartTotalAmount();
             const tenderedVal = parseFloat(document.getElementById('amountTendered').value) || 0;
-            const change = tenderedVal - subtotal;
             const changeField = document.getElementById('amountChange');
 
-            if (change >= 0) {
-                changeField.value = `₱${change.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                changeField.style.color = 'var(--success)';
-                changeField.style.backgroundColor = '#ECFDF5';
+            let cashNeeded = 0;
+
+            if (method === 'Cash') {
+                cashNeeded = subtotal;
+            } else if (method === 'Split') {
+                const m1 = document.getElementById('splitMethod1').value;
+                const m2 = document.getElementById('splitMethod2').value;
+                const amt1 = parseFloat(document.getElementById('splitAmount1').value) || 0;
+                const amt2 = parseFloat(document.getElementById('splitAmount2').value) || 0;
+
+                if (m1 === 'Cash') cashNeeded += amt1;
+                if (m2 === 'Cash') cashNeeded += amt2;
+            }
+
+            if (cashNeeded > 0) {
+                const change = tenderedVal - cashNeeded;
+                if (change >= 0) {
+                    changeField.value = `₱${change.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    changeField.style.color = 'var(--success)';
+                    changeField.style.backgroundColor = '#ECFDF5';
+                } else {
+                    changeField.value = '₱0.00';
+                    changeField.style.color = 'var(--danger)';
+                    changeField.style.backgroundColor = '#FEF2F2';
+                }
             } else {
                 changeField.value = '₱0.00';
-                changeField.style.color = 'var(--danger)';
-                changeField.style.backgroundColor = '#FEF2F2';
+                changeField.style.color = 'var(--success)';
+                changeField.style.backgroundColor = '#ECFDF5';
             }
+        }
+
+        function openCheckoutReviewModal() {
+            if (cart.length === 0) {
+                alert('Add product items before processing checkout!');
+                return;
+            }
+            
+            const existingCustomer = document.getElementById('posExistingCustomer').value;
+            const newCustomer = document.getElementById('posCustomerName').value.trim();
+            const customerName = existingCustomer || newCustomer;
+            
+            if (!customerName) {
+                alert('Please enter Customer Name to complete this transaction.');
+                return;
+            }
+
+            const reviewList = document.getElementById('reviewCartItemsList');
+            const products = db.getProducts();
+            reviewList.innerHTML = '';
+            
+            cart.forEach(item => {
+                const product = products.find(p => p.id === item.id);
+                if (!product) return;
+                
+                const price = (item.priceTier === 'price2') ? product.price2 : product.price1;
+                const total = price * item.qty;
+                
+                const card = document.createElement('div');
+                card.style.cssText = `
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 8px 12px;
+                    background: #FFFFFF;
+                    border: 1px solid var(--border);
+                    border-radius: 8px;
+                    font-size: 13px;
+                `;
+                
+                const leftDetails = `
+                    <div style="min-width: 0; flex: 1; padding-right: 8px;">
+                        <div style="font-weight: 600; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                            ${item.name}
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
+                            Part No: ${item.partNo} &bull; <span style="font-weight: 600; color: ${item.priceTier === 'price2' ? '#7C3AED' : '#2563EB'};">${item.priceTier === 'price2' ? 'Price 2' : 'Price 1'}</span>
+                        </div>
+                    </div>
+                `;
+                
+                const rightDetails = `
+                    <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
+                        <span style="color: var(--text-secondary); font-weight: 600; background: #F1F5F9; padding: 2px 8px; border-radius: 6px;">x${item.qty}</span>
+                        <span style="font-weight: 700; color: var(--text-primary); min-width: 75px; text-align: right;">₱${total.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                    </div>
+                `;
+                
+                card.innerHTML = leftDetails + rightDetails;
+                reviewList.appendChild(card);
+            });
+            
+            document.getElementById('reviewCartSubtotal').innerText = document.getElementById('cartSubtotal').innerText;
+            document.getElementById('reviewCartTax').innerText = document.getElementById('cartTax').innerText;
+            document.getElementById('reviewCartTotal').innerText = document.getElementById('cartTotal').innerText;
+            
+            openModal('checkoutReviewModal');
+            togglePaymentModeInline();
         }
 
         function processDirectCheckout() {
@@ -998,26 +1193,107 @@
             const newCustomer = document.getElementById('posCustomerName').value.trim();
             const customerName = existingCustomer || newCustomer;
             const customerPhone = document.getElementById('posCustomerPhone').value.trim();
+            const customerTin = document.getElementById('posCustomerTin').value.trim();
+            const customerAddress = document.getElementById('posCustomerAddress').value.trim();
             const docType = document.getElementById('posDocType').value;
             const servedBy = document.getElementById('posServedBy').value;
             
             const products = db.getProducts();
-            
-            const totalVal = cart.reduce((sum, item) => {
-                const product = products.find(p => p.id === item.id);
-                if (!product) return sum;
-                return sum + ((item.priceTier === 'price2') ? product.price2 : product.price1) * item.qty;
-            }, 0);
+            const totalVal = getCartTotalAmount();
 
             if (!customerName) {
                 alert('Please enter Customer Name to complete this transaction.');
                 return;
             }
 
-            const tenderedVal = parseFloat(document.getElementById('amountTendered').value) || 0;
-            if (tenderedVal < totalVal) {
-                alert('Amount tendered must be greater than or equal to the Grand Total.');
-                return;
+            const method = document.getElementById('posPaymentMethod').value;
+            let paymentMethodSave = method;
+            let tenderedVal = 0;
+            let cashNeeded = 0;
+            let splitDetailsHtml = '';
+
+            if (method === 'Cash') {
+                tenderedVal = parseFloat(document.getElementById('amountTendered').value) || 0;
+                if (tenderedVal < totalVal) {
+                    alert('Amount tendered must be greater than or equal to the Grand Total.');
+                    return;
+                }
+                cashNeeded = totalVal;
+                splitDetailsHtml = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; color: var(--text-secondary);">
+                        <span>Payment Method:</span>
+                        <span style="font-weight: 600; color: var(--text-primary);">Cash</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; color: var(--text-secondary);">
+                        <span>Cash Tendered:</span>
+                        <span>₱${tenderedVal.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-secondary);">
+                        <span>Change:</span>
+                        <span>₱${(tenderedVal - totalVal).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                    </div>
+                `;
+            } else if (method === 'Split') {
+                const m1 = document.getElementById('splitMethod1').value;
+                const m2 = document.getElementById('splitMethod2').value;
+                const amt1 = parseFloat(document.getElementById('splitAmount1').value) || 0;
+                const amt2 = parseFloat(document.getElementById('splitAmount2').value) || 0;
+
+                // Validate sum
+                if (Math.abs((amt1 + amt2) - totalVal) > 0.01) {
+                    alert('The sum of split amounts must equal the Grand Total.');
+                    return;
+                }
+
+                // Verify Cash tendered if Cash is present
+                if (m1 === 'Cash') cashNeeded += amt1;
+                if (m2 === 'Cash') cashNeeded += amt2;
+
+                if (cashNeeded > 0) {
+                    tenderedVal = parseFloat(document.getElementById('amountTendered').value) || 0;
+                    if (tenderedVal < cashNeeded) {
+                        alert(`Amount tendered must be greater than or equal to the Cash Portion (₱${cashNeeded.toLocaleString()}).`);
+                        return;
+                    }
+                }
+
+                paymentMethodSave = `Split: ${m1} (₱${amt1.toLocaleString()}) & ${m2} (₱${amt2.toLocaleString()})`;
+                splitDetailsHtml = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; color: var(--text-secondary);">
+                        <span>Payment Method:</span>
+                        <span style="font-weight: 600; color: var(--text-primary);">Split Payment</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; color: var(--text-secondary);">
+                        <span>- ${m1}:</span>
+                        <span>₱${amt1.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; color: var(--text-secondary);">
+                        <span>- ${m2}:</span>
+                        <span>₱${amt2.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                    </div>
+                `;
+
+                if (cashNeeded > 0) {
+                    splitDetailsHtml += `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; color: var(--text-secondary);">
+                            <span>Cash Tendered:</span>
+                            <span>₱${tenderedVal.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-secondary);">
+                            <span>Change:</span>
+                            <span>₱${(tenderedVal - cashNeeded).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                        </div>
+                    `;
+                }
+            } else {
+                // GCash or Bank Transfer
+                tenderedVal = totalVal;
+                splitDetailsHtml = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; color: var(--text-secondary);">
+                        <span>Payment Method:</span>
+                        <span style="font-weight: 600; color: var(--text-primary);">${method}</span>
+                    </div>
+                `;
             }
 
             // Verify stock holds out for all items in the cart
@@ -1067,8 +1343,6 @@
             const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
             const dateStr = new Date().toLocaleDateString('en-US', dateOptions) + ', ' + new Date().toLocaleTimeString('en-US', timeOptions);
 
-            const posPaymentMethod = document.getElementById('posPaymentMethod').value;
-            
             const newTx = {
                 siNo: siNo,
                 date: dateStr,
@@ -1076,17 +1350,19 @@
                 customer: customerName,
                 qty: cart.reduce((sum, i) => sum + i.qty, 0),
                 amount: totalVal,
-                amountTendered: tenderedVal,
-                payment: posPaymentMethod,
+                amountTendered: method === 'Cash' || (method === 'Split' && cashNeeded > 0) ? tenderedVal : totalVal,
+                payment: paymentMethodSave,
                 cashier: currentUser.name,
                 status: 'Completed',
                 type: 'sale',
                 phone: customerPhone,
+                buyerTin: customerTin,
+                buyerAddress: customerAddress,
                 internalNotes: `Served by ${servedBy}`,
                 items: cart.map(item => {
                     const prod = products.find(p => p.id === item.id);
                     const price = (item.priceTier === 'price2') ? prod.price2 : prod.price1;
-                    return { id: item.id, name: item.name, partNo: item.partNo, qty: item.qty, price, priceTier: item.priceTier, variant: item.variant };
+                    return { id: item.id, name: item.name, partNo: item.partNo, qty: item.qty, price, priceTier: item.priceTier, variant: item.variant, unit: prod.unit || 'pc' };
                 })
             };
 
@@ -1118,7 +1394,7 @@
                 const product = products.find(p => p.id === item.id);
                 const price = (item.priceTier === 'price2') ? product.price2 : product.price1;
                 const tierBadge = item.priceTier === 'price2' ? '<span style="font-size:10px;background:#F5F3FF;color:#7C3AED;padding:1px 5px;border-radius:8px;font-weight:700;margin-left:4px;">P2</span>' : '<span style="font-size:10px;background:#EFF6FF;color:#2563EB;padding:1px 5px;border-radius:8px;font-weight:700;margin-left:4px;">P1</span>';
-                const itemTotal = (price * item.qty).toLocaleString();
+                const itemTotal = (price * item.qty).toLocaleString(undefined, {minimumFractionDigits: 2});
                 receiptHtml += `
                         <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
                             <span style="flex: 1; padding-right: 12px; font-weight: 500;">${item.name}${tierBadge}</span>
@@ -1134,16 +1410,9 @@
                     
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; font-size: 16px; color: var(--primary);">
                         <span>Grand Total</span>
-                        <span>₱${totalVal.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</span>
+                        <span>₱${totalVal.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; color: var(--text-secondary);">
-                        <span>Cash Tendered</span>
-                        <span>₱${tenderedVal.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-secondary);">
-                        <span>Change</span>
-                        <span>₱${(tenderedVal - totalVal).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</span>
-                    </div>
+                    ${splitDetailsHtml}
                 </div>
             `;
             document.getElementById('receiptNo').innerText = siNo;
@@ -1153,10 +1422,19 @@
             document.getElementById('posExistingCustomer').value = '';
             document.getElementById('posCustomerName').value = '';
             document.getElementById('posCustomerPhone').value = '';
+            document.getElementById('posCustomerTin').value = '';
+            document.getElementById('posCustomerAddress').value = '';
+            document.getElementById('posPaymentMethod').value = 'Cash';
             document.getElementById('amountTendered').value = '';
             document.getElementById('amountChange').value = '₱0.00';
             document.getElementById('amountChange').style.color = 'var(--danger)';
             document.getElementById('amountChange').style.backgroundColor = '#FEF2F2';
+
+            // Hide split panel, show cash card, reset split dropdowns
+            document.getElementById('splitPaymentRow').style.display = 'none';
+            document.getElementById('cashPaymentCard').style.display = 'block';
+            document.getElementById('splitMethod1').value = 'GCash';
+            document.getElementById('splitMethod2').value = 'Cash';
 
             clearCart();
             renderPOSProducts();
@@ -1166,60 +1444,80 @@
                 window.triggerNotificationsUpdate();
             }
 
+            // Close Checkout Review Modal
+            closeModal('checkoutReviewModal');
+
             // Open Receipt Modal
             openModal('receiptModal');
         }
 
         function printReceipt() {
-            const printContent = document.getElementById('receiptContent').innerHTML;
-            const receiptNo = document.getElementById('receiptNo').innerText;
-            
-            const printStyle = document.createElement('style');
-            printStyle.id = 'print-style';
-            printStyle.innerHTML = `
-                @media print {
-                    body * { visibility: hidden !important; }
-                    #print-section, #print-section * { visibility: visible !important; }
-                    #print-section { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; font-family: monospace; color: #000; }
-                }
-            `;
-            document.head.appendChild(printStyle);
+            // Read structured data from the last saved transaction
+            const transactions = db.getTransactions();
+            const tx = transactions[0]; // Most recent transaction is always first
 
-            const printDiv = document.createElement('div');
-            printDiv.id = 'print-section';
-            printDiv.innerHTML = `
-                <div style="text-align: center; margin-bottom: 10px; line-height: 1.3;">
-                    <h2 style="margin: 0; font-size: 18px; font-weight: bold;">ZTG HEAVY PARTS</h2>
-                    <div style="font-size: 12px; margin-top: 4px;">
-                        <div>Non-VAT Reg. TIN: 000-123-456-000</div>
-                        <div>123 Industrial Ave., Brgy. San Jose</div>
-                        <div>Quezon City, Metro Manila</div>
-                    </div>
-                </div>
-                
-                <div style="text-align: center; margin: 15px 0;">
-                    <h3 style="margin: 0; font-size: 15px; font-weight: bold;">SALES INVOICE</h3>
-                    <p style="margin: 4px 0; font-size: 14px; font-weight: bold; color: var(--danger);">No. ${receiptNo}</p>
-                </div>
-                
-                ${printContent}
-                
-                <div style="text-align: center; margin-top: 20px; font-size: 11px; line-height: 1.4;">
-                    <p style="margin: 4px 0;">================================</p>
-                    <p style="margin: 4px 0; font-weight: bold;">THIS DOCUMENT IS NOT VALID FOR CLAIM OF INPUT TAX</p>
-                    <p style="margin: 8px 0 4px 0; font-size: 13px;">Thank you for your business!</p>
-                    <p style="margin: 4px 0; font-style: italic;">Software Provider: ZTG POS System</p>
-                </div>
-            `;
-            document.body.appendChild(printDiv);
-            
-            window.print();
-            
-            // Cleanup after printing dialog closes (or immediately starts)
-            setTimeout(() => {
-                document.head.removeChild(printStyle);
-                document.body.removeChild(printDiv);
-            }, 1000);
+            if (!tx) {
+                alert('No transaction data found to print.');
+                return;
+            }
+
+            const products = db.getProducts();
+            const receiptNo = document.getElementById('receiptNo').innerText || tx.siNo;
+
+            // Build items array for the unified receipt
+            const items = (tx.items || []).map(item => {
+                const prod = products.find(p => p.id === item.id) || {};
+                return {
+                    name: item.name || prod.name || 'Part',
+                    partNo: item.partNo || prod.partNo || '—',
+                    qty: item.qty,
+                    price: item.price,
+                    total: item.qty * item.price,
+                    unit: item.unit || prod.unit || 'pc'
+                };
+            });
+
+            const subtotal = items.reduce((s, i) => s + i.total, 0);
+
+            // Build split payment detail rows for the receipt (table-row format)
+            let splitDetailRows = '';
+            const pm = tx.payment || '';
+            if (pm.startsWith('Split:')) {
+                splitDetailRows += `<tr><td style="padding:3px 0;font-size:11px;color:#374151;">Payment Method:</td><td style="padding:3px 0;font-size:11px;text-align:right;font-weight:600;">Split Payment</td></tr>`;
+                const parts = pm.replace('Split: ', '').split(' & ');
+                parts.forEach(p => {
+                    const match = p.match(/^(.+)\s\(₱(.+)\)$/);
+                    if (match) splitDetailRows += `<tr><td style="padding:2px 0 2px 8px;font-size:11px;color:#374151;">- ${match[1]}:</td><td style="padding:2px 0;font-size:11px;text-align:right;">&#8369;${match[2]}</td></tr>`;
+                });
+                if (tx.amountTendered && tx.amountTendered > 0) {
+                    const cashChange = (tx.amountTendered - subtotal);
+                    splitDetailRows += `<tr><td style="padding:3px 0;font-size:11px;color:#374151;">Cash Tendered:</td><td style="padding:3px 0;font-size:11px;text-align:right;">&#8369;${Number(tx.amountTendered).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`;
+                    splitDetailRows += `<tr><td style="padding:3px 0;font-size:11px;color:#374151;">Change:</td><td style="padding:3px 0;font-size:11px;text-align:right;">&#8369;${Number(cashChange < 0 ? 0 : cashChange).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`;
+                }
+            }
+
+            const docType = tx.siNo ? (tx.siNo.startsWith('DR-') ? 'D.R.' : tx.siNo.startsWith('CI-') ? 'C.I.' : 'S.I.') : 'S.I.';
+            const tendered = tx.amountTendered || 0;
+            const changeGiven = Math.max(0, tendered - tx.amount);
+
+            printUnifiedReceipt({
+                type: 'Sales',
+                invoiceNo: receiptNo,
+                date: tx.date || new Date().toLocaleString(),
+                customer: tx.customer || 'Walk-in',
+                phone: tx.phone || '',
+                buyerTin: tx.buyerTin || '',
+                buyerAddress: tx.buyerAddress || '',
+                items: items,
+                subtotal: subtotal,
+                total: tx.amount || subtotal,
+                payment: pm,
+                tendered: tendered,
+                change: changeGiven,
+                servedBy: tx.cashier || '',
+                docType: docType,
+                splitDetails: splitDetailRows || ''
+            });
         }
 
         // Global map to store existing customer phone numbers

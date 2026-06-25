@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sales Log | ZTG Heavy Parts</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
     <div class="app-container">
@@ -95,43 +95,97 @@
                 const comm = t.amount * 0.05;
                 commission += comm;
 
-                // Extract base name to match with products
-                let baseName = t.itemName;
-                if (baseName.includes(' & ')) {
-                    baseName = baseName.split(' & ')[0];
-                }
-                baseName = baseName.replace(' (Order Release)', '').trim();
-                
-                const product = products.find(p => p.name === baseName) || {};
-                const partNo = product.partNo || 'N/A';
-                const chineseName = product.chineseName || '';
-                
-                let displayName = `<span style="font-weight: 600; color: var(--text-primary);">${t.itemName}</span>`;
-                if (chineseName) {
-                    displayName += `<br><span style="font-size: 12px; color: var(--text-secondary);">${chineseName}</span>`;
+                let rowItems = [];
+                if (t.items && t.items.length > 0) {
+                    rowItems = t.items;
+                } else {
+                    rowItems = [{
+                        id: null,
+                        name: t.itemName,
+                        partNo: 'N/A',
+                        qty: t.qty,
+                        price: null
+                    }];
                 }
 
-                // Format payment method to include details if present (e.g. "Cash / Deposit (P1000 applied, P1500 paid)")
-                let paymentDisplay = t.payment;
-                if (t.payment.includes('Deposit')) {
-                    paymentDisplay = `<span style="color: var(--text-secondary);">${t.payment}</span>`;
-                }
+                rowItems.forEach(item => {
+                    // Resolve Part Number and Product details
+                    let partNo = item.partNo || '';
+                    let product = null;
 
-                const tr = document.createElement('tr');
-                tr.style.borderBottom = "1px solid var(--border)";
-                tr.innerHTML = `
-                    <td style="padding: 16px; font-size: 13px;">${t.date.replace(', ', '<br>')}</td>
-                    <td style="padding: 16px; font-size: 14px; font-weight: 700; color: var(--text-primary);">${t.siNo}</td>
-                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${partNo}</td>
-                    <td style="padding: 16px;">${displayName}</td>
-                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.qty}</td>
-                    <td style="padding: 16px; font-size: 14px; font-weight: 700;">₱${t.amount.toLocaleString(undefined, {minimumFractionDigits: 0})}</td>
-                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.customer || 'Guest'}</td>
-                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${paymentDisplay}</td>
-                    <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.cashier}</td>
-                    <td style="padding: 16px;"><span style="color: var(--success); font-size: 13px; font-weight: 600;">Completed</span></td>
-                `;
-                tbody.appendChild(tr);
+                    if (item.id) {
+                        product = products.find(p => p.id === item.id);
+                    }
+                    
+                    if (!partNo || partNo === 'N/A' || partNo === '—') {
+                        let baseName = item.name || t.itemName || '';
+                        if (baseName.includes(' & ')) {
+                            baseName = baseName.split(' & ')[0];
+                        }
+                        baseName = baseName.replace(' (Order Release)', '').trim();
+                        
+                        product = products.find(p => p.name === baseName);
+                        
+                        if (!product && baseName.includes(' (')) {
+                            const noVariantName = baseName.split(' (')[0].trim();
+                            product = products.find(p => p.name === noVariantName);
+                        }
+                        
+                        if (!product) {
+                            const sortedProducts = [...products].sort((a, b) => b.name.length - a.name.length);
+                            product = sortedProducts.find(p => baseName.startsWith(p.name));
+                        }
+                        
+                        partNo = (product && product.partNo) ? product.partNo : 'N/A';
+                    }
+
+                    if (!product) {
+                        product = {};
+                    }
+                    const chineseName = product.chineseName || '';
+                    
+                    let resolvedName = item.name || t.itemName || '-';
+                    if (item.variant) {
+                        if (!resolvedName.includes(`(${item.variant})`)) {
+                            resolvedName += ` (${item.variant})`;
+                        }
+                    }
+                    
+                    let displayName = `<span style="font-weight: 600; color: var(--text-primary);">${resolvedName}</span>`;
+                    if (chineseName) {
+                        displayName += `<br><span style="font-size: 12px; color: var(--text-secondary);">${chineseName}</span>`;
+                    }
+
+                    // Format payment method to include details if present
+                    let paymentDisplay = t.payment;
+                    if (t.payment.includes('Deposit')) {
+                        paymentDisplay = `<span style="color: var(--text-secondary);">${t.payment}</span>`;
+                    }
+
+                    // Calculate row amount
+                    let rowAmount = 0;
+                    if (item.price !== null && item.price !== undefined) {
+                        rowAmount = item.price * item.qty;
+                    } else {
+                        rowAmount = t.amount || 0;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = "1px solid var(--border)";
+                    tr.innerHTML = `
+                        <td style="padding: 16px; font-size: 13px;">${t.date.replace(', ', '<br>')}</td>
+                        <td style="padding: 16px; font-size: 14px; font-weight: 700; color: var(--text-primary);">${t.siNo}</td>
+                        <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${partNo}</td>
+                        <td style="padding: 16px;">${displayName}</td>
+                        <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${item.qty}</td>
+                        <td style="padding: 16px; font-size: 14px; font-weight: 700;">₱${rowAmount.toLocaleString(undefined, {minimumFractionDigits: 0})}</td>
+                        <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.customer || 'Guest'}</td>
+                        <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${paymentDisplay}</td>
+                        <td style="padding: 16px; font-size: 13px; color: var(--text-secondary);">${t.cashier}</td>
+                        <td style="padding: 16px;"><span style="color: var(--success); font-size: 13px; font-weight: 600;">Completed</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
             });
 
             document.getElementById('cashierGrossSales').innerText = `₱${gross.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;

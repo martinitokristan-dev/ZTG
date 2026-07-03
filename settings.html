@@ -65,6 +65,283 @@
             flex-direction: column;
             gap: 4px;
         }
+
+        /* ===== PRODUCT SETTINGS VERTICAL TABS ===== */
+        .prod-tabs-layout {
+            display: flex;
+            gap: 0;
+            min-height: 480px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            background: var(--bg-card);
+        }
+        .prod-vtab-sidebar {
+            width: 220px;
+            min-width: 220px;
+            background: var(--bg-main, #f5f6fa);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 12px 0;
+            gap: 2px;
+        }
+        .prod-vtab-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            background: none;
+            border: none;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.18s ease;
+            width: 100%;
+            border-radius: 0;
+        }
+        .prod-vtab-btn:hover {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+        .prod-vtab-btn.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-left-color: var(--primary);
+            font-weight: 700;
+        }
+        .prod-vtab-btn svg {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+            opacity: 0.7;
+        }
+        .prod-vtab-btn.active svg { opacity: 1; }
+        .prod-vtab-panel {
+            display: none;
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        .prod-vtab-panel.active {
+            display: block;
+        }
+        .prod-vtab-panel h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 4px;
+        }
+        .prod-vtab-panel .panel-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 0 0 20px;
+        }
+        /* Category cards */
+        .cat-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            background: var(--bg-main, #f5f6fa);
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            transition: box-shadow 0.15s;
+        }
+        .cat-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .cat-card-info { flex: 1; min-width: 0; }
+        .cat-card-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+        .cat-variant-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+        .cv-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 9px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--primary-light);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        .cv-badge.size   { background:#e0f2fe; color:#0369a1; border-color:#0369a1; }
+        .cv-badge.quality{ background:#fef3c7; color:#b45309; border-color:#b45309; }
+        .cv-badge.color  { background:#f3e8ff; color:#7c3aed; border-color:#7c3aed; }
+        .cat-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        /* Variant option list (vertical) */
+        .variant-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 18px; }
+        .vitem {
+            display: flex;
+            align-items: center;
+            padding: 9px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            gap: 10px;
+            transition: background 0.12s, box-shadow 0.12s;
+        }
+        .vitem:hover { background: var(--bg-main, #f8f9fb); box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .vitem.vitem-static { background: #fffbeb; cursor: default; }
+        .vitem-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .vitem-actions { display: flex; gap: 5px; flex-shrink: 0; }
+        .vitem-action-btn {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 3px 9px;
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1.4;
+            transition: all 0.12s;
+        }
+        .vitem-action-btn:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+        .vitem-action-btn.del:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+        .vitem-edit-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex: 1;
+        }
+        .vitem-edit-row input { font-size: 12px; padding: 4px 8px; height: 28px; }
+        .add-option-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .add-option-row input { flex: 1; max-width: 260px; }
+
+        /* ===== PRODUCT SETTINGS SUB-TABS (DEFUNCT, REPLACED BY SIDEBAR) ===== */
+        .prod-subtab-panel { display: none; }
+        .prod-subtab-panel.active { display: block; }
+        /* Variant icon dots */
+        .variant-color-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid rgba(0,0,0,0.12);
+        }
+
+        /* ===== MODAL VARIANT SELECTOR CARDS ===== */
+        .variant-selector-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-card);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+            margin-bottom: 8px;
+        }
+        .variant-selector-card:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+        .variant-selector-card:has(input:checked) {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            box-shadow: 0 0 0 1px var(--primary);
+        }
+        .variant-selector-card:has(input:disabled) {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--bg-main, #f5f6fa);
+            border-color: var(--border);
+        }
+        .variant-card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .variant-card-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .variant-card-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .variant-card-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+        .variant-selector-card:has(input:checked) .variant-card-indicator {
+            border-color: var(--primary);
+            background: var(--primary);
+        }
+        .variant-selector-card:has(input:checked) .variant-card-indicator::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #ffffff;
+            display: block;
+        }
+
+        /* ===== ALERTS & NOTIFICATIONS GROUP TABS ===== */
+        .alert-gtab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            white-space: nowrap;
+            margin-bottom: -1px;
+        }
+        .alert-gtab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(0,0,0,0.03);
+        }
+        .alert-gtab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            font-weight: 700;
+            background: var(--bg-card);
+        }
+        .alert-gtab-panel {
+            display: none;
+        }
+        .alert-gtab-panel.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -87,7 +364,7 @@
                         <button class="tab-btn active" data-tab="profile" onclick="switchTab('profile', this)">My Profile</button>
                         <button class="tab-btn" data-tab="general" onclick="switchTab('general', this)">General</button>
                         <button class="tab-btn" data-tab="products" onclick="switchTab('products', this)">Products Settings</button>
-                        <button class="tab-btn" data-tab="alerts" onclick="switchTab('alerts', this)">Alerts</button>
+                        <button class="tab-btn" data-tab="alerts" onclick="switchTab('alerts', this)">Alerts & Notifications</button>
                         <button class="tab-btn" data-tab="employees" onclick="switchTab('employees', this)">Employees</button>
                     </div>
 
@@ -231,39 +508,63 @@
                                         <span class="toggle-label">Track damaged products counts separately</span>
                                         <input type="checkbox" id="trackDamaged">
                                     </label>
-                                    <label class="toggle-row">
-                                        <span class="toggle-label">Enable low-stock and out-of-stock alerts</span>
-                                        <input type="checkbox" id="enableStockAlerts">
-                                    </label>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Tab 2: Products Settings (Categories) -->
+                    <!-- Tab 2: Products Settings -->
                     <div class="tab-content" id="tab-products">
-                        <div class="card" style="margin-bottom: 16px; padding: 24px;">
-                            <!-- Section 1: Product Information Settings -->
-                            <div class="settings-section">
-                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Product Information Settings</h3>
-                                
-                                <!-- Blue Alert Banner -->
-                                <div class="alert-banner info">
-                                    <strong style="color: var(--primary-hover); font-size: 13px;">Product Configuration</strong>
-                                    <span style="color: var(--text-secondary); font-size: 12px;">Configure how products are displayed and managed in the inventory system.</span>
-                                </div>
+                        <div class="prod-tabs-layout">
+                            <!-- Left Sidebar -->
+                            <div class="prod-vtab-sidebar">
+                                <button class="prod-vtab-btn active" data-ptab="pinfo" onclick="switchProdTab('pinfo',this)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+                                    Product Info
+                                </button>
+                                <button class="prod-vtab-btn" data-ptab="categories" onclick="switchProdTab('categories',this)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                                    Categories
+                                </button>
+                                <button class="prod-vtab-btn" data-ptab="size" onclick="switchProdTab('size',this)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18M3 12h12M3 17h6"/></svg>
+                                    Size Options
+                                </button>
+                                <button class="prod-vtab-btn" data-ptab="quality" onclick="switchProdTab('quality',this)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+                                    Quality
+                                </button>
+                                <button class="prod-vtab-btn" data-ptab="color" onclick="switchProdTab('color',this)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18"/></svg>
+                                    Color Options
+                                </button>
+                                <button class="prod-vtab-btn" data-ptab="ppricing" onclick="switchProdTab('ppricing',this)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm0 0v20M2 12h20"/></svg>
+                                    Pricing Configuration
+                                </button>
+                                <button class="prod-vtab-btn" data-ptab="pwarehouse" onclick="switchProdTab('pwarehouse',this)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                                    Warehouse &amp; Display
+                                </button>
+                            </div>
 
-                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px;">
+                            <!-- PANEL: Product Info -->
+                            <div class="prod-vtab-panel active" id="ptab-pinfo">
+                                <div style="margin-bottom:20px;">
+                                    <h4 style="font-size:14px;font-weight:700;color:var(--text-primary);margin:0 0 4px;">Product Information Settings</h4>
+                                    <p class="panel-desc" style="margin:0;">Configure display names, variant modes, pricing options, and warehouse tracking.</p>
+                                </div>
+                                <div class="checkbox-group" style="display:flex;flex-direction:column;gap:0;">
                                     <label class="toggle-row">
                                         <span class="toggle-label">Display Chinese names for products</span>
                                         <input type="checkbox" id="displayChineseNames">
                                     </label>
                                     <label class="toggle-row">
-                                        <span class="toggle-label">Enable product variants (Size, Color, Weight, Height)</span>
+                                        <span class="toggle-label">Enable product variants (Size, Color, Quality)</span>
                                         <input type="checkbox" id="enableVariants">
                                     </label>
                                     <label class="toggle-row">
-                                        <span class="toggle-label">Enable dual pricing (Price 1 and Price 2)</span>
+                                        <span class="toggle-label">Enable dual pricing (Original and Retail Price)</span>
                                         <input type="checkbox" id="enableDualPricing">
                                     </label>
                                     <label class="toggle-row">
@@ -273,70 +574,125 @@
                                 </div>
                             </div>
 
-                            <!-- Section 2: Product Variants Configuration -->
-                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
-                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Product Variants Configuration</h3>
-                                <div style="overflow-x: auto; margin-bottom: 16px;">
-                                    <table style="width: 100%; border-collapse: collapse;">
-                                        <thead>
-                                            <tr>
-                                                <th>Variant Type</th>
-                                                <th>Status</th>
-                                                <th>Example Values</th>
-                                                <th style="text-align: center;">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="variantsTableBody">
-                                            <!-- Dynamic variant rows: Size, Color, Weight, Height -->
-                                        </tbody>
-                                    </table>
+                            <!-- PANEL: Categories -->
+                            <div class="prod-vtab-panel" id="ptab-categories">
+                                <div style="display:flex;justify-content:between;align-items:center;margin-bottom:16px;gap:12px;border-bottom:1px solid var(--border);padding-bottom:12px;">
+                                    <div style="flex:1;">
+                                        <h4 style="margin:0 0 3px;">Product Categories</h4>
+                                        <p class="panel-desc" style="margin:0;">Add categories and assign variant types — up to 2 per category.</p>
+                                    </div>
+                                    <button class="btn btn-primary btn-sm" style="flex-shrink:0;" onclick="openAddCategoryModal()">
+                                        <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.5;vertical-align:middle;margin-right:4px;"><path d="M12 5v14M5 12h14"/></svg>
+                                        Add Category
+                                    </button>
                                 </div>
+                                <div id="categoriesList"><!-- rendered --></div>
                             </div>
 
-                            <!-- Section 3: Pricing Configuration -->
-                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
-                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Pricing Configuration</h3>
-                                <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                    <div class="form-group" style="margin-bottom: 0;">
-                                        <label class="form-label" for="price1Label">Price 1 Label</label>
-                                        <input type="text" id="price1Label" class="form-control" value="Regular Price">
+                            <!-- PANEL: Size -->
+                            <div class="prod-vtab-panel" id="ptab-size">
+                                <div style="display:flex;justify-content:between;align-items:center;margin-bottom:16px;gap:12px;border-bottom:1px solid var(--border);padding-bottom:12px;">
+                                    <div style="flex:1;">
+                                        <h4 style="margin:0 0 3px;">Size Options</h4>
+                                        <p class="panel-desc" style="margin:0;">Manage available size values for products.</p>
                                     </div>
-                                    <div class="form-group" style="margin-bottom: 0;">
-                                        <label class="form-label" for="price2Label">Price 2 Label</label>
-                                        <input type="text" id="price2Label" class="form-control" value="Wholesale Price">
+                                    <div class="add-option-row" style="flex-shrink:0;">
+                                        <input type="text" id="sizeNewInput" class="form-control" placeholder="e.g. XL, 32, 500ml" style="width: 180px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addVariantOption('size');}">
+                                        <button class="btn btn-primary btn-sm" onclick="addVariantOption('size')">Add</button>
                                     </div>
                                 </div>
-                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                                <div class="variant-list" id="sizePills"><!-- rendered --></div>
+                            </div>
+
+                            <!-- PANEL: Quality -->
+                            <div class="prod-vtab-panel" id="ptab-quality">
+                                <div style="margin-bottom:16px;">
+                                    <h4 style="margin:0 0 3px;">Quality</h4>
+                                    <p class="panel-desc" style="margin:0;">Fixed quality variant for marking product condition.</p>
+                                </div>
+                                <div class="variant-list">
+                                    <div class="vitem vitem-static">
+                                        <span class="vitem-label">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+                                            Low Quality
+                                        </span>
+                                        <span style="font-size:11px;color:#b45309;font-weight:600;background:#fef3c7;padding:2px 8px;border-radius:99px;border:1px solid #b45309;">Fixed</span>
+                                    </div>
+                                </div>
+                                <p style="font-size:11px;color:var(--text-secondary);margin-top:4px;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;vertical-align:middle;margin-right:2px;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+                                    This is a system-defined variant and cannot be modified.
+                                </p>
+                            </div>
+
+                            <!-- PANEL: Color -->
+                            <div class="prod-vtab-panel" id="ptab-color">
+                                <div style="display:flex;justify-content:between;align-items:center;margin-bottom:16px;gap:12px;border-bottom:1px solid var(--border);padding-bottom:12px;">
+                                    <div style="flex:1;">
+                                        <h4 style="margin:0 0 3px;">Color Options</h4>
+                                        <p class="panel-desc" style="margin:0;">Manage available color values for products.</p>
+                                    </div>
+                                    <div class="add-option-row" style="flex-shrink:0;">
+                                        <input type="text" id="colorNewInput" class="form-control" placeholder="e.g. Red, Blue, Black" style="width: 180px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addVariantOption('color');}">
+                                        <input type="color" id="colorPicker" value="#3b82f6" style="width:34px;height:34px;padding:2px;border:1px solid var(--border);border-radius:6px;cursor:pointer;background:var(--bg-card);flex-shrink:0;">
+                                        <button class="btn btn-primary btn-sm" onclick="addVariantOption('color')">Add</button>
+                                    </div>
+                                </div>
+                                <div class="variant-list" id="colorPills"><!-- rendered --></div>
+                            </div>
+
+                            <!-- PANEL: Pricing -->
+                            <div class="prod-vtab-panel" id="ptab-ppricing">
+                                <div style="margin-bottom:20px;">
+                                    <h4 style="font-size:14px;font-weight:700;color:var(--text-primary);margin:0 0 4px;">Pricing Configuration</h4>
+                                    <p class="panel-desc" style="margin:0;">Set price labels, define markup rules, and enable auto-calculation for Price 2.</p>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
+                                    <div class="form-group" style="margin-bottom:0;">
+                                        <label class="form-label" for="price1Label">Original Price Label</label>
+                                        <input type="text" id="price1Label" class="form-control" value="Original Price">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom:0;">
+                                        <label class="form-label" for="price2Label">Retail Price Label</label>
+                                        <input type="text" id="price2Label" class="form-control" value="Retail Price">
+                                    </div>
+                                </div>
+                                <div class="checkbox-group" style="display:flex;flex-direction:column;gap:0;margin-bottom:16px;">
                                     <label class="toggle-row">
                                         <span class="toggle-label">Automatically calculate Price 2 based on percentage markup</span>
                                         <input type="checkbox" id="autoCalcPrice2">
                                     </label>
                                 </div>
-                                <div class="form-group" style="max-width: 50%;" id="markupGroup">
-                                    <label class="form-label" for="price2Markup">Price 2 Markup Percentage (%)</label>
+                                <div class="form-group" style="max-width:240px;margin-bottom:0;" id="markupGroup">
+                                    <label class="form-label" for="price2Markup">Retail Price Markup Percentage (%)</label>
                                     <input type="number" id="price2Markup" class="form-control" value="10">
                                 </div>
                             </div>
 
-                            <!-- Section 4: Warehouse Location Format -->
-                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
-                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Warehouse Location Format</h3>
-                                <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 0;">
-                                    <div class="form-group" style="margin-bottom: 0;">
+                            <!-- PANEL: Warehouse & Display -->
+                            <div class="prod-vtab-panel" id="ptab-pwarehouse">
+                                <div style="margin-bottom:20px;">
+                                    <h4 style="font-size:14px;font-weight:700;color:var(--text-primary);margin:0 0 4px;">Warehouse Location Format</h4>
+                                    <p class="panel-desc" style="margin:0;">Define how warehouse locations are structured and labeled.</p>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:0;">
+                                    <div class="form-group" style="margin-bottom:0;">
                                         <label class="form-label" for="locationFormat">Location Format</label>
                                         <input type="text" id="locationFormat" class="form-control" value="Aisle-Center-Hang (A-12-3)">
                                     </div>
-                                    <div class="form-group" style="margin-bottom: 0;">
+                                    <div class="form-group" style="margin-bottom:0;">
                                         <label class="form-label" for="numAisles">Number of Aisles</label>
                                         <input type="number" id="numAisles" class="form-control" value="15">
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Section 5: Product Display Options -->
-                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
-                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Product Display Options</h3>
-                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="height:1px;background:var(--border);margin:24px 0 20px;"></div>
+
+                                <div style="margin-bottom:20px;">
+                                    <h4 style="font-size:14px;font-weight:700;color:var(--text-primary);margin:0 0 4px;">Product Display Options</h4>
+                                    <p class="panel-desc" style="margin:0;">Control how products are shown in the POS interface.</p>
+                                </div>
+                                <div class="checkbox-group" style="display:flex;flex-direction:column;gap:0;">
                                     <label class="toggle-row">
                                         <span class="toggle-label">Always display part numbers</span>
                                         <input type="checkbox" id="alwaysDisplayPartNumbers">
@@ -354,24 +710,55 @@
                         </div>
                     </div>
 
-                    <!-- Tab 3: Notification & Alert Settings -->
+                    <!-- Tab 3: Alerts & Notifications -->
                     <div class="tab-content" id="tab-alerts">
-                        <div class="card" style="margin-bottom: 16px; padding: 24px;">
-                            <!-- Header & Banner -->
-                            <div class="settings-section">
-                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Notification & Alert Settings</h3>
-                                
-                                <!-- Alert Configuration Banner -->
-                                <div class="alert-banner warning">
-                                    <strong style="color: var(--warning-hover); font-size: 13px;">Alert Configuration</strong>
-                                    <span style="color: var(--text-secondary); font-size: 12px;">Choose which notifications you want to receive and how you want to be notified.</span>
-                                </div>
+                        <div class="prod-tabs-layout">
+                            <!-- Left Sidebar -->
+                            <div class="prod-vtab-sidebar">
+                                <button class="prod-vtab-btn active" data-atab="inventory" onclick="switchAlertTab('inventory', this)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/></svg>
+                                    Inventory Alerts
+                                </button>
+                                <button class="prod-vtab-btn" data-atab="transactions" onclick="switchAlertTab('transactions', this)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+                                    Transaction Alerts
+                                </button>
+                                <button class="prod-vtab-btn" data-atab="reservations" onclick="switchAlertTab('reservations', this)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                                    Reservation Alerts
+                                </button>
+                                <button class="prod-vtab-btn" data-atab="email" onclick="switchAlertTab('email', this)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
+                                    Email &amp; Reports
+                                </button>
+                                <button class="prod-vtab-btn" data-atab="rules" onclick="switchAlertTab('rules', this)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><path d="M13 12H9m4 4H9m4-8H9"/></svg>
+                                    Active Alert Rules
+                                </button>
                             </div>
 
-                            <!-- Section 1: Inventory Alerts -->
-                            <div class="settings-section">
-                                <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 6px; margin-bottom: 12px; color: var(--text-primary);">Inventory Alerts</h4>
-                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                            <!-- PANEL: Inventory -->
+                            <div class="prod-vtab-panel active" id="atab-inventory">
+                                <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                                    <div style="width:36px;height:36px;border-radius:8px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" style="width:18px;height:18px;"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/></svg>
+                                    </div>
+                                    <div>
+                                        <h4 style="font-size:14px;font-weight:700;color:var(--text-primary);margin:0 0 2px;">Inventory Alerts</h4>
+                                        <p style="font-size:12px;color:var(--text-secondary);margin:0;">Get notified about stock levels, damaged goods, and dashboard visibility.</p>
+                                    </div>
+                                </div>
+                                <div style="height:1px;background:var(--border);margin:16px 0;"></div>
+
+                                <!-- Master enable toggle -->
+                                <div style="background:var(--primary-light);border:1px solid var(--primary);border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+                                    <label class="toggle-row" style="margin:0;border:none;padding:0;">
+                                        <span style="font-size:13px;font-weight:700;color:var(--primary);">Enable stock alerts (low-stock & out-of-stock)</span>
+                                        <input type="checkbox" id="enableStockAlerts">
+                                    </label>
+                                </div>
+
+                                <div class="checkbox-group" style="display:flex;flex-direction:column;gap:0;">
                                     <label class="toggle-row">
                                         <span class="toggle-label">Send alerts for low stock items</span>
                                         <input type="checkbox" id="alertLowStock">
@@ -395,10 +782,20 @@
                                 </div>
                             </div>
 
-                            <!-- Section 2: Transaction Alerts -->
-                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
-                                <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 6px; margin-bottom: 12px; color: var(--text-primary);">Transaction Alerts</h4>
-                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                            <!-- PANEL: Transactions -->
+                            <div class="prod-vtab-panel" id="atab-transactions">
+                                <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                                    <div style="width:36px;height:36px;border-radius:8px;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2" style="width:18px;height:18px;"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+                                    </div>
+                                    <div>
+                                        <h4 style="font-size:14px;font-weight:700;color:var(--text-primary);margin:0 0 2px;">Transaction Alerts</h4>
+                                        <p style="font-size:12px;color:var(--text-secondary);margin:0;">Notifications for purchase orders, refunds, and large sales events.</p>
+                                    </div>
+                                </div>
+                                <div style="height:1px;background:var(--border);margin:16px 0;"></div>
+
+                                <div class="checkbox-group" style="display:flex;flex-direction:column;gap:0;">
                                     <label class="toggle-row">
                                         <span class="toggle-label">Notify admin when new P.O. order awaits approval</span>
                                         <input type="checkbox" id="alertPOApproval">
@@ -420,16 +817,26 @@
                                         <input type="checkbox" id="alertLargeSales">
                                     </label>
                                 </div>
-                                <div class="form-group" style="max-width: 50%; margin-top: 12px;" id="largeSaleGroup">
+                                <div class="form-group" style="max-width:320px;margin-top:16px;" id="largeSaleGroup">
                                     <label class="form-label" for="alertLargeSaleThreshold">Large Sale Threshold (₱)</label>
                                     <input type="number" id="alertLargeSaleThreshold" class="form-control" value="50000">
                                 </div>
                             </div>
 
-                            <!-- Section 3: Reservation Alerts -->
-                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
-                                <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 6px; margin-bottom: 12px; color: var(--text-primary);">Reservation Alerts</h4>
-                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                            <!-- PANEL: Reservations -->
+                            <div class="prod-vtab-panel" id="atab-reservations">
+                                <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                                    <div style="width:36px;height:36px;border-radius:8px;background:#f3e8ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" style="width:18px;height:18px;"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                                    </div>
+                                    <div>
+                                        <h4 style="font-size:14px;font-weight:700;color:var(--text-primary);margin:0 0 2px;">Reservation Alerts</h4>
+                                        <p style="font-size:12px;color:var(--text-secondary);margin:0;">Stay informed about upcoming and expired reservations.</p>
+                                    </div>
+                                </div>
+                                <div style="height:1px;background:var(--border);margin:16px 0;"></div>
+
+                                <div class="checkbox-group" style="display:flex;flex-direction:column;gap:0;">
                                     <label class="toggle-row">
                                         <span class="toggle-label">Send alerts for reservations expiring soon (24 hours before)</span>
                                         <input type="checkbox" id="alertResExpiring">
@@ -441,29 +848,40 @@
                                 </div>
                             </div>
 
-                            <!-- Section 4: Email Notification Settings -->
-                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
-                                <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 6px; margin-bottom: 12px; color: var(--text-primary);">Email Notification Settings</h4>
-                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                            <!-- PANEL: Email & Reports -->
+                            <div class="prod-vtab-panel" id="atab-email">
+                                <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                                    <div style="width:36px;height:36px;border-radius:8px;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" style="width:18px;height:18px;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
+                                    </div>
+                                    <div>
+                                        <h4 style="font-size:14px;font-weight:700;color:var(--text-primary);margin:0 0 2px;">Email &amp; Reports</h4>
+                                        <p style="font-size:12px;color:var(--text-secondary);margin:0;">Configure email delivery and automated report schedules.</p>
+                                    </div>
+                                </div>
+                                <div style="height:1px;background:var(--border);margin:16px 0;"></div>
+
+                                <h5 style="font-size:12px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin:0 0 12px;">Email Delivery</h5>
+                                <div class="checkbox-group" style="display:flex;flex-direction:column;gap:0;margin-bottom:16px;">
                                     <label class="toggle-row">
                                         <span class="toggle-label">Enable email notifications</span>
                                         <input type="checkbox" id="alertEnableEmail">
                                     </label>
                                 </div>
-                                <div class="form-group" style="margin-bottom: 16px;">
-                                    <label class="form-label" for="alertAdminEmail">Admin Email Address</label>
-                                    <input type="email" id="alertAdminEmail" class="form-control" value="admin@ztgheavyparts.com">
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                                    <div class="form-group" style="margin-bottom:0;">
+                                        <label class="form-label" for="alertAdminEmail">Admin Email Address</label>
+                                        <input type="email" id="alertAdminEmail" class="form-control" value="admin@ztgheavyparts.com">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom:0;">
+                                        <label class="form-label" for="alertAdditionalRecipients">Additional Recipients <span style="font-weight:400;color:var(--text-secondary);">(comma separated)</span></label>
+                                        <input type="text" id="alertAdditionalRecipients" class="form-control" placeholder="email1@example.com, email2@example.com">
+                                    </div>
                                 </div>
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label class="form-label" for="alertAdditionalRecipients">Additional Email Recipients (comma separated)</label>
-                                    <input type="text" id="alertAdditionalRecipients" class="form-control" placeholder="email1@example.com, email2@example.com">
-                                </div>
-                            </div>
 
-                            <!-- Section 5: Daily & Weekly Reports -->
-                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
-                                <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 6px; margin-bottom: 12px; color: var(--text-primary);">Daily & Weekly Reports</h4>
-                                <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 0;">
+                                <div style="height:1px;background:var(--border);margin:0 0 16px;"></div>
+                                <h5 style="font-size:12px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin:0 0 12px;">Automated Reports</h5>
+                                <div class="checkbox-group" style="display:flex;flex-direction:column;gap:0;">
                                     <label class="toggle-row">
                                         <span class="toggle-label">Send daily sales summary report (end of day)</span>
                                         <input type="checkbox" id="alertReportDailySales">
@@ -479,9 +897,19 @@
                                 </div>
                             </div>
 
-                            <!-- Section 6: Active Alert Rules -->
-                            <div class="settings-section" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
-                                <h4 style="font-size: 13px; font-weight: 600; padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 16px; color: var(--text-primary);">Active Alert Rules</h4>
+                            <!-- PANEL: Alert Rules -->
+                            <div class="prod-vtab-panel" id="atab-rules">
+                                <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                                    <div style="width:36px;height:36px;border-radius:8px;background:#fee2e2;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" style="width:18px;height:18px;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4m0 4h.01"/></svg>
+                                    </div>
+                                    <div>
+                                        <h4 style="font-size:14px;font-weight:700;color:var(--text-primary);margin:0 0 2px;">Active Alert Rules</h4>
+                                        <p style="font-size:12px;color:var(--text-secondary);margin:0;">Define custom rules with specific trigger conditions and recipients.</p>
+                                    </div>
+                                </div>
+                                <div style="height:1px;background:var(--border);margin:16px 0;"></div>
+
                                 <div style="overflow-x: auto; margin-bottom: 16px;">
                                     <table style="width: 100%; border-collapse: collapse;">
                                         <thead>
@@ -501,6 +929,7 @@
                                 <button type="button" class="btn btn-primary" onclick="openAlertRuleModal(-1)">+ Add New Alert Rule</button>
                             </div>
                         </div>
+
                     </div>
 
                     <!-- Tab 4: Employee Management -->
@@ -683,33 +1112,63 @@
         </div>
     </div>
 
-    <!-- Modal: Configure Variant -->
-    <div class="modal-overlay" id="configureVariantModal">
-        <div class="modal-card" style="max-width: 450px;">
-            <form id="configureVariantForm" onsubmit="handleConfigureVariant(event)">
-                <input type="hidden" id="configVariantType">
-                <div class="modal-header">
-                    <h3 class="modal-title" id="configureVariantModalTitle">Configure Variant</h3>
-                    <button type="button" class="modal-close" onclick="closeModal('configureVariantModal')">
-                        <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
+    <!-- Modal: Add / Edit Category -->
+    <div class="modal-overlay" id="addCategoryModal">
+        <div class="modal-card" style="max-width: 460px; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-lg);">
+            <form id="addCategoryForm" onsubmit="handleSaveCategory(event)">
+                <input type="hidden" id="editCatIndex" value="-1">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border); padding: 18px 24px; background: var(--bg-card);">
+                    <h3 class="modal-title" id="addCategoryModalTitle" style="font-size: 15px; font-weight: 700;">Add Category</h3>
+                    <button type="button" class="modal-close" onclick="closeModal('addCategoryModal')">
+                        <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;"><path d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label class="form-label" for="configVariantStatus">Status</label>
-                        <select id="configVariantStatus" class="form-control" style="width: 100%; height: 38px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background-color: var(--bg-card); color: var(--text-primary); font-size: 13px;">
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                        </select>
+                <div class="modal-body" style="padding: 24px;">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label" for="catNameInput" style="font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 6px;">Category Name <span style="color:var(--danger);">*</span></label>
+                        <input type="text" id="catNameInput" class="form-control" required placeholder="e.g. Apparel, Electronics" style="height: 42px; font-size: 13px;">
                     </div>
-                    <div class="form-group" style="margin-top: 16px;">
-                        <label class="form-label" for="configVariantValues">Example Values (comma-separated)</label>
-                        <input type="text" id="configVariantValues" class="form-control" required placeholder="e.g. Small, Medium, Large">
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 8px;">Assign Variant Types <span style="font-weight:400;text-transform:none;letter-spacing:normal;">(select up to 2)</span></label>
+                        
+                        <!-- Size Card -->
+                        <label class="variant-selector-card">
+                            <input type="checkbox" id="catVarSize" class="cat-var-check" value="size" style="display:none;">
+                            <div class="variant-card-info">
+                                <span class="variant-card-title">Size</span>
+                                <span class="variant-card-desc" id="catVarSizeHint">(no options defined)</span>
+                            </div>
+                            <div class="variant-card-indicator"></div>
+                        </label>
+
+                        <!-- Quality Card -->
+                        <label class="variant-selector-card">
+                            <input type="checkbox" id="catVarQuality" class="cat-var-check" value="quality" style="display:none;">
+                            <div class="variant-card-info">
+                                <span class="variant-card-title">Quality</span>
+                                <span class="variant-card-desc" id="catVarQualityHint">(no options defined)</span>
+                            </div>
+                            <div class="variant-card-indicator"></div>
+                        </label>
+
+                        <!-- Color Card -->
+                        <label class="variant-selector-card">
+                            <input type="checkbox" id="catVarColor" class="cat-var-check" value="color" style="display:none;">
+                            <div class="variant-card-info">
+                                <span class="variant-card-title">Color</span>
+                                <span class="variant-card-desc" id="catVarColorHint">(no options defined)</span>
+                            </div>
+                            <div class="variant-card-indicator"></div>
+                        </label>
+
+                        <p id="catVarLimitNote" style="font-size:11px;color:var(--warning,#f59e0b);margin-top:10px;font-weight:600;display:none;background:#fffbeb;border:1px solid #fef3c7;padding:8px 12px;border-radius:6px;">
+                            ⚠ Maximum 2 variant types per category.
+                        </p>
                     </div>
                 </div>
-                <div class="modal-footer" style="padding: 12px 20px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('configureVariantModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Configuration</button>
+                <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--border); background: var(--bg-main,#f8f9fb); display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="btn btn-secondary" style="height: 38px; font-size: 13px;" onclick="closeModal('addCategoryModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveCatBtn" style="height: 38px; font-size: 13px; background-color: var(--primary);">Save Category</button>
                 </div>
             </form>
         </div>
@@ -766,7 +1225,12 @@
             }
 
             if (tabName === 'products') {
-                renderVariants();
+                initProductSettings();
+                renderCategories();
+                // attach cat-var check listeners (safe to re-attach)
+                document.querySelectorAll('.cat-var-check').forEach(c => {
+                    c.addEventListener('change', updateCatVarHints);
+                });
             } else if (tabName === 'employees') {
                 renderEmployees();
             } else if (tabName === 'alerts') {
@@ -998,77 +1462,306 @@
             showToast('Profile saved successfully.');
         }
 
-        // ================== PRODUCT VARIANTS CONFIGURATION ==================
-        let tempVariantsData = [];
+        // ================== PRODUCT CATEGORIES & VARIANTS CONFIGURATION ==================
 
-        function initVariants() {
-            const stored = localStorage.getItem('ztg_config_variants_data');
-            if (stored) {
-                try {
-                    tempVariantsData = JSON.parse(stored);
-                } catch(e) {
-                    tempVariantsData = getDefaultVariants();
-                }
-            } else {
-                tempVariantsData = getDefaultVariants();
+        // Data stores
+        let tempCategories = [];        // [{name, variants: ['size','quality']}]
+        let tempVariantOptions = {      // {size:[], quality:[], color:[]}
+            size: [],
+            quality: [],
+            color: []
+        };
+
+        // ---- Defaults ----
+        function getDefaultCategories() {
+            return [
+                { name: 'Hydraulics', variants: ['quality'] },
+                { name: 'Filters', variants: ['size'] },
+                { name: 'Undercarriage', variants: ['size'] },
+                { name: 'Engine', variants: ['quality'] },
+                { name: 'Electrical', variants: ['color'] },
+                { name: 'Brake Systems', variants: [] }
+            ];
+        }
+        function getDefaultVariantOptions() {
+            return {
+                size:    ['Small', 'Medium', 'Large', 'XL', 'XXL'],
+                quality: ['Low Quality'],
+                color:   ['Red', 'Blue', 'Black', 'White']
+            };
+        }
+
+        // ---- Init / Load from localStorage ----
+        function initProductSettings() {
+            const storedCats = localStorage.getItem('ztg_prod_categories');
+            const storedOpts = localStorage.getItem('ztg_prod_variant_options');
+            try { tempCategories    = storedCats ? JSON.parse(storedCats) : getDefaultCategories(); }
+            catch(e) { tempCategories = getDefaultCategories(); }
+            try { tempVariantOptions = storedOpts ? JSON.parse(storedOpts) : getDefaultVariantOptions(); }
+            catch(e) { tempVariantOptions = getDefaultVariantOptions(); }
+
+            // Upgrade/Sync: if it's the old default (containing 'Apparel' or is empty/mismatched), replace with POS categories
+            if (tempCategories.length === 0 || (tempCategories.length === 2 && tempCategories[0].name === 'Apparel')) {
+                tempCategories = getDefaultCategories();
+                localStorage.setItem('ztg_prod_categories', JSON.stringify(tempCategories));
+                const catNames = tempCategories.map(c => c.name);
+                localStorage.setItem('ztg_categories', JSON.stringify(catNames));
+                if (typeof notifyDbChange === 'function') notifyDbChange('ztg_categories');
+            }
+
+            // Force/upgrade quality variant option to only contain ['Low Quality']
+            if (!tempVariantOptions.quality || tempVariantOptions.quality.length !== 1 || tempVariantOptions.quality[0] !== 'Low Quality') {
+                tempVariantOptions.quality = ['Low Quality'];
+                localStorage.setItem('ztg_prod_variant_options', JSON.stringify(tempVariantOptions));
             }
         }
 
-        function getDefaultVariants() {
-            return [
-                { type: 'Size', status: 'Active', values: 'Small, Medium, Large' },
-                { type: 'Color', status: 'Active', values: 'Red, Blue, Green, Black' },
-                { type: 'Weight', status: 'Inactive', values: '1kg, 5kg, 10kg' },
-                { type: 'Height', status: 'Inactive', values: '10cm, 20cm, 50cm' }
-            ];
+        // ---- Vertical tab switcher (Products Settings) ----
+        function switchProdTab(tabKey, btnEl) {
+            const sidebar = btnEl.closest('.prod-vtab-sidebar');
+            sidebar.querySelectorAll('.prod-vtab-btn').forEach(b => b.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+
+            const container = sidebar.closest('.prod-tabs-layout');
+            container.querySelectorAll(':scope > .prod-vtab-panel').forEach(p => p.classList.remove('active'));
+
+            const panel = document.getElementById('ptab-' + tabKey);
+            if (panel) panel.classList.add('active');
+
+            if (tabKey === 'categories') renderCategories();
+            else if (tabKey === 'size' || tabKey === 'quality' || tabKey === 'color') renderVariantPills(tabKey);
         }
 
-        function renderVariants() {
-            const tbody = document.getElementById('variantsTableBody');
-            tbody.innerHTML = '';
-            tempVariantsData.forEach(v => {
-                const tr = document.createElement('tr');
-                const statusBadge = v.status === 'Active' 
-                    ? '<span class="badge badge-success">Active</span>' 
-                    : '<span class="badge badge-secondary">Inactive</span>';
-                tr.innerHTML = `
-                    <td style="font-weight: 600; color: var(--text-primary);">${v.type}</td>
-                    <td>${statusBadge}</td>
-                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${v.values}</td>
-                    <td style="text-align: center;">
-                        <button class="btn btn-secondary btn-sm" onclick="openConfigureVariantModal('${v.type}')">Configure</button>
-                    </td>
+        // ---- Vertical tab switcher (Alerts & Notifications) ----
+        function switchAlertTab(tabKey, btnEl) {
+            const sidebar = btnEl.closest('.prod-vtab-sidebar');
+            sidebar.querySelectorAll('.prod-vtab-btn').forEach(b => b.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+
+            const container = sidebar.closest('.prod-tabs-layout');
+            container.querySelectorAll(':scope > .prod-vtab-panel').forEach(p => p.classList.remove('active'));
+
+            const panel = document.getElementById('atab-' + tabKey);
+            if (panel) panel.classList.add('active');
+        }
+
+        // ---- Render Categories ----
+        function renderCategories() {
+            const container = document.getElementById('categoriesList');
+            if (!container) return;
+            if (tempCategories.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-secondary);font-size:13px;">No categories yet. Click "Add Category" to get started.</p>';
+                return;
+            }
+            container.innerHTML = '';
+            tempCategories.forEach((cat, idx) => {
+                const badgesHtml = (cat.variants || []).map(v => {
+                    const labels = { size: 'Size', quality: 'Low Quality', color: 'Color' };
+                    return `<span class="cv-badge ${v}">${labels[v] || v}</span>`;
+                }).join('');
+                const card = document.createElement('div');
+                card.className = 'cat-card';
+                card.innerHTML = `
+                    <div class="cat-card-info">
+                        <div class="cat-card-name">${escHtml(cat.name)}</div>
+                        <div class="cat-variant-badges">${badgesHtml || '<span style="font-size:11px;color:var(--text-secondary);">No variants assigned</span>'}</div>
+                    </div>
+                    <div class="cat-card-actions">
+                        <button class="btn btn-secondary btn-sm" onclick="openEditCategoryModal(${idx})">Edit</button>
+                        <button class="btn btn-sm" style="background:var(--danger-light,#fee2e2);color:var(--danger,#dc2626);border:1px solid var(--danger,#dc2626);" onclick="deleteCategory(${idx})">Remove</button>
+                    </div>
                 `;
-                tbody.appendChild(tr);
+                container.appendChild(card);
             });
         }
 
-        function openConfigureVariantModal(type) {
-            const variant = tempVariantsData.find(v => v.type === type);
-            if (!variant) return;
-            document.getElementById('configVariantType').value = type;
-            document.getElementById('configureVariantModalTitle').innerText = `Configure Variant: ${type}`;
-            document.getElementById('configVariantStatus').value = variant.status;
-            document.getElementById('configVariantValues').value = variant.values;
-            openModal('configureVariantModal');
-        }
-
-        function handleConfigureVariant(event) {
-            event.preventDefault();
-            const type = document.getElementById('configVariantType').value;
-            const status = document.getElementById('configVariantStatus').value;
-            const values = document.getElementById('configVariantValues').value.trim();
-            if (!values) {
-                alert('Example values cannot be empty.');
+        // ---- Render variant option list (vertical rows) ----
+        function renderVariantPills(type) {
+            const container = document.getElementById(type + 'Pills');
+            if (!container) return;
+            const opts = tempVariantOptions[type] || [];
+            container.innerHTML = '';
+            if (opts.length === 0) {
+                container.innerHTML = '<p style="font-size:12px;color:var(--text-secondary);margin:0 0 12px;">No options added yet.</p>';
                 return;
             }
-            const variantIndex = tempVariantsData.findIndex(v => v.type === type);
-            if (variantIndex !== -1) {
-                tempVariantsData[variantIndex].status = status;
-                tempVariantsData[variantIndex].values = values;
+            opts.forEach((val, idx) => {
+                const item = document.createElement('div');
+                item.className = 'vitem';
+                item.id = `vitem-${type}-${idx}`;
+                if (type === 'color') {
+                    const hex = val.hex || null;
+                    const label = escHtml(val.label || val);
+                    const dot = hex ? `<span class="variant-color-dot" style="background:${escHtml(hex)};width:16px;height:16px;"></span>` : '';
+                    item.innerHTML = `
+                        <span class="vitem-label">${dot}${label}</span>
+                        <div class="vitem-actions">
+                            <button class="vitem-action-btn" onclick="editVariantOption('${type}',${idx})" title="Edit">Edit</button>
+                            <button class="vitem-action-btn del" onclick="removeVariantOption('${type}',${idx})" title="Remove">Remove</button>
+                        </div>`;
+                } else {
+                    item.innerHTML = `
+                        <span class="vitem-label">${escHtml(val)}</span>
+                        <div class="vitem-actions">
+                            <button class="vitem-action-btn" onclick="editVariantOption('${type}',${idx})" title="Edit">Edit</button>
+                            <button class="vitem-action-btn del" onclick="removeVariantOption('${type}',${idx})" title="Remove">Remove</button>
+                        </div>`;
+                }
+                container.appendChild(item);
+            });
+        }
+
+        // ---- Inline edit variant option ----
+        function editVariantOption(type, idx) {
+            const itemEl = document.getElementById(`vitem-${type}-${idx}`);
+            if (!itemEl) return;
+            const opts = tempVariantOptions[type] || [];
+            const val = opts[idx];
+            const currentLabel = type === 'color' ? (val.label || val) : val;
+            const currentHex = type === 'color' ? (val.hex || '#3b82f6') : null;
+            const colorPart = type === 'color' ? `<input type="color" value="${escHtml(currentHex)}" id="vedit-hex-${type}-${idx}" style="width:32px;height:32px;padding:2px;border:1px solid var(--border);border-radius:4px;cursor:pointer;flex-shrink:0;">` : '';
+            itemEl.innerHTML = `
+                <div class="vitem-edit-row">
+                    ${colorPart}
+                    <input type="text" class="form-control" id="vedit-inp-${type}-${idx}" value="${escHtml(currentLabel)}" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();saveVariantEdit('${type}',${idx});}if(event.key==='Escape'){renderVariantPills('${type}');}">
+                    <button class="btn btn-primary btn-sm" onclick="saveVariantEdit('${type}',${idx})">Save</button>
+                    <button class="btn btn-secondary btn-sm" onclick="renderVariantPills('${type}')">Cancel</button>
+                </div>`;
+            const inp = document.getElementById(`vedit-inp-${type}-${idx}`);
+            if (inp) { inp.focus(); inp.select(); }
+        }
+
+        // ---- Save inline edit ----
+        function saveVariantEdit(type, idx) {
+            const inp = document.getElementById(`vedit-inp-${type}-${idx}`);
+            const newVal = (inp ? inp.value : '').trim();
+            if (!newVal) return;
+            const opts = tempVariantOptions[type];
+            if (type === 'color') {
+                const hexInp = document.getElementById(`vedit-hex-${type}-${idx}`);
+                opts[idx] = { label: newVal, hex: hexInp ? hexInp.value : (opts[idx].hex || '#3b82f6') };
+            } else {
+                opts[idx] = newVal;
             }
-            renderVariants();
-            closeModal('configureVariantModal');
+            renderVariantPills(type);
+            markSettingsDirty();
+        }
+
+        // ---- Add variant option ----
+        function addVariantOption(type) {
+            const input = document.getElementById(type + 'NewInput');
+            const val = (input.value || '').trim();
+            if (!val) { input.focus(); return; }
+            if (!tempVariantOptions[type]) tempVariantOptions[type] = [];
+            if (type === 'color') {
+                const picker = document.getElementById('colorPicker');
+                const hex = picker ? picker.value : null;
+                // avoid duplicates
+                const exists = tempVariantOptions[type].some(c => (c.label || c) === val);
+                if (exists) { showToast('Color already exists.'); return; }
+                tempVariantOptions[type].push(hex ? { label: val, hex } : val);
+            } else {
+                if (tempVariantOptions[type].includes(val)) { showToast('Value already exists.'); return; }
+                tempVariantOptions[type].push(val);
+            }
+            input.value = '';
+            input.focus();
+            renderVariantPills(type);
+            markSettingsDirty();
+        }
+
+        // ---- Remove variant option ----
+        function removeVariantOption(type, idx) {
+            tempVariantOptions[type].splice(idx, 1);
+            renderVariantPills(type);
+            markSettingsDirty();
+        }
+
+        // ---- Open Add Category Modal ----
+        function openAddCategoryModal() {
+            document.getElementById('editCatIndex').value = '-1';
+            document.getElementById('addCategoryModalTitle').textContent = 'Add Category';
+            document.getElementById('catNameInput').value = '';
+            document.getElementById('catVarSize').checked = false;
+            document.getElementById('catVarQuality').checked = false;
+            document.getElementById('catVarColor').checked = false;
+            updateCatVarHints();
+            openModal('addCategoryModal');
+        }
+
+        // ---- Open Edit Category Modal ----
+        function openEditCategoryModal(idx) {
+            const cat = tempCategories[idx];
+            if (!cat) return;
+            document.getElementById('editCatIndex').value = idx;
+            document.getElementById('addCategoryModalTitle').textContent = 'Edit Category';
+            document.getElementById('catNameInput').value = cat.name;
+            document.getElementById('catVarSize').checked    = (cat.variants || []).includes('size');
+            document.getElementById('catVarQuality').checked = (cat.variants || []).includes('quality');
+            document.getElementById('catVarColor').checked   = (cat.variants || []).includes('color');
+            updateCatVarHints();
+            openModal('addCategoryModal');
+        }
+
+        // ---- Update variant hint text & enforce max 2 ----
+        function updateCatVarHints() {
+            const checks = document.querySelectorAll('.cat-var-check');
+            const chosen = Array.from(checks).filter(c => c.checked).length;
+            const limitNote = document.getElementById('catVarLimitNote');
+            if (limitNote) limitNote.style.display = chosen >= 2 ? 'block' : 'none';
+            checks.forEach(c => {
+                if (!c.checked && chosen >= 2) c.disabled = true;
+                else c.disabled = false;
+            });
+            // Update hints with current options count
+            const hints = { size:'catVarSizeHint', quality:'catVarQualityHint', color:'catVarColorHint' };
+            Object.entries(hints).forEach(([type, hintId]) => {
+                const el = document.getElementById(hintId);
+                if (el) {
+                    const n = (tempVariantOptions[type] || []).length;
+                    el.textContent = n > 0 ? `(${n} option${n!==1?'s':''} defined)` : '(no options defined)';
+                }
+            });
+        }
+
+        // ---- Save Category ----
+        function handleSaveCategory(event) {
+            event.preventDefault();
+            const name = document.getElementById('catNameInput').value.trim();
+            if (!name) return;
+            const variants = [];
+            if (document.getElementById('catVarSize').checked)    variants.push('size');
+            if (document.getElementById('catVarQuality').checked) variants.push('quality');
+            if (document.getElementById('catVarColor').checked)   variants.push('color');
+
+            const editIdx = parseInt(document.getElementById('editCatIndex').value);
+            if (editIdx >= 0) {
+                tempCategories[editIdx] = { name, variants };
+            } else {
+                // Check for duplicate name
+                if (tempCategories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+                    showToast('A category with that name already exists.');
+                    return;
+                }
+                tempCategories.push({ name, variants });
+            }
+            closeModal('addCategoryModal');
+            renderCategories();
+            markSettingsDirty();
+        }
+
+        // ---- Delete Category ----
+        function deleteCategory(idx) {
+            if (!confirm(`Delete category "${tempCategories[idx].name}"?`)) return;
+            tempCategories.splice(idx, 1);
+            renderCategories();
+            markSettingsDirty();
+        }
+
+        // ---- HTML escape helper ----
+        function escHtml(str) {
+            if (str == null) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
 
         // ================== ALERT RULES CONFIGURATION ==================
@@ -1395,8 +2088,8 @@
             document.getElementById('trackWarehouseLocations').checked = (localStorage.getItem('ztg_config_track_locations') !== 'false');
 
             // Pricing Configuration
-            document.getElementById('price1Label').value = localStorage.getItem('ztg_config_price1_label') || 'Regular Price';
-            document.getElementById('price2Label').value = localStorage.getItem('ztg_config_price2_label') || 'Wholesale Price';
+            document.getElementById('price1Label').value = localStorage.getItem('ztg_config_price1_label') || 'Original Price';
+            document.getElementById('price2Label').value = localStorage.getItem('ztg_config_price2_label') || 'Retail Price';
             document.getElementById('autoCalcPrice2').checked = (localStorage.getItem('ztg_config_auto_calc_price2') !== 'false');
             document.getElementById('price2Markup').value = localStorage.getItem('ztg_config_price2_markup') || '10';
             toggleMarkupField();
@@ -1410,9 +2103,8 @@
             document.getElementById('showStockLevelsPos').checked = (localStorage.getItem('ztg_config_show_stock_levels_pos') !== 'false');
             document.getElementById('hideOutofStockPos').checked = (localStorage.getItem('ztg_config_hide_outof_stock_pos') === 'true');
 
-            // Load Variants
-            initVariants();
-            renderVariants();
+            // Load Product Categories & Variants
+            initProductSettings();
         }
 
         function saveAllSettings() {
@@ -1483,8 +2175,12 @@
             localStorage.setItem('ztg_config_show_stock_levels_pos', document.getElementById('showStockLevelsPos').checked);
             localStorage.setItem('ztg_config_hide_outof_stock_pos', document.getElementById('hideOutofStockPos').checked);
 
-            // Save Variants Configuration
-            localStorage.setItem('ztg_config_variants_data', JSON.stringify(tempVariantsData));
+            // Save Product Categories & Variants
+            localStorage.setItem('ztg_prod_categories', JSON.stringify(tempCategories));
+            localStorage.setItem('ztg_prod_variant_options', JSON.stringify(tempVariantOptions));
+            const catNames = tempCategories.map(c => c.name);
+            localStorage.setItem('ztg_categories', JSON.stringify(catNames));
+            notifyDbChange('ztg_categories');
 
             alert('Settings saved successfully!');
             markSettingsClean();

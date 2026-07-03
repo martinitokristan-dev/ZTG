@@ -121,8 +121,8 @@
                                         <th style="padding: 12px 16px; font-weight: 600;">Category</th>
                                         <th style="padding: 12px 16px; font-weight: 600;">Address</th>
                                         <th style="padding: 12px 16px; font-weight: 600;">Stock</th>
-                                        <th style="padding: 12px 16px; font-weight: 600;">Price 1</th>
-                                        <th style="padding: 12px 16px; font-weight: 600;">Price 2</th>
+                                        <th style="padding: 12px 16px; font-weight: 600;">Original Price</th>
+                                        <th style="padding: 12px 16px; font-weight: 600;">Retail Price</th>
                                         <th style="padding: 12px 16px; font-weight: 600;">Sales</th>
                                         <th style="padding: 12px 16px; font-weight: 600;">Status</th>
                                         <th style="padding: 12px 16px; font-weight: 600;">Damaged</th>
@@ -294,11 +294,7 @@
                                 placeholder="e.g. 履带链节总成">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label" for="addTags">Product Tags</label>
-                        <input type="text" id="addTags" class="form-control"
-                            placeholder="Add tags separated by commas (e.g. Heavy Duty, Excavator)">
-                    </div>
+
 
                     <!-- Warehouse Address Section -->
                     <div class="section-header">Warehouse Address / Location</div>
@@ -321,13 +317,13 @@
                     <div class="section-header">Pricing & Stock Alerts</div>
                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px;">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="addPrice1">Price 1 (Regular) <span
+                            <label class="form-label" for="addPrice1">Original Price <span
                                     style="color: red;">*</span></label>
                             <input type="number" id="addPrice1" class="form-control" required min="0"
                                 placeholder="₱0.00">
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="addPrice2">Price 2 (VIP)</label>
+                            <label class="form-label" for="addPrice2">Retail Price</label>
                             <input type="number" id="addPrice2" class="form-control" min="0" placeholder="₱0.00">
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
@@ -362,20 +358,19 @@
                             </label>
                         </div>
                     </div>
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label class="form-label" for="addVariantType">Variant Type (Optional)</label>
-                            <select id="addVariantType" class="form-control">
-                                <option value="">None</option>
-                                <option value="Size">Size</option>
-                                <option value="Color">Color</option>
-                                <option value="Material">Material</option>
-                            </select>
+                    <div style="margin-top: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 16px; background-color: var(--bg-main, #f5f6fa); margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Product Variants</span>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnAddVariantRow" onclick="addVariantRow('add')" style="display: flex; align-items: center; gap: 4px; padding: 5px 10px;">
+                                <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.5;"><path d="M12 5v14M5 12h14"/></svg>
+                                Add Variant
+                            </button>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" for="addVariantOptions">Variant Options</label>
-                            <input type="text" id="addVariantOptions" class="form-control"
-                                placeholder="e.g. Small, Medium, Large">
+                        <div id="addVariantsList" style="display: flex; flex-direction: column; gap: 8px;">
+                            <!-- Dynamic variant rows -->
+                        </div>
+                        <div id="addNoVariantsMsg" style="font-size: 12px; color: var(--text-secondary); text-align: center; padding: 10px 0;">
+                            No variants added yet. Click "Add Variant" to configure options.
                         </div>
                     </div>
                     <div class="form-group">
@@ -456,11 +451,7 @@
                             <input type="text" id="editChineseName" class="form-control" required>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label" for="editTags">Product Tags</label>
-                        <input type="text" id="editTags" class="form-control"
-                            placeholder="Add tags separated by commas (e.g. Heavy Duty, Excavator)">
-                    </div>
+
 
                     <!-- Warehouse Address Section -->
                     <div class="section-header">Warehouse Address / Location</div>
@@ -483,12 +474,12 @@
                     <div class="section-header">Pricing & Stock Alerts</div>
                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px;">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="editPrice1">Price 1 (Regular) <span
+                            <label class="form-label" for="editPrice1">Original Price <span
                                     style="color: red;">*</span></label>
                             <input type="number" id="editPrice1" class="form-control" required min="0">
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="editPrice2">Price 2 (VIP)</label>
+                            <label class="form-label" for="editPrice2">Retail Price</label>
                             <input type="number" id="editPrice2" class="form-control" min="0">
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
@@ -523,20 +514,19 @@
                             </label>
                         </div>
                     </div>
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label class="form-label" for="editVariantType">Variant Type (Optional)</label>
-                            <select id="editVariantType" class="form-control">
-                                <option value="">None</option>
-                                <option value="Size">Size</option>
-                                <option value="Color">Color</option>
-                                <option value="Material">Material</option>
-                            </select>
+                    <div style="margin-top: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 16px; background-color: var(--bg-main, #f5f6fa); margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Product Variants</span>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnEditAddVariantRow" onclick="addVariantRow('edit')" style="display: flex; align-items: center; gap: 4px; padding: 5px 10px;">
+                                <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.5;"><path d="M12 5v14M5 12h14"/></svg>
+                                Add Variant
+                            </button>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" for="editVariantOptions">Variant Options</label>
-                            <input type="text" id="editVariantOptions" class="form-control"
-                                placeholder="e.g. Small, Medium, Large">
+                        <div id="editVariantsList" style="display: flex; flex-direction: column; gap: 8px;">
+                            <!-- Dynamic variant rows -->
+                        </div>
+                        <div id="editNoVariantsMsg" style="font-size: 12px; color: var(--text-secondary); text-align: center; padding: 10px 0;">
+                            No variants added yet. Click "Add Variant" to configure options.
                         </div>
                     </div>
                     <div class="form-group">
@@ -559,6 +549,22 @@
                     </div>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL: VIEW PRODUCT DETAILS -->
+    <div class="modal-overlay" id="viewModal">
+        <div class="modal-card modal-card-lg" style="max-width: 650px; width: 90%;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="viewModalTitle">Product Details</h3>
+                <button type="button" class="btn-close" onclick="closeModal('viewModal')" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+            </div>
+            <div class="modal-body" id="viewModalBody" style="display: flex; flex-direction: column; gap: 16px; font-size: 13px; color: var(--text-main); max-height: 450px; overflow-y: auto;">
+                <!-- Details injected here -->
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('viewModal')">Close</button>
+            </div>
         </div>
     </div>
 
@@ -658,12 +664,110 @@
                 addDropdown.innerHTML += `<option value="${cat}">${cat}</option>`;
                 editDropdown.innerHTML += `<option value="${cat}">${cat}</option>`;
             });
+
+            // Bind change listeners to dynamically update variant options
+            const addCatSelect = document.getElementById('addCategory');
+            if (addCatSelect && !addCatSelect.dataset.listenerBound) {
+                addCatSelect.addEventListener('change', () => handleCategoryChange('add'));
+                addCatSelect.dataset.listenerBound = 'true';
+            }
+            const editCatSelect = document.getElementById('editCategory');
+            if (editCatSelect && !editCatSelect.dataset.listenerBound) {
+                editCatSelect.addEventListener('change', () => handleCategoryChange('edit'));
+                editCatSelect.dataset.listenerBound = 'true';
+            }
+        }
+
+        function renderProductRow(tbody, p, isVariantSubRow, isFirstInGroup) {
+            const tr = document.createElement('tr');
+            const alertLevel = p.alertLimit || 5;
+            const isOutOfStock = p.stock === 0;
+            const isLowStock = p.stock > 0 && p.stock <= alertLevel;
+
+            let stockStatusText = 'Active';
+            let statusBg = '#DCFCE7';
+            let statusText = '#22C55E';
+            let stockColor = '#1F2937';
+
+            if (isOutOfStock) {
+                stockStatusText = 'No Stock';
+                statusBg = '#FEE2E2';
+                statusText = '#EF4444';
+                stockColor = '#EF4444';
+            } else if (isLowStock) {
+                stockStatusText = 'Low Stock';
+                statusBg = '#FEF3C7';
+                statusText = '#F59E0B';
+                stockColor = '#F59E0B';
+            }
+
+            // First row of a group with siblings gets a top border separator
+            if (isFirstInGroup) {
+                tr.style.borderTop = '2px solid #E2E8F0';
+            }
+
+            let nameHtml;
+            if (isVariantSubRow) {
+                const varLabel = p.variantOptions || (p.variants ? p.variants.join(', ') : 'Variant');
+                nameHtml = `<strong style="color: #0F172A; font-size: 13px; display: block;">${p.name} <span style="color:var(--primary); font-weight: 500;">(${varLabel})</span></strong>
+                   <span style="font-size: 11px; color: #94A3B8; margin-top: 2px; display: block;">${p.chineseName || ''}</span>`;
+            } else {
+                nameHtml = `<strong style="color: #0F172A; font-size: 13px; display: block;">${p.name}</strong>
+                   <span style="font-size: 11px; color: #94A3B8; margin-top: 2px; display: block;">${p.chineseName || ''}</span>`;
+            }
+
+            let stockBadgeBg = '#F0FDF4';
+            if (isOutOfStock) stockBadgeBg = '#FEF2F2';
+            else if (isLowStock) stockBadgeBg = '#FEFCE8';
+
+            let stockHtml = `
+                <div style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1.2; padding: 4px 8px; border-radius: 6px; background-color: ${stockBadgeBg}; color: ${stockColor}; min-width: 50px;">
+                    <span style="font-size: 13px; font-weight: 700;">${p.stock}</span>
+                    <span style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px;">Units</span>
+                </div>
+            `;
+
+            let damagedHtml = `
+                <div style="display: inline-flex; flex-direction: column; align-items: center; line-height: 1.2; padding: 4px 8px; border-radius: 6px; background-color: #FEF2F2; color: #EF4444; min-width: 60px;">
+                    <span style="font-size: 13px; font-weight: 700;">${p.damaged || 0}</span>
+                    <span style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px;">Damaged</span>
+                </div>
+            `;
+
+            tr.innerHTML = `
+                <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9;">
+                    ${nameHtml}
+                </td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #334155; font-size: 12px; font-weight: 600;">${p.partNo}</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #334155;">${p.category}</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #475569;">${p.address}</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9;">${stockHtml}</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #334155; font-weight: 500;">₱${(p.price1||0).toLocaleString()}</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #334155; font-weight: 500;">₱${(p.price2||0).toLocaleString()}</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #475569;">${p.salesCount || 0}</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9;">
+                    <span style="background-color: ${statusBg}; color: ${statusText}; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600;">${stockStatusText}</span>
+                </td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9;">${damagedHtml}</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; text-align: center;">
+                    <div class="btn-group" style="display: flex; gap: 6px; justify-content: center;">
+                        <button class="btn btn-sm" style="background: #F1F5F9; border: 1px solid #E2E8F0; color: #334155; border-radius: 4px; padding: 4px 8px; font-size: 11px;" onclick="openViewModal(${p.id})">View</button>
+                        <button class="btn btn-sm" style="background: #F1F5F9; border: 1px solid #E2E8F0; color: #334155; border-radius: 4px; padding: 4px 8px; font-size: 11px;" onclick="openEditModal(${p.id})">Edit</button>
+                        ${!isVariantSubRow ? `<button class="btn btn-sm" style="background: #F1F5F9; border: 1px solid #E2E8F0; color: ${p.status === 'Disabled' ? '#10B981' : '#EF4444'}; border-radius: 4px; padding: 4px 8px; display: flex; align-items: center; justify-content: center;" onclick="toggleProductStatus(${p.id})" title="${p.status === 'Disabled' ? 'Enable' : 'Disable'}">
+                            ${p.status === 'Disabled' ?
+                    '<svg viewBox="0 0 24 24" style="width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>' :
+                    '<svg viewBox="0 0 24 24" style="width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2;"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>'}
+                        </button>` : ''}
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
         }
 
         // Render products table
         function renderProductsTable() {
             const products = db.getProducts();
-            const searchVal = document.getElementById('searchBar').value.toLowerCase();
+            const searchVal = document.getElementById('searchBar').value.toLowerCase().trim();
             const categoryVal = document.getElementById('categoryFilter').value;
             const stockVal = document.getElementById('stockFilter').value;
             const tbody = document.getElementById('productsTableBody');
@@ -672,9 +776,9 @@
 
             const filtered = products.filter(p => {
                 const matchesSearch = p.name.toLowerCase().includes(searchVal) ||
-                    p.chineseName.toLowerCase().includes(searchVal) ||
+                    (p.chineseName && p.chineseName.toLowerCase().includes(searchVal)) ||
                     p.partNo.toLowerCase().includes(searchVal) ||
-                    p.address.toLowerCase().includes(searchVal);
+                    (p.address && p.address.toLowerCase().includes(searchVal));
 
                 const matchesCategory = categoryVal === 'All' || p.category === categoryVal;
 
@@ -691,67 +795,388 @@
                 return;
             }
 
+            // Build groups keyed by product name (lowercase), preserving insertion order
+            const groups = {};
+            const groupOrder = [];
             filtered.forEach(p => {
-                const tr = document.createElement('tr');
-                const alertLevel = p.alertLimit || 5;
-                const isOutOfStock = p.stock === 0;
-                const isLowStock = p.stock > 0 && p.stock <= alertLevel;
+                const key = p.name.toLowerCase();
+                if (!groups[key]) {
+                    groups[key] = [];
+                    groupOrder.push(key);
+                }
+                groups[key].push(p);
+            });
 
-                let stockStatusText = 'Active';
-                let statusBg = '#DCFCE7';
-                let statusText = '#22C55E';
-                let stockColor = '#1F2937';
+            // Render each group: base product as first real row, variants as sub-rows
+            // A product is a variant if it has variantOptions set (the specific option string like 'Standard', 'Heavy Duty')
+            groupOrder.forEach((key, groupIdx) => {
+                const group = groups[key];
 
-                if (isOutOfStock) {
-                    stockStatusText = 'No Stock';
-                    statusBg = '#FEE2E2';
-                    statusText = '#EF4444';
-                    stockColor = '#EF4444';
-                } else if (isLowStock) {
-                    stockStatusText = 'Low Stock';
-                    statusBg = '#FEF3C7';
-                    statusText = '#F59E0B';
-                    stockColor = '#F59E0B';
+                // Sort: base products (no variantOptions) first, then variants
+                group.sort((a, b) => {
+                    const aIsBase = !a.variantOptions;
+                    const bIsBase = !b.variantOptions;
+                    if (aIsBase && !bIsBase) return -1;
+                    if (!aIsBase && bIsBase) return 1;
+                    return 0;
+                });
+
+                group.forEach((p, i) => {
+                    const isVariantSubRow = !!p.variantOptions; // variants have variantOptions set
+                    const isFirstInGroup = (i === 0) && (groupIdx > 0); // add top border separator between groups
+                    renderProductRow(tbody, p, isVariantSubRow, isFirstInGroup);
+                });
+            });
+        }
+
+        // ---- Dynamic Category and Variant helpers ----
+        function getProdCategories() {
+            const stored = localStorage.getItem('ztg_prod_categories');
+            let list = [];
+            if (stored) {
+                try { list = JSON.parse(stored); } catch(e) { }
+            }
+            if (!list || list.length === 0) {
+                list = [
+                    { name: 'Apparel', variants: ['size', 'color'] },
+                    { name: 'Engine Parts', variants: ['quality'] },
+                    { name: 'Hydraulics', variants: ['quality'] },
+                    { name: 'Filters', variants: ['size'] },
+                    { name: 'Electrical', variants: ['quality'] },
+                    { name: 'Undercarriage', variants: ['size'] }
+                ];
+            }
+            // Merge in names from db.getCategories() to cover all categories in the system
+            const dbCats = db.getCategories() || [];
+            dbCats.forEach(name => {
+                if (!list.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+                    list.push({ name: name, variants: [] });
+                }
+            });
+            return list;
+        }
+
+        function getVariantOptions() {
+            const stored = localStorage.getItem('ztg_prod_variant_options');
+            let opts = {};
+            if (stored) {
+                try { opts = JSON.parse(stored); } catch(e) { }
+            }
+            // Enforce defaults if keys are missing or contain old quality settings
+            if (!opts.size) opts.size = ['Small', 'Medium', 'Large', 'XL', 'XXL'];
+            if (!opts.quality || opts.quality.length !== 1 || opts.quality[0] !== 'Low Quality') {
+                opts.quality = ['Low Quality'];
+                localStorage.setItem('ztg_prod_variant_options', JSON.stringify(opts));
+            }
+            if (!opts.color) opts.color = ['Red', 'Blue', 'Black', 'White'];
+            return opts;
+        }
+
+        let variantRowCount = 0;
+
+        function handleCategoryChange(mode) {
+            const listId = mode === 'add' ? 'addVariantsList' : 'editVariantsList';
+            const msgId = mode === 'add' ? 'addNoVariantsMsg' : 'editNoVariantsMsg';
+            const btnId = mode === 'add' ? 'btnAddVariantRow' : 'btnEditAddVariantRow';
+            const categorySelectId = mode === 'add' ? 'addCategory' : 'editCategory';
+
+            const list = document.getElementById(listId);
+            const msg = document.getElementById(msgId);
+            const btn = document.getElementById(btnId);
+            if (!list) return;
+
+            list.innerHTML = '';
+            if (msg) msg.style.display = 'block';
+
+            const catName = document.getElementById(categorySelectId).value;
+            const allCats = getProdCategories();
+            const cat = allCats.find(c => c.name === catName) || { name: catName, variants: [] };
+
+            if (!cat.variants || cat.variants.length === 0) {
+                if (btn) btn.disabled = true;
+                if (msg) {
+                    msg.textContent = 'This category has no variant options defined. Configure them in Settings.';
+                    msg.style.display = 'block';
+                }
+            } else {
+                if (btn) btn.disabled = false;
+                if (msg) {
+                    msg.textContent = 'No variants added yet. Click "Add Variant" to configure options.';
+                    msg.style.display = 'block';
+                }
+            }
+        }
+
+        function addVariantRow(mode, initialVal = null) {
+            const listId = mode === 'add' ? 'addVariantsList' : 'editVariantsList';
+            const msgId = mode === 'add' ? 'addNoVariantsMsg' : 'editNoVariantsMsg';
+            const categorySelectId = mode === 'add' ? 'addCategory' : 'editCategory';
+            
+            const list = document.getElementById(listId);
+            const msg = document.getElementById(msgId);
+            if (!list) return;
+
+            const catName = document.getElementById(categorySelectId).value;
+            const allCats = getProdCategories();
+            const cat = allCats.find(c => c.name === catName) || { name: catName, variants: [] };
+            const varOpts = getVariantOptions();
+
+            if (!cat.variants || cat.variants.length === 0) {
+                if (initialVal && initialVal.variantValues && Object.keys(initialVal.variantValues).length > 0) {
+                    // Temporarily allow rendering existing variants even if category is unconfigured
+                    cat.variants = Object.keys(initialVal.variantValues);
+                } else {
+                    alert('This category does not have any variants configured in Settings.');
+                    return;
+                }
+            }
+
+            if (msg) msg.style.display = 'none';
+
+            const rowId = `vrow-${mode}-${variantRowCount++}`;
+            const row = document.createElement('div');
+            row.id = rowId;
+            row.className = 'variant-row';
+            row.style.cssText = 'display: flex; gap: 10px; align-items: center; background: white; border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; flex-wrap: wrap; box-shadow: 0 1px 2px rgba(0,0,0,0.05); width: 100%; box-sizing: border-box;';
+
+            // 1. Generate dropdowns for variant types
+            cat.variants.forEach(vType => {
+                const selectGroup = document.createElement('div');
+                selectGroup.style.cssText = 'display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px;';
+                
+                const selectLabel = document.createElement('label');
+                selectLabel.style.cssText = 'font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 2px;';
+                selectLabel.textContent = `${vType}`;
+                
+                const select = document.createElement('select');
+                select.className = 'form-control variant-select-option';
+                select.dataset.vtype = vType;
+                select.style.cssText = 'height: 34px; padding: 6px 10px; font-size: 12px; width: 100%;';
+                
+                const rawOptions = varOpts[vType] || [];
+                rawOptions.forEach(opt => {
+                    const label = typeof opt === 'object' ? (opt.label || opt.name || '') : opt;
+                    const val = typeof opt === 'object' ? (opt.label || opt.name || '') : opt;
+                    const optEl = document.createElement('option');
+                    optEl.value = val;
+                    optEl.textContent = label;
+                    select.appendChild(optEl);
+                });
+
+                // Pre-fill if we have initialVal
+                if (initialVal && initialVal.variantValues && initialVal.variantValues[vType]) {
+                    select.value = initialVal.variantValues[vType];
                 }
 
-                tr.innerHTML = `
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9;">
-                        <strong style="color: #0F172A; font-size: 13px; display: block;">${p.name}</strong>
-                        <span style="font-size: 11px; color: #94A3B8; margin-top: 2px; display: block;">${p.chineseName || ''}</span>
-                    </td>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #334155;">${p.partNo}</td>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #334155;">${p.category}</td>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #475569;">${p.address}</td>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: ${stockColor}; font-weight: 600;">
-                        ${p.stock}
-                    </td>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #334155; font-weight: 500;">₱${p.price1.toLocaleString()}</td>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #334155; font-weight: 500;">₱${p.price2.toLocaleString()}</td>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #475569;">${p.salesCount}</td>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9;">
-                        <span style="background-color: ${statusBg}; color: ${statusText}; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600;">${stockStatusText}</span>
-                    </td>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #475569;">
-                        ${p.damaged || 0}
-                    </td>
-                    <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; text-align: center;">
-                        <div class="btn-group" style="display: flex; gap: 8px; justify-content: center;">
-                            <button class="btn btn-sm" style="background: #F1F5F9; border: 1px solid #E2E8F0; color: #334155; border-radius: 4px; padding: 4px 12px;" onclick="openEditModal(${p.id})">Edit</button>
-                            <button class="btn btn-sm" style="background: #F1F5F9; border: 1px solid #E2E8F0; color: ${p.status === 'Disabled' ? '#10B981' : '#EF4444'}; border-radius: 4px; padding: 4px 8px; display: flex; align-items: center; justify-content: center;" onclick="toggleProductStatus(${p.id})" title="${p.status === 'Disabled' ? 'Enable Product' : 'Disable Product'}">
-                                ${p.status === 'Disabled' ?
-                        '<svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>' :
-                        '<svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>'}
-                            </button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
+                selectGroup.appendChild(selectLabel);
+                selectGroup.appendChild(select);
+                row.appendChild(selectGroup);
             });
+
+
+            // 2. Part Number input
+            const partGroup = document.createElement('div');
+            partGroup.style.cssText = 'display: flex; flex-direction: column; gap: 4px; flex: 1.2; min-width: 110px;';
+            
+            const partLabel = document.createElement('label');
+            partLabel.style.cssText = 'font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 2px;';
+            partLabel.textContent = 'Part Number';
+            
+            const partInp = document.createElement('input');
+            partInp.type = 'text';
+            partInp.required = true;
+            partInp.className = 'form-control variant-part-number';
+            partInp.placeholder = 'Part No.';
+            partInp.style.cssText = 'height: 34px; padding: 6px 10px; font-size: 12px; width: 100%;';
+            if (initialVal && initialVal.partNo) {
+                partInp.value = initialVal.partNo;
+            }
+
+            partGroup.appendChild(partLabel);
+            partGroup.appendChild(partInp);
+            row.appendChild(partGroup);
+
+            // 3. Price 1 input
+            const p1Group = document.createElement('div');
+            p1Group.style.cssText = 'display: flex; flex-direction: column; gap: 4px; flex: 0.8; min-width: 80px;';
+            
+            const p1Label = document.createElement('label');
+            p1Label.style.cssText = 'font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 2px;';
+            p1Label.textContent = 'Orig. Price';
+            
+            const p1Inp = document.createElement('input');
+            p1Inp.type = 'number';
+            p1Inp.step = '0.01';
+            p1Inp.required = true;
+            p1Inp.className = 'form-control variant-price1';
+            p1Inp.placeholder = 'Orig. Price';
+            p1Inp.style.cssText = 'height: 34px; padding: 6px 10px; font-size: 12px; width: 100%;';
+            if (initialVal && initialVal.price1 !== undefined) {
+                p1Inp.value = initialVal.price1;
+            } else {
+                const parentPrice1 = document.getElementById(mode === 'add' ? 'addPrice1' : 'editPrice1').value;
+                p1Inp.value = parentPrice1 || '0';
+            }
+
+            p1Group.appendChild(p1Label);
+            p1Group.appendChild(p1Inp);
+            row.appendChild(p1Group);
+
+            // 4. Price 2 input
+            const p2Group = document.createElement('div');
+            p2Group.style.cssText = 'display: flex; flex-direction: column; gap: 4px; flex: 0.8; min-width: 80px;';
+            
+            const p2Label = document.createElement('label');
+            p2Label.style.cssText = 'font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 2px;';
+            p2Label.textContent = 'Retail Price';
+            
+            const p2Inp = document.createElement('input');
+            p2Inp.type = 'number';
+            p2Inp.step = '0.01';
+            p2Inp.required = true;
+            p2Inp.className = 'form-control variant-price2';
+            p2Inp.placeholder = 'Retail Price';
+            p2Inp.style.cssText = 'height: 34px; padding: 6px 10px; font-size: 12px; width: 100%;';
+            if (initialVal && initialVal.price2 !== undefined) {
+                p2Inp.value = initialVal.price2;
+            } else {
+                const parentPrice2 = document.getElementById(mode === 'add' ? 'addPrice2' : 'editPrice2').value;
+                p2Inp.value = parentPrice2 || '0';
+            }
+
+            p2Group.appendChild(p2Label);
+            p2Group.appendChild(p2Inp);
+            row.appendChild(p2Group);
+
+            // 5. Stock input
+            const stockGroup = document.createElement('div');
+            stockGroup.style.cssText = 'display: flex; flex-direction: column; gap: 4px; flex: 0.7; min-width: 70px;';
+            
+            const stockLabel = document.createElement('label');
+            stockLabel.style.cssText = 'font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 2px;';
+            stockLabel.textContent = 'Stock';
+            
+            const stockInp = document.createElement('input');
+            stockInp.type = 'number';
+            stockInp.required = true;
+            stockInp.className = 'form-control variant-stock';
+            stockInp.placeholder = 'Stock';
+            stockInp.style.cssText = 'height: 34px; padding: 6px 10px; font-size: 12px; width: 100%;';
+            if (initialVal && initialVal.stock !== undefined) {
+                stockInp.value = initialVal.stock;
+            } else {
+                const parentStock = document.getElementById(mode === 'add' ? 'addStock' : 'editStock').value;
+                stockInp.value = parentStock || '0';
+            }
+
+            stockGroup.appendChild(stockLabel);
+            stockGroup.appendChild(stockInp);
+            row.appendChild(stockGroup);
+
+            // 6. Remove Button
+            const btnGroup = document.createElement('div');
+            btnGroup.style.cssText = 'display: flex; align-items: flex-end; height: 100%;';
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn';
+            removeBtn.style.cssText = 'background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5; height: 34px; width: 34px; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; border-radius: 6px; margin-top: 18px;';
+            removeBtn.innerHTML = '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>';
+
+            removeBtn.onclick = () => {
+                row.remove();
+                if (list.children.length === 0) {
+                    if (msg) msg.style.display = 'block';
+                }
+            };
+            btnGroup.appendChild(removeBtn);
+            list.appendChild(row);
+        }
+
+        function openViewModal(id) {
+            const products = db.getProducts();
+            const p = products.find(x => x.id === id);
+            if (!p) return;
+
+            // Always resolve to the base product for the header section
+            // (if user clicked a variant row, find the base product of the same name)
+            const allSameName = products.filter(x => x.name.toLowerCase() === p.name.toLowerCase());
+            const base = allSameName.find(x => !x.variantOptions) || p;
+            const variantProducts = allSameName.filter(x => !!x.variantOptions);
+
+            document.getElementById('viewModalTitle').innerText = `Product Details: ${base.name}`;
+
+            // Build variant rows (only actual variant products — NOT the base product)
+            let variantsHtml = '';
+            if (variantProducts.length > 0) {
+                variantsHtml = `
+                    <div style="margin-top: 16px;">
+                        <h4 style="font-weight: 700; margin-bottom: 10px; color: var(--primary); font-size: 13px; letter-spacing: 0.3px;">
+                            Associated SKUs &amp; Variants (${variantProducts.length})
+                        </h4>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 12px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
+                            <thead>
+                                <tr style="background: #F1F5F9; border-bottom: 2px solid var(--border);">
+                                    <th style="padding: 9px 12px; color: var(--text-secondary); font-size: 11px; letter-spacing: 0.5px; text-align: left;">PART NO.</th>
+                                    <th style="padding: 9px 12px; color: var(--text-secondary); font-size: 11px; letter-spacing: 0.5px; text-align: left;">VARIANT</th>
+                                    <th style="padding: 9px 12px; color: var(--text-secondary); font-size: 11px; letter-spacing: 0.5px; text-align: center;">STOCK</th>
+                                    <th style="padding: 9px 12px; color: var(--text-secondary); font-size: 11px; letter-spacing: 0.5px; text-align: right;">ORIG. PRICE</th>
+                                    <th style="padding: 9px 12px; color: var(--text-secondary); font-size: 11px; letter-spacing: 0.5px; text-align: right;">RETAIL PRICE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${variantProducts.map((v, idx) => {
+                                    const stockColor = v.stock === 0 ? '#EF4444' : (v.stock <= (v.alertLimit || 5) ? '#F59E0B' : '#22C55E');
+                                    const stockBg = v.stock === 0 ? '#FEE2E2' : (v.stock <= (v.alertLimit || 5) ? '#FEF3C7' : '#DCFCE7');
+                                    const rowBg = idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC';
+                                    return `
+                                    <tr style="border-bottom: 1px solid #F1F5F9; background: ${rowBg};">
+                                        <td style="padding: 10px 12px; font-weight: 700; color: #1E293B; font-family: monospace; font-size: 12px;">${v.partNo}</td>
+                                        <td style="padding: 10px 12px; color: #475569; font-weight: 500;">${v.variantOptions}</td>
+                                        <td style="padding: 10px 12px; text-align: center;">
+                                            <span style="background: ${stockBg}; color: ${stockColor}; padding: 3px 10px; border-radius: 9999px; font-weight: 700; font-size: 11px;">${v.stock}</span>
+                                        </td>
+                                        <td style="padding: 10px 12px; text-align: right; font-weight: 600; color: #334155;">₱${(v.price1 || 0).toLocaleString()}</td>
+                                        <td style="padding: 10px 12px; text-align: right; font-weight: 700; color: var(--primary);">₱${(v.price2 || 0).toLocaleString()}</td>
+                                    </tr>`;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            document.getElementById('viewModalBody').innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 16px; margin-bottom: 4px;">
+                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">English Name:</span> <span style="font-weight: 600; color: #1E293B; font-size: 13px;">${base.name}</span></div>
+                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Chinese Name:</span> <span style="font-weight: 600; color: #1E293B; font-size: 13px;">${base.chineseName || 'N/A'}</span></div>
+                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Category:</span> <span style="font-weight: 500; color: #334155;">${base.category}</span></div>
+                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Warehouse Location:</span> <span style="font-weight: 500; color: #334155;">${base.address || 'N/A'}</span></div>
+                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Part No. (Base):</span> <span style="font-weight: 700; color: #1E293B; font-family: monospace;">${base.partNo}</span></div>
+                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Status:</span> <span style="font-weight: 600; color: ${base.status === 'Active' ? '#16A34A' : '#EF4444'};">${base.status || 'Active'}</span></div>
+                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Stock Level:</span> <span style="font-weight: 700; color: ${base.stock === 0 ? '#EF4444' : base.stock <= (base.alertLimit||5) ? '#F59E0B' : '#1E293B'};">${base.stock} units</span></div>
+                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Damaged Count:</span> <span style="font-weight: 500; color: ${(base.damaged||0) > 0 ? '#EF4444' : '#334155'};">${base.damaged || 0}</span></div>
+                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Original Price:</span> <span style="font-weight: 700; color: #1E293B;">₱${(base.price1 || 0).toLocaleString()}</span></div>
+                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Retail Price:</span> <span style="font-weight: 700; color: var(--primary);">₱${(base.price2 || 0).toLocaleString()}</span></div>
+
+                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Dead Stock:</span> <span style="font-weight: 500; color: #334155;">${base.isDeadStock ? 'Yes' : 'No'}</span></div>
+                </div>
+                ${variantsHtml}
+                <div style="margin-top: 14px;">
+                    <strong style="color: var(--text-secondary); font-size: 12px;">Notes:</strong>
+                    <p style="margin-top: 6px; padding: 10px; background: #F8FAFC; border-radius: 6px; border: 1px solid var(--border); font-style: italic; color: #475569; line-height: 1.6; font-size: 12.5px;">
+                        ${base.notes || 'No description notes.'}
+                    </p>
+                </div>
+            `;
+
+            openModal('viewModal');
         }
 
         // Add Product Modal trigger
         function openAddModal() {
             document.getElementById('addItemForm').reset();
+            handleCategoryChange('add');
             openModal('addModal');
         }
 
@@ -761,31 +1186,74 @@
             const p = products.find(x => x.id === id);
             if (!p) return;
 
-            document.getElementById('editId').value = p.id;
-            document.getElementById('editPartNo').value = p.partNo;
-            document.getElementById('editCategory').value = p.category;
-            document.getElementById('editName').value = p.name;
-            document.getElementById('editChineseName').value = p.chineseName;
-            document.getElementById('editTags').value = p.tags || '';
+            // Find all products in the same name group
+            const oldName = p.name;
+            const related = products.filter(x => x.name.toLowerCase() === oldName.toLowerCase());
+            
+            // The base product is the one with no variant options
+            const baseProd = related.find(x => !x.variantOptions) || p;
+            
+            document.getElementById('editId').value = baseProd.id;
+            document.getElementById('editPartNo').value = baseProd.partNo;
+            document.getElementById('editCategory').value = baseProd.category;
+            document.getElementById('editName').value = baseProd.name;
+            document.getElementById('editChineseName').value = baseProd.chineseName;
 
-            // Address splitted
-            const parts = (p.address || '').split('-');
+
+            const parts = (baseProd.address || '').split('-');
             document.getElementById('editAisle').value = parts[0] || '';
             document.getElementById('editCarrier').value = parts[1] || '';
             document.getElementById('editHang').value = parts[2] || '';
 
-            document.getElementById('editStock').value = p.stock;
-            document.getElementById('editPrice1').value = p.price1;
-            document.getElementById('editPrice2').value = p.price2 || '';
-            document.getElementById('editAlert').value = p.alertLimit || 5;
-            document.getElementById('editStatus').value = p.status || 'Active';
-            document.getElementById('editDeadStock').checked = !!p.isDeadStock;
-            document.getElementById('editVariantType').value = p.variantType || '';
-            document.getElementById('editVariantOptions').value = p.variantOptions || '';
-            document.getElementById('editDamaged').value = p.damaged || 0;
-            document.getElementById('editNotes').value = p.notes || '';
+            document.getElementById('editStock').value = baseProd.stock;
+            document.getElementById('editPrice1').value = baseProd.price1;
+            document.getElementById('editPrice2').value = baseProd.price2 || '';
+            document.getElementById('editAlert').value = baseProd.alertLimit || 5;
+            document.getElementById('editStatus').value = baseProd.status || 'Active';
+            document.getElementById('editDeadStock').checked = !!baseProd.isDeadStock;
+            document.getElementById('editDamaged').value = baseProd.damaged || 0;
+            document.getElementById('editNotes').value = baseProd.notes || '';
 
-            document.getElementById('editModalHeaderTitle').innerText = `Edit Product Details (${p.partNo})`;
+            // Clear previous edit variants from UI first
+            document.getElementById('editVariantsList').innerHTML = '';
+
+            // Setup categories and options
+            handleCategoryChange('edit');
+            
+            // Get current category's configured variants for fallback
+            const catName = document.getElementById('editCategory').value;
+            const allCats = getProdCategories();
+            const cat = allCats.find(c => c.name === catName) || { name: catName, variants: [] };
+
+            // Find all variant items (those that have variantOptions)
+            const variantItems = related.filter(x => !!x.variantOptions);
+            
+            if (variantItems.length > 0) {
+                variantItems.forEach(v => {
+                    let vTypes = v.variantType ? v.variantType.split(',').map(s => s.trim()) : [];
+                    if (vTypes.length === 0 && cat.variants.length > 0) {
+                        vTypes = cat.variants;
+                    } else if (vTypes.length === 0) {
+                        vTypes = ['quality']; // ultimate fallback
+                    }
+                    const vVals = v.variants || [v.variantOptions];
+                    
+                    const variantValues = {};
+                    vTypes.forEach((vt, idx) => {
+                        variantValues[vt] = vVals[idx] || '';
+                    });
+
+                    addVariantRow('edit', {
+                        partNo: v.partNo,
+                        price1: v.price1,
+                        price2: v.price2,
+                        stock: v.stock,
+                        variantValues: variantValues
+                    });
+                });
+            }
+
+            document.getElementById('editModalHeaderTitle').innerText = `Edit Product Details (${baseProd.partNo})`;
 
             openModal('editModal');
         }
@@ -798,11 +1266,8 @@
 
             if (product.status === 'Disabled') {
                 product.status = product.stock > 10 ? 'Active' : (product.stock > 0 ? 'Low Stock' : 'No Stock');
-                // Optional: you could show a toast here if a toast function exists
-                // showToast(`Product ${product.name} enabled.`);
             } else {
                 product.status = 'Disabled';
-                // showToast(`Product ${product.name} disabled.`);
             }
             db.saveProducts(products);
             renderProductsTable();
@@ -818,28 +1283,111 @@
             const hang = document.getElementById('addHang').value.trim();
             const addressJoined = `${aisle}-${carrier}-${hang}`;
 
-            const newProduct = {
-                id: Date.now(),
-                partNo: document.getElementById('addPartNo').value.trim(),
-                category: document.getElementById('addCategory').value,
-                name: document.getElementById('addName').value.trim(),
-                chineseName: document.getElementById('addChineseName').value.trim(),
-                tags: document.getElementById('addTags').value.trim(),
-                address: addressJoined,
-                stock: parseInt(document.getElementById('addStock').value),
-                alertLimit: parseInt(document.getElementById('addAlert').value),
-                price1: parseFloat(document.getElementById('addPrice1').value),
-                price2: parseFloat(document.getElementById('addPrice2').value) || 0,
-                salesCount: 0,
-                status: document.getElementById('addStatus').value,
-                isDeadStock: document.getElementById('addDeadStock').checked,
-                variantType: document.getElementById('addVariantType').value,
-                variantOptions: document.getElementById('addVariantOptions').value.trim(),
-                damaged: parseInt(document.getElementById('addDamaged').value) || 0,
-                notes: document.getElementById('addNotes').value.trim()
-            };
+            const mainPartNo = document.getElementById('addPartNo').value.trim();
+            const catName = document.getElementById('addCategory').value;
+            const name = document.getElementById('addName').value.trim();
+            const chineseName = document.getElementById('addChineseName').value.trim();
 
-            products.push(newProduct);
+            const stock = parseInt(document.getElementById('addStock').value);
+            const alertLimit = parseInt(document.getElementById('addAlert').value);
+            const price1 = parseFloat(document.getElementById('addPrice1').value);
+            const price2 = parseFloat(document.getElementById('addPrice2').value) || 0;
+            const status = document.getElementById('addStatus').value;
+            const isDeadStock = document.getElementById('addDeadStock').checked;
+            const damaged = parseInt(document.getElementById('addDamaged').value) || 0;
+            const notes = document.getElementById('addNotes').value.trim();
+
+            const variantRows = document.querySelectorAll('#addVariantsList .variant-row');
+
+            if (variantRows.length === 0) {
+                // Save single product
+                const newProduct = {
+                    id: Date.now(),
+                    partNo: mainPartNo,
+                    category: catName,
+                    name: name,
+                    chineseName: chineseName,
+
+                    address: addressJoined,
+                    stock: stock,
+                    alertLimit: alertLimit,
+                    price1: price1,
+                    price2: price2,
+                    salesCount: 0,
+                    status: status,
+                    isDeadStock: isDeadStock,
+                    variants: [],
+                    variantType: '',
+                    variantOptions: '',
+                    damaged: damaged,
+                    notes: notes
+                };
+                products.push(newProduct);
+            } else {
+                // Save base product (original container) WITH its own stock
+                const baseProduct = {
+                    id: Date.now(),
+                    partNo: mainPartNo,
+                    category: catName,
+                    name: name,
+                    chineseName: chineseName,
+
+                    address: addressJoined,
+                    stock: stock, // Original product's stock!
+                    alertLimit: alertLimit,
+                    price1: price1,
+                    price2: price2,
+                    salesCount: 0,
+                    status: status,
+                    isDeadStock: isDeadStock,
+                    variants: [],
+                    variantType: '',
+                    variantOptions: '',
+                    damaged: damaged,
+                    notes: notes
+                };
+                products.push(baseProduct);
+
+                // Save multiple product variant entries
+                variantRows.forEach((row, index) => {
+                    const rowPartNo = row.querySelector('.variant-part-number').value.trim();
+                    const rowPrice1 = parseFloat(row.querySelector('.variant-price1').value) || 0;
+                    const rowPrice2 = parseFloat(row.querySelector('.variant-price2').value) || 0;
+                    const rowStock = parseInt(row.querySelector('.variant-stock').value) || 0;
+                    
+                    const selects = row.querySelectorAll('.variant-select-option');
+                    const selectedVals = [];
+                    const selectedTypes = [];
+                    selects.forEach(sel => {
+                        selectedVals.push(sel.value);
+                        selectedTypes.push(sel.dataset.vtype);
+                    });
+
+                    const newProduct = {
+                        id: Date.now() + index + 1,
+                        partNo: rowPartNo || `${mainPartNo}-${selectedVals.join('-')}`,
+                        category: catName,
+                        name: name,
+                        chineseName: chineseName,
+
+                        address: addressJoined,
+                        stock: rowStock, // Variant's stock!
+                        alertLimit: alertLimit,
+                        price1: rowPrice1,
+                        price2: rowPrice2,
+                        salesCount: 0,
+                        status: status,
+                        isDeadStock: isDeadStock,
+                        variants: selectedVals,
+                        variantType: selectedTypes.join(', '),
+                        variantOptions: selectedVals.join(', '),
+                        damaged: damaged,
+                        notes: notes
+                    };
+                    products.push(newProduct);
+                });
+            }
+
             db.saveProducts(products);
             closeModal('addModal');
             renderProductsTable();
@@ -858,23 +1406,142 @@
             const hang = document.getElementById('editHang').value.trim();
             const addressJoined = `${aisle}-${carrier}-${hang}`;
 
-            products[pIndex].category = document.getElementById('editCategory').value;
-            products[pIndex].name = document.getElementById('editName').value.trim();
-            products[pIndex].chineseName = document.getElementById('editChineseName').value.trim();
-            products[pIndex].tags = document.getElementById('editTags').value.trim();
-            products[pIndex].address = addressJoined;
-            products[pIndex].stock = parseInt(document.getElementById('editStock').value);
-            products[pIndex].alertLimit = parseInt(document.getElementById('editAlert').value);
-            products[pIndex].price1 = parseFloat(document.getElementById('editPrice1').value);
-            products[pIndex].price2 = parseFloat(document.getElementById('editPrice2').value) || 0;
-            products[pIndex].status = document.getElementById('editStatus').value;
-            products[pIndex].isDeadStock = document.getElementById('editDeadStock').checked;
-            products[pIndex].variantType = document.getElementById('editVariantType').value;
-            products[pIndex].variantOptions = document.getElementById('editVariantOptions').value.trim();
-            products[pIndex].damaged = parseInt(document.getElementById('editDamaged').value) || 0;
-            products[pIndex].notes = document.getElementById('editNotes').value.trim();
+            const catName = document.getElementById('editCategory').value;
+            const name = document.getElementById('editName').value.trim();
+            const chineseName = document.getElementById('editChineseName').value.trim();
 
-            db.saveProducts(products);
+            const stock = parseInt(document.getElementById('editStock').value);
+            const alertLimit = parseInt(document.getElementById('editAlert').value);
+            const price1 = parseFloat(document.getElementById('editPrice1').value);
+            const price2 = parseFloat(document.getElementById('editPrice2').value) || 0;
+            const status = document.getElementById('editStatus').value;
+            const isDeadStock = document.getElementById('editDeadStock').checked;
+            const damaged = parseInt(document.getElementById('editDamaged').value) || 0;
+            const notes = document.getElementById('editNotes').value.trim();
+
+            const variantRows = document.querySelectorAll('#editVariantsList .variant-row');
+
+            // Find all related products under the old name
+            const oldName = products[pIndex].name;
+            const related = products.filter(x => x.name.toLowerCase() === oldName.toLowerCase());
+            
+            // Temporary remove related entries from main products array
+            const relatedIds = related.map(x => x.id);
+            let updatedList = products.filter(x => !relatedIds.includes(x.id));
+
+            // Find if we already have a Base Product in the old list
+            let baseProd = related.find(x => !x.variants || x.variants.length === 0);
+            
+            if (variantRows.length === 0) {
+                // Save/update only one single base product
+                if (!baseProd) {
+                    baseProd = { id: id, salesCount: 0 };
+                }
+                baseProd.partNo = document.getElementById('editPartNo').value.trim();
+                baseProd.category = catName;
+                baseProd.name = name;
+                baseProd.chineseName = chineseName;
+
+                baseProd.address = addressJoined;
+                baseProd.stock = stock;
+                baseProd.alertLimit = alertLimit;
+                baseProd.price1 = price1;
+                baseProd.price2 = price2;
+                baseProd.status = status;
+                baseProd.isDeadStock = isDeadStock;
+                baseProd.variants = [];
+                baseProd.variantType = '';
+                baseProd.variantOptions = '';
+                baseProd.damaged = damaged;
+                baseProd.notes = notes;
+
+                updatedList.push(baseProd);
+            } else {
+                // Ensure Base Product exists and is updated
+                if (!baseProd) {
+                    baseProd = {
+                        id: id,
+                        salesCount: 0
+                    };
+                }
+                baseProd.partNo = document.getElementById('editPartNo').value.trim();
+                baseProd.category = catName;
+                baseProd.name = name;
+                baseProd.chineseName = chineseName;
+
+                baseProd.address = addressJoined;
+                baseProd.stock = stock; // Keep parent stock separate
+                baseProd.alertLimit = alertLimit;
+                baseProd.price1 = price1;
+                baseProd.price2 = price2;
+                baseProd.status = status;
+                baseProd.isDeadStock = isDeadStock;
+                baseProd.variants = [];
+                baseProd.variantType = '';
+                baseProd.variantOptions = '';
+                baseProd.damaged = damaged;
+                baseProd.notes = notes;
+
+                updatedList.push(baseProd);
+
+                // Add or update variant products
+                const activeVariantIds = new Set();
+
+                variantRows.forEach((row, index) => {
+                    const rowPartNo = row.querySelector('.variant-part-number').value.trim();
+                    const rowPrice1 = parseFloat(row.querySelector('.variant-price1').value) || 0;
+                    const rowPrice2 = parseFloat(row.querySelector('.variant-price2').value) || 0;
+                    const rowStock = parseInt(row.querySelector('.variant-stock').value) || 0;
+
+                    const selects = row.querySelectorAll('.variant-select-option');
+                    const selectedVals = [];
+                    const selectedTypes = [];
+                    selects.forEach(sel => {
+                        selectedVals.push(sel.value);
+                        selectedTypes.push(sel.dataset.vtype);
+                    });
+                    const vOptsStr = selectedVals.join(', ');
+
+                    // Check if a variant with these options already existed in the database
+                    const existing = related.find(x => x.id !== baseProd.id && x.variantOptions === vOptsStr);
+                    const newId = existing ? existing.id : (Date.now() + index + 10);
+                    const newSales = existing ? (existing.salesCount || 0) : 0;
+
+                    const vProd = {
+                        id: newId,
+                        partNo: rowPartNo || `${baseProd.partNo}-${selectedVals.join('-')}`,
+                        category: catName,
+                        name: name,
+                        chineseName: chineseName,
+
+                        address: addressJoined,
+                        stock: rowStock, // Keep variant stock separate
+                        alertLimit: alertLimit,
+                        price1: rowPrice1,
+                        price2: rowPrice2,
+                        salesCount: newSales,
+                        status: status,
+                        isDeadStock: isDeadStock,
+                        variants: selectedVals,
+                        variantType: selectedTypes.join(', '),
+                        variantOptions: vOptsStr,
+                        damaged: damaged,
+                        notes: notes
+                    };
+                    updatedList.push(vProd);
+                    activeVariantIds.add(vProd.id);
+                });
+
+                // Delete variant products that were removed from the modal
+                const toDeleteIds = related
+                    .filter(x => x.id !== baseProd.id && x.variants && x.variants.length > 0)
+                    .filter(x => !activeVariantIds.has(x.id))
+                    .map(x => x.id);
+
+                updatedList = updatedList.filter(x => !toDeleteIds.includes(x.id));
+            }
+
+            db.saveProducts(updatedList);
             closeModal('editModal');
             renderProductsTable();
         }

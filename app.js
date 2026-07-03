@@ -2,14 +2,35 @@
 
 // 1. Initial Seed Data
 const DEFAULT_PRODUCTS = [
-    { id: 1, name: 'Hydraulic Pump', chineseName: '液压泵', partNo: 'HP-001', category: 'Hydraulics', address: 'A-12-3', stock: 45, price1: 2500, price2: 2750, salesCount: 127, status: 'Active', damaged: 0, variants: ['Standard', 'Heavy Duty'] },
-    { id: 2, name: 'Engine Oil Filter', chineseName: '发动机机油滤芯', partNo: 'EOF-102', category: 'Filters', address: 'B-04-1', stock: 103, price1: 850, price2: 920, salesCount: 412, status: 'Active', damaged: 2, variants: ['Small', 'Large'] },
+    // Hydraulic Pump (base)
+    { id: 1, name: 'Hydraulic Pump', chineseName: '液压泵', partNo: 'HP-001', category: 'Hydraulics', address: 'A-12-3', stock: 10, price1: 2500, price2: 2750, salesCount: 80, status: 'Active', damaged: 0 },
+    // Hydraulic Pump variants
+    { id: 101, name: 'Hydraulic Pump', chineseName: '液压泵', partNo: 'HP-002', category: 'Hydraulics', address: 'A-12-3', stock: 25, price1: 2500, price2: 2750, salesCount: 30, status: 'Active', damaged: 0, variantOptions: 'Standard', variants: ['Standard'] },
+    { id: 102, name: 'Hydraulic Pump', chineseName: '液压泵', partNo: 'HP-003', category: 'Hydraulics', address: 'A-12-3', stock: 10, price1: 3200, price2: 3500, salesCount: 17, status: 'Active', damaged: 0, variantOptions: 'Heavy Duty', variants: ['Heavy Duty'] },
+    // Engine Oil Filter (base)
+    { id: 2, name: 'Engine Oil Filter', chineseName: '发动机机油滤芯', partNo: 'EOF-101', category: 'Filters', address: 'B-04-1', stock: 50, price1: 850, price2: 920, salesCount: 200, status: 'Active', damaged: 2 },
+    // Engine Oil Filter variants
+    { id: 201, name: 'Engine Oil Filter', chineseName: '发动机机油滤芯', partNo: 'EOF-102', category: 'Filters', address: 'B-04-1', stock: 33, price1: 750, price2: 800, salesCount: 150, status: 'Active', damaged: 0, variantOptions: 'Small', variants: ['Small'] },
+    { id: 202, name: 'Engine Oil Filter', chineseName: '发动机机油滤芯', partNo: 'EOF-103', category: 'Filters', address: 'B-04-1', stock: 20, price1: 950, price2: 1050, salesCount: 62, status: 'Active', damaged: 0, variantOptions: 'Large', variants: ['Large'] },
+    // Track Link Assembly (no variants)
     { id: 3, name: 'Track Link Assembly', chineseName: '履带链节总成', partNo: 'TRK-003', category: 'Undercarriage', address: 'C-08-2', stock: 0, price1: 1200, price2: 1350, salesCount: 89, status: 'No Stock', damaged: 0 },
+    // Engine Gasket Set (no variants)
     { id: 4, name: 'Engine Gasket Set', chineseName: '发动机垫片组', partNo: 'ENG-005', category: 'Engine', address: 'D-03-4', stock: 3, price1: 980, price2: 1100, salesCount: 156, status: 'Low Stock', damaged: 0 },
-    { id: 5, name: 'Alternator 24V', chineseName: '24V交流发电机', partNo: 'ELE-006', category: 'Electrical', address: 'E-05-1', stock: 0, price1: 3200, price2: 3500, salesCount: 67, status: 'No Stock', damaged: 1, variants: ['Standard', 'Premium'] },
+    // Alternator 24V (base)
+    { id: 5, name: 'Alternator 24V', chineseName: '24V交流发电机', partNo: 'ELE-006', category: 'Electrical', address: 'E-05-1', stock: 5, price1: 3200, price2: 3500, salesCount: 30, status: 'Active', damaged: 1 },
+    // Alternator 24V variants
+    { id: 501, name: 'Alternator 24V', chineseName: '24V交流发电机', partNo: 'ELE-007', category: 'Electrical', address: 'E-05-1', stock: 0, price1: 3200, price2: 3500, salesCount: 22, status: 'No Stock', damaged: 0, variantOptions: 'Standard', variants: ['Standard'] },
+    { id: 502, name: 'Alternator 24V', chineseName: '24V交流发电机', partNo: 'ELE-008', category: 'Electrical', address: 'E-05-1', stock: 2, price1: 4500, price2: 5000, salesCount: 15, status: 'Active', damaged: 0, variantOptions: 'Premium', variants: ['Premium'] },
+    // Fuel Filter Primary (no variants)
     { id: 6, name: 'Fuel Filter Primary', chineseName: '主燃油滤清器', partNo: 'FLT-008', category: 'Filters', address: 'B-07-2', stock: 1, price1: 450, price2: 520, salesCount: 298, status: 'Low Stock', damaged: 0 },
+    // Bucket Cylinder (no variants)
     { id: 7, name: 'Bucket Cylinder', chineseName: '铲斗油缸', partNo: 'BC-104', category: 'Hydraulics', address: 'A-15-2', stock: 15, price1: 4500, price2: 4900, salesCount: 42, status: 'Active', damaged: 0 },
-    { id: 8, name: 'Rubber Track 400mm', chineseName: '橡胶履带400mm', partNo: 'RT-400', category: 'Undercarriage', address: 'C-10-1', stock: 8, price1: 8500, price2: 9200, salesCount: 28, status: 'Active', damaged: 0, variants: ['300mm width', '400mm width', '500mm width'] }
+    // Rubber Track (base)
+    { id: 8, name: 'Rubber Track', chineseName: '橡胶履带', partNo: 'RT-400', category: 'Undercarriage', address: 'C-10-1', stock: 4, price1: 8500, price2: 9200, salesCount: 10, status: 'Active', damaged: 0 },
+    // Rubber Track variants
+    { id: 801, name: 'Rubber Track', chineseName: '橡胶履带', partNo: 'RT-401', category: 'Undercarriage', address: 'C-10-1', stock: 4, price1: 7500, price2: 8000, salesCount: 8, status: 'Active', damaged: 0, variantOptions: '300mm width', variants: ['300mm width'] },
+    { id: 802, name: 'Rubber Track', chineseName: '橡胶履带', partNo: 'RT-402', category: 'Undercarriage', address: 'C-10-1', stock: 0, price1: 8500, price2: 9200, salesCount: 12, status: 'No Stock', damaged: 0, variantOptions: '400mm width', variants: ['400mm width'] },
+    { id: 803, name: 'Rubber Track', chineseName: '橡胶履带', partNo: 'RT-403', category: 'Undercarriage', address: 'C-10-1', stock: 2, price1: 9500, price2: 10200, salesCount: 6, status: 'Active', damaged: 0, variantOptions: '500mm width', variants: ['500mm width'] }
 ];
 
 const DEFAULT_EMPLOYEES = [
@@ -49,6 +70,23 @@ const DEFAULT_RESERVATIONS = [
 function dbInit() {
     if (!localStorage.getItem('ztg_products')) {
         localStorage.setItem('ztg_products', JSON.stringify(DEFAULT_PRODUCTS));
+    } else {
+        // Migrate: if the stored products use the old schema where variants were stored
+        // as an array on the base product (instead of separate products with variantOptions),
+        // reset to the new DEFAULT_PRODUCTS.
+        try {
+            const storedProds = JSON.parse(localStorage.getItem('ztg_products'));
+            const hasOldSchema = storedProds.some(p =>
+                p.variants && p.variants.length > 0 && !p.variantOptions &&
+                !storedProds.some(x => x.name === p.name && !!x.variantOptions)
+            );
+            if (hasOldSchema) {
+                console.log('[ZTG] Migrating products to new variant schema...');
+                localStorage.setItem('ztg_products', JSON.stringify(DEFAULT_PRODUCTS));
+            }
+        } catch(e) {
+            localStorage.setItem('ztg_products', JSON.stringify(DEFAULT_PRODUCTS));
+        }
     }
     if (!localStorage.getItem('ztg_employees')) {
         localStorage.setItem('ztg_employees', JSON.stringify(DEFAULT_EMPLOYEES));
@@ -90,6 +128,20 @@ function dbInit() {
     }
     if (patched) {
         localStorage.setItem('ztg_employees', JSON.stringify(existingEmps));
+    }
+    
+    // Migration for Dummy Data Name Fix
+    const existingProds = JSON.parse(localStorage.getItem('ztg_products') || '[]');
+    let prodsPatched = false;
+    existingProds.forEach(prod => {
+        if (prod.name === 'Rubber Track 400mm') {
+            prod.name = 'Rubber Track';
+            prod.chineseName = '橡胶履带';
+            prodsPatched = true;
+        }
+    });
+    if (prodsPatched) {
+        localStorage.setItem('ztg_products', JSON.stringify(existingProds));
     }
 }
 

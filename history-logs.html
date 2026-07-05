@@ -62,6 +62,9 @@
             color: var(--text-secondary);
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 44px; /* Mobile accessibility touch target */
+            min-height: 44px;
+            padding: 0;
         }
         .action-trigger-btn:hover {
             background: #F8FAFC;
@@ -75,13 +78,13 @@
             right: 0;
             top: calc(100% + 6px);
             z-index: 999;
-            min-width: 140px;
-            background: rgba(255, 255, 255, 0.85);
+            min-width: 160px;
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(12px) saturate(180%);
             -webkit-backdrop-filter: blur(12px) saturate(180%);
             border: 1px solid rgba(226, 232, 240, 0.8);
             border-radius: 12px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
             padding: 6px;
             flex-direction: column;
             gap: 4px;
@@ -91,7 +94,7 @@
             align-items: center;
             gap: 10px;
             padding: 8px 12px;
-            font-size: 12px;
+            font-size: 12.5px;
             font-weight: 600;
             color: #334155;
             text-decoration: none;
@@ -102,6 +105,7 @@
             background: transparent;
             width: 100%;
             text-align: left;
+            min-height: 36px;
         }
         .actions-dropdown-item.view:hover {
             background: rgba(241, 245, 249, 0.9);
@@ -116,71 +120,28 @@
             color: #2563EB;
         }
         
-        /* Custom Premium Tooltips */
-        [data-tooltip] {
-            position: relative;
-        }
-        [data-tooltip]::before {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 125%;
-            left: 50%;
-            transform: translate(-50%, 4px) scale(0.95);
-            background: #0F172A;
-            color: #FFFFFF;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 5px 10px;
-            border-radius: 6px;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            z-index: 1000;
-        }
-        [data-tooltip]::after {
-            content: '';
-            position: absolute;
-            bottom: 115%;
-            left: 50%;
-            transform: translate(-50%, 4px) scale(0.95);
-            border-width: 5px;
-            border-style: solid;
-            border-color: #0F172A transparent transparent transparent;
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1000;
-        }
-        [data-tooltip]:hover::before,
-        [data-tooltip]:hover::after {
-            opacity: 1;
-            visibility: visible;
-            transform: translate(-50%, 0) scale(1);
+        @media (max-width: 768px) {
+            .actions-dropdown-menu {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                top: auto;
+                width: 100%;
+                border-radius: 20px 20px 0 0;
+                box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+                padding: 16px;
+                animation: slideUpMobile 0.25s ease-out;
+            }
+            .actions-dropdown-item {
+                min-height: 48px; /* Taller items for mobile touch targets */
+                font-size: 14px;
+            }
         }
         
-        /* Dropdown item tooltips positioning offset */
-        .actions-dropdown-item[data-tooltip]::before {
-            left: auto;
-            right: 105%;
-            bottom: 50%;
-            transform: translate(4px, 50%) scale(0.95);
-        }
-        .actions-dropdown-item[data-tooltip]::after {
-            left: auto;
-            right: 100%;
-            bottom: 50%;
-            transform: translate(4px, 50%) scale(0.95);
-            border-color: transparent transparent transparent #0F172A;
-        }
-        .actions-dropdown-item[data-tooltip]:hover::before {
-            transform: translate(0, 50%) scale(1);
-        }
-        .actions-dropdown-item[data-tooltip]:hover::after {
-            transform: translate(0, 50%) scale(1);
+        @keyframes slideUpMobile {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
         }
     </style>
 </head>
@@ -507,7 +468,7 @@
 
     <!-- Modal: View Audit / Transaction Details -->
     <div class="modal-overlay" id="auditDetailModal">
-        <div class="modal-card audit-detail-card" style="max-width: 560px;">
+        <div class="modal-card audit-detail-card" style="max-width: 680px; width: 95%;">
             <div class="modal-header audit-detail-header">
                 <div>
                     <h3 class="modal-title" id="auditModalTitle">Transaction Details</h3>
@@ -528,59 +489,62 @@
 
     <!-- Modal: Void Transaction (Admin-Only) -->
     <div class="modal-overlay" id="voidModal">
-        <div class="modal-card" style="max-width: 580px; width: 95%; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);">
+        <div class="modal-card" style="max-width: 540px; width: 95%; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.12); border: 1px solid #E2E8F0;">
             <form id="voidForm" onsubmit="submitVoid(event)">
                 <input type="hidden" id="voidTxIndex">
-
-                <!-- Dark Crimson Header -->
-                <div class="modal-header" style="background: #7F1D1D; border-bottom: none; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center;">
+ 
+                <!-- Sleek White Header with Red Accent -->
+                <div class="modal-header" style="background: #FFFFFF; border-bottom: 1px solid #F1F5F9; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <h3 style="color: white; font-size: 16px; font-weight: 700; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Void Transaction</h3>
-                        <p style="color: rgba(255,255,255,0.75); font-size: 11px; margin: 0;">Admin authorization required — Cashier must physically request this action</p>
+                        <h3 style="color: #991B1B; font-size: 18px; font-weight: 700; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px; font-family: 'Outfit', sans-serif;"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2.5" style="color: #EF4444; flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Void Transaction</h3>
+                        <p style="color: #6B7280; font-size: 11.5px; margin: 0;">Admin authorization required — Cashier must physically request this action</p>
                     </div>
-                    <button type="button" style="color: rgba(255,255,255,0.75); background: none; border: none; cursor: pointer; padding: 4px;" onclick="closeModal('voidModal')">
+                    <button type="button" style="color: #94A3B8; background: none; border: none; cursor: pointer; padding: 4px; transition: color 0.2s;" onmouseover="this.style.color='#475569'" onmouseout="this.style.color='#94A3B8'" onclick="closeModal('voidModal')">
                         <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                 </div>
-
+ 
                 <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 20px; max-height: 75vh; overflow-y: auto;">
-
+ 
                     <!-- Warning Banner -->
-                    <div style="background: #FEF2F2; border: 1px solid #FCA5A5; border-left: 4px solid #DC2626; border-radius: 6px; padding: 12px 16px; font-size: 12px; color: #991B1B;">
-                        <div style="display: flex; align-items: flex-start; gap: 8px;"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2.5" style="flex-shrink: 0; margin-top: 1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span><strong>This action cannot be undone.</strong> Voiding cancels the sale and generates an Official Receipt (OR-VOID) as proof. Only proceed after the cashier's physical request.</span></div>
+                    <div style="background: #FFF5F5; border: 1px solid #FEE2E2; border-left: 4px solid #EF4444; border-radius: 8px; padding: 12px 16px; font-size: 12.5px; color: #991B1B;">
+                        <div style="display: flex; align-items: flex-start; gap: 8px;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2.5" style="flex-shrink: 0; margin-top: 1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <span><strong>This action cannot be undone.</strong> Voiding cancels the sale and generates an Official Receipt (OR-VOID) as proof. Only proceed after the cashier's physical request.</span>
+                        </div>
                     </div>
-
-                    <!-- Original Transaction Info (read-only) -->
+ 
+                    <!-- Original Transaction Info (read-only grid) -->
                     <div>
-                        <h4 style="font-size: 11px; font-weight: 600; color: #6B7280; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Original Transaction</h4>
-                        <div style="border: 1px solid #E5E7EB; border-radius: 6px; overflow: hidden;">
-                            <div style="display: flex; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #F3F4F6; font-size: 13px;">
-                                <span style="color: #6B7280;">Invoice No.</span>
-                                <span style="font-weight: 700; color: #111827;" id="voidSiNo">—</span>
+                        <h4 style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px;">Original Transaction</h4>
+                        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 24px;">
+                            <div>
+                                <span style="font-size: 11px; color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">Invoice No.</span>
+                                <span style="font-weight: 700; color: #0F172A; font-size: 14px;" id="voidSiNo">—</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #F3F4F6; font-size: 13px;">
-                                <span style="color: #6B7280;">Date</span>
-                                <span style="font-weight: 600; color: #111827;" id="voidTxDate">—</span>
+                            <div>
+                                <span style="font-size: 11px; color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">Date & Time</span>
+                                <span style="font-weight: 600; color: #0F172A; font-size: 13.5px;" id="voidTxDate">—</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #F3F4F6; font-size: 13px;">
-                                <span style="color: #6B7280;">Customer</span>
-                                <span style="font-weight: 600; color: #111827;" id="voidCustomerName">—</span>
+                            <div>
+                                <span style="font-size: 11px; color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">Customer</span>
+                                <span style="font-weight: 600; color: #0F172A; font-size: 13.5px;" id="voidCustomerName">—</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #F3F4F6; font-size: 13px;">
-                                <span style="color: #6B7280;">Cashier</span>
-                                <span style="font-weight: 600; color: #111827;" id="voidCashier">—</span>
+                            <div>
+                                <span style="font-size: 11px; color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">Cashier</span>
+                                <span style="font-weight: 600; color: #0F172A; font-size: 13.5px;" id="voidCashier">—</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding: 10px 16px; font-size: 13px;">
-                                <span style="color: #6B7280;">Amount</span>
-                                <span style="font-weight: 700; color: #DC2626;" id="voidAmount">—</span>
+                            <div style="grid-column: span 2; border-top: 1px dashed #E2E8F0; padding-top: 12px; margin-top: 4px; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 11px; color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Amount to Void</span>
+                                <span style="font-weight: 800; color: #EF4444; font-size: 18px;" id="voidAmount">—</span>
                             </div>
                         </div>
                     </div>
-
+ 
                     <!-- Void Reason -->
-                    <div>
-                        <label style="font-size: 12px; font-weight: 600; color: #111827; margin-bottom: 8px; display: block;">Void Reason <span style="color: #DC2626;">*</span></label>
-                        <select id="voidReason" class="form-control" required style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 10px 12px; font-size: 13px; width: 100%;">
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 12px; font-weight: 600; color: #334155;">Void Reason <span style="color: #EF4444;">*</span></label>
+                        <select id="voidReason" class="form-control" required style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 12px; font-size: 13px; width: 100%; background-color: #FFFFFF; font-family: var(--font-ui); outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='#E2E8F0'">
                             <option value="Wrong Transaction / Input Error">Wrong Transaction / Input Error</option>
                             <option value="Duplicate Entry">Duplicate Entry</option>
                             <option value="System Error">System Error</option>
@@ -588,34 +552,44 @@
                             <option value="Other">Other</option>
                         </select>
                     </div>
-
+ 
                     <!-- Stock Restoration -->
                     <div>
-                        <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer; color: #374151;">
-                            <input type="checkbox" id="voidRestoreStock" checked style="accent-color: #7F1D1D; width: 16px; height: 16px; margin: 0;">
+                        <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; color: #334155; font-weight: 500; user-select: none;">
+                            <input type="checkbox" id="voidRestoreStock" checked style="accent-color: #EF4444; width: 16px; height: 16px; margin: 0; cursor: pointer;">
                             <span>Restore items to inventory (recommended)</span>
                         </label>
                     </div>
-
+ 
                     <!-- Admin Authorization Box -->
-                    <div style="background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
-                        <h4 style="font-size: 11px; font-weight: 700; color: #92400E; text-transform: uppercase; margin: 0; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2.5" style="flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Admin Authorization</h4>
-                        <div>
-                            <label style="font-size: 12px; color: #374151; margin-bottom: 6px; display: block;">Admin Name <span style="color: #DC2626;">*</span></label>
-                            <select id="voidAdminSelect" class="form-control" required style="border: 1px solid #FCD34D; border-radius: 6px; padding: 10px 12px; font-size: 13px; width: 100%; background: #FFFBEB;">
+                    <div style="background: #FFFDF5; border: 1px solid #FEF3C7; border-left: 4px solid #D97706; border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                        <h4 style="font-size: 11px; font-weight: 700; color: #B45309; text-transform: uppercase; margin: 0; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" style="flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Admin Authorization</h4>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <label style="font-size: 12px; font-weight: 600; color: #92400E;">Admin Name <span style="color: #EF4444;">*</span></label>
+                            <select id="voidAdminSelect" class="form-control" required style="border: 1px solid #FCD34D; border-radius: 8px; padding: 10px 12px; font-size: 13px; width: 100%; background: #FFFFFF; font-family: var(--font-ui); outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#D97706'" onblur="this.style.borderColor='#FCD34D'">
                                 <!-- Populated dynamically -->
                             </select>
                         </div>
-                        <div>
-                            <label style="font-size: 12px; color: #374151; margin-bottom: 6px; display: block;">4-Digit Admin PIN <span style="color: #DC2626;">*</span></label>
-                            <input type="password" id="voidAdminPin" class="form-control" maxlength="4" pattern="\d{4}" required placeholder="••••" style="border: 1px solid #FCD34D; border-radius: 6px; padding: 12px; font-size: 22px; width: 100%; letter-spacing: 12px; text-align: center; background: #FFFBEB; box-sizing: border-box;">
+                        
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <label style="font-size: 12px; font-weight: 600; color: #92400E;">4-Digit Admin PIN <span style="color: #EF4444;">*</span></label>
+                            <div style="position: relative; width: 100%;">
+                                <input type="password" id="voidAdminPin" class="form-control" maxlength="4" pattern="\d{4}" required placeholder="••••" style="border: 1px solid #FCD34D; border-radius: 8px; padding: 12px 40px 12px 40px; font-size: 20px; width: 100%; letter-spacing: 10px; text-align: center; background: #FFFFFF; box-sizing: border-box; font-family: var(--font-mono); outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#D97706'" onblur="this.style.borderColor='#FCD34D'">
+                                <button type="button" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; color: #A1A1AA; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;" onclick="togglePasswordVisibility('voidAdminPin', this)">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #E5E7EB; background: #fff;">
-                    <button type="button" class="btn" onclick="closeModal('voidModal')" style="background: #F3F4F6; color: #374151; border: none; padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer;">Cancel</button>
-                    <button type="submit" class="btn" style="background: #7F1D1D; color: white; border: none; padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Process Void</button>
+ 
+                <div class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #F1F5F9; background: #FFFFFF;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('voidModal')" style="border-radius: 8px; font-weight: 500; font-size: 13.5px; height: 38px; padding: 0 20px; border: 1px solid #E2E8F0; background: #FFFFFF; color: #475569; cursor: pointer;" onmouseover="this.style.background='#F8FAFC'; this.style.color='#1E293B';" onmouseout="this.style.background='#FFFFFF'; this.style.color='#475569';">Cancel</button>
+                    <button type="submit" class="btn btn-danger" style="background: #EF4444; border: none; border-radius: 8px; font-weight: 600; font-size: 13.5px; height: 38px; padding: 0 20px; color: white; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#DC2626'" onmouseout="this.style.backgroundColor='#EF4444'">
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                        Process Void
+                    </button>
                 </div>
             </form>
         </div>
@@ -825,49 +799,73 @@
                 const actionLabel = statusGrp === 'Pending' ? 'Update' : 'View';
 
                 // Build actions dropdown
+                const hasReprint = tx.orNo || statusGrp === 'Completed';
+                const hasVoid = statusGrp === 'Completed';
+                const hasOverflow = hasReprint || hasVoid;
+
                 let dropdownHtml = `
-                    <div class="actions-dropdown-container">
-                        <button class="action-trigger-btn" data-tooltip="Actions" onclick="toggleActionsDropdown(event, ${realIdx})">
+                    <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+                        <!-- Inline View Button -->
+                        <button class="action-trigger-btn" aria-label="${actionLabel} Transaction" data-tooltip="${statusGrp === 'Pending' ? 'Update pending info' : 'View full details'}" onclick="viewTransaction(${realIdx})">
                             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
-                              <polyline points="16 6 12 2 8 6"></polyline>
-                              <line x1="12" y1="2" x2="12" y2="15"></line>
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
                             </svg>
                         </button>
-                        <div id="actionsDropdown-${realIdx}" class="actions-dropdown-menu">
-                            <button class="actions-dropdown-item view" data-tooltip="${statusGrp === 'Pending' ? 'Update pending info' : 'View full invoice details'}" onclick="viewTransaction(${realIdx})">
-                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                ${actionLabel}
-                            </button>
                 `;
 
-                if (statusGrp === 'Completed') {
+                if (hasOverflow) {
                     dropdownHtml += `
-                            <button class="actions-dropdown-item void" data-tooltip="Cancel transaction & void sales record" onclick="openVoidModal(${realIdx})">
-                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
-                                Void
+                        <!-- Three-dot Overflow Menu -->
+                        <div class="actions-dropdown-container">
+                            <button class="action-trigger-btn" aria-label="More actions" aria-haspopup="true" aria-expanded="false" data-tooltip="More actions" onclick="toggleActionsDropdown(event, ${realIdx})">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                    <circle cx="12" cy="5" r="2"></circle>
+                                    <circle cx="12" cy="12" r="2"></circle>
+                                    <circle cx="12" cy="19" r="2"></circle>
+                                </svg>
                             </button>
+                            <div id="actionsDropdown-${realIdx}" class="actions-dropdown-menu" role="menu">
                     `;
-                }
 
-                if (tx.orNo) {
+                    if (tx.orNo) {
+                        dropdownHtml += `
+                                <button class="actions-dropdown-item reprint" role="menuitem" data-tooltip="Print official receipt duplicate" onclick="closeAllDropdowns(); reprintOR(${realIdx})">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                                    Reprint OR
+                                </button>
+                        `;
+                    } else if (statusGrp === 'Completed') {
+                        dropdownHtml += `
+                                <button class="actions-dropdown-item reprint" role="menuitem" data-tooltip="Print sales invoice duplicate" onclick="closeAllDropdowns(); reprintSI(${realIdx})">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                                    Reprint SI
+                                </button>
+                        `;
+                    }
+
+                    if (hasReprint && hasVoid) {
+                        dropdownHtml += `
+                                <div class="actions-dropdown-divider" style="margin: 4px 0; border-top: 1px solid #E2E8F0;"></div>
+                        `;
+                    }
+
+                    if (hasVoid) {
+                        dropdownHtml += `
+                                <button class="actions-dropdown-item void" role="menuitem" data-tooltip="Cancel transaction & void sales record" onclick="closeAllDropdowns(); openVoidModal(${realIdx})" style="color: #EF4444;">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                                    Void Transaction
+                                </button>
+                        `;
+                    }
+
                     dropdownHtml += `
-                            <button class="actions-dropdown-item reprint" data-tooltip="Print official receipt duplicate" onclick="reprintOR(${realIdx})">
-                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                                Reprint OR
-                            </button>
-                    `;
-                } else if (statusGrp === 'Completed') {
-                    dropdownHtml += `
-                            <button class="actions-dropdown-item reprint" data-tooltip="Print sales invoice duplicate" onclick="reprintSI(${realIdx})">
-                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                                Reprint SI
-                            </button>
+                            </div>
+                        </div>
                     `;
                 }
 
                 dropdownHtml += `
-                        </div>
                     </div>
                 `;
 
@@ -1272,7 +1270,7 @@
                         <div class="audit-detail-section-title">Items Restocked</div>
                         <div class="audit-detail-items">${entries.map(e => `
                             <div class="audit-detail-item">
-                                <div><strong>${e.partNo}</strong> — ${e.name}</div>
+                                <div><strong>${e.partNo}</strong> — ${e.name}${e.variantOptions ? ` (${e.variantOptions})` : ''}</div>
                                 <div class="audit-detail-item-meta">${e.category || ''} · ${e.address || ''}</div>
                                 <div class="audit-detail-item-qty">+${e.qty} units <span>(${e.currentStock} → ${e.currentStock + e.qty})</span></div>
                             </div>
@@ -1350,17 +1348,84 @@
                 rows += auditDetailRow('Status', status, `color:${statusColor};font-weight:700;`);
             }
 
+            // If the transaction has items, show them
+            if (status !== 'Restocked' && status !== 'Damaged') {
+                const txItems = tx.items || [];
+                // Retroactive fallback for items if not present
+                if (txItems.length === 0) {
+                    const products = db.getProducts();
+                    const prodName = tx.itemName ? tx.itemName.split(' & ')[0] : '';
+                    const matched = products.find(p => p.name === prodName || p.partNo === prodName) || products[0];
+                    if (matched) {
+                        txItems.push({
+                            id: matched.id,
+                            name: matched.name,
+                            partNo: matched.partNo,
+                            qty: tx.qty || 1,
+                            price: tx.qty ? (tx.amount / tx.qty) : tx.amount,
+                            variant: '',
+                            unit: matched.unit || 'pc'
+                        });
+                    }
+                }
+                
+                if (txItems.length > 0) {
+                    const products = db.getProducts();
+                    extraBlock = `
+                        <div class="audit-detail-section" style="margin-top: 14px;">
+                            <span class="audit-detail-section-title" style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.5px;">Items Purchased</span>
+                            <div style="border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: #FFFFFF; max-height: 250px; overflow-y: auto;">
+                                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12.5px;">
+                                    <thead style="background: #F8FAFC; border-bottom: 1px solid #E2E8F0; font-size: 10px; text-transform: uppercase; color: #64748B;">
+                                        <tr>
+                                            <th style="padding: 8px 12px; font-weight: 600;">Part No.</th>
+                                            <th style="padding: 8px 12px; font-weight: 600;">Product</th>
+                                            <th style="padding: 8px 12px; font-weight: 600; text-align: center; width: 60px;">Qty</th>
+                                            <th style="padding: 8px 12px; font-weight: 600; text-align: right; width: 100px;">Price</th>
+                                            <th style="padding: 8px 12px; font-weight: 600; text-align: right; width: 110px;">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${txItems.map(item => {
+                                            const prod = products.find(p => p.id === item.id) || {};
+                                            const partNo = item.partNo || prod.partNo || '—';
+                                            const name = item.name || prod.name || 'Unknown Part';
+                                            const qty = item.qty || 0;
+                                            const price = item.price || 0;
+                                            const total = qty * price;
+                                            const variantText = item.variant ? ` <span style="color: var(--primary); font-weight: 500;">(${item.variant})</span>` : '';
+                                            return `
+                                                <tr style="border-bottom: 1px solid #F1F5F9;">
+                                                    <td style="padding: 10px 12px; color: #0F172A; font-weight: 700; font-family: monospace;">${partNo}</td>
+                                                    <td style="padding: 10px 12px; color: #334155;">
+                                                        <div style="font-weight: 600;">${name}${variantText}</div>
+                                                    </td>
+                                                    <td style="padding: 10px 12px; text-align: center; color: #0F172A; font-weight: 700;">${qty}</td>
+                                                    <td style="padding: 10px 12px; text-align: right; color: #475569;">₱${price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                                    <td style="padding: 10px 12px; text-align: right; color: #0F172A; font-weight: 700;">₱${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
             document.getElementById('auditModalTitle').textContent = title;
             document.getElementById('auditModalSubtitle').textContent = subtitle;
 
             body.innerHTML = `
                 <div class="audit-detail-grid">${rows}</div>
                 ${extraBlock}
+                ${status !== 'Restocked' ? `
                 <div class="audit-detail-reason">
                     <span class="audit-detail-section-title">Reason</span>
                     <p>${reason}</p>
-                </div>
-                ${tx.internalNotes && status === 'Restocked' ? `
+                </div>` : ''}
+                ${tx.internalNotes && status !== 'Restocked' ? `
                 <div class="audit-detail-notes">
                     <span class="audit-detail-section-title">Stock Changes</span>
                     <p>${tx.internalNotes}</p>
@@ -1549,26 +1614,39 @@
             allDropdowns.forEach(dropdown => {
                 if (dropdown.id !== `actionsDropdown-${idx}`) {
                     dropdown.style.display = 'none';
+                    const triggerBtn = dropdown.closest('.actions-dropdown-container')?.querySelector('.action-trigger-btn');
+                    if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'false');
                 }
             });
 
             const dropdown = document.getElementById(`actionsDropdown-${idx}`);
+            const trigger = event.currentTarget;
             if (dropdown) {
-                if (dropdown.style.display === 'flex') {
-                    dropdown.style.display = 'none';
-                } else {
-                    dropdown.style.display = 'flex';
-                }
+                const isOpen = dropdown.style.display === 'flex';
+                dropdown.style.display = isOpen ? 'none' : 'flex';
+                trigger.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
             }
         }
 
-        // Close dropdowns on outside clicks
+        function closeAllDropdowns() {
+            const allDropdowns = document.querySelectorAll('.actions-dropdown-menu');
+            allDropdowns.forEach(dropdown => {
+                dropdown.style.display = 'none';
+                const triggerBtn = dropdown.closest('.actions-dropdown-container')?.querySelector('.action-trigger-btn');
+                if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'false');
+            });
+        }
+
+        // Close dropdowns on outside clicks & ESC key
         document.addEventListener('click', function(event) {
             if (!event.target.closest('.actions-dropdown-container')) {
-                const allDropdowns = document.querySelectorAll('.actions-dropdown-menu');
-                allDropdowns.forEach(dropdown => {
-                    dropdown.style.display = 'none';
-                });
+                closeAllDropdowns();
+            }
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeAllDropdowns();
             }
         });
 

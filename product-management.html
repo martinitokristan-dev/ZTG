@@ -27,6 +27,109 @@
         .suggest-item:hover {
             background-color: #F1F5F9;
         }
+
+        /* Action Dropdown Styling */
+        .actions-dropdown-container {
+            position: relative;
+            display: inline-block;
+        }
+        .action-trigger-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #FFFFFF;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 44px; /* Mobile accessibility touch target */
+            min-height: 44px;
+            padding: 0;
+        }
+        .action-trigger-btn:hover {
+            background: #F8FAFC;
+            color: var(--primary);
+            border-color: var(--primary-light);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12);
+        }
+        .actions-dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 6px);
+            z-index: 999;
+            min-width: 160px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            padding: 6px;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .actions-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #334155;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+            min-height: 36px;
+        }
+        .actions-dropdown-item:hover {
+            background: #F1F5F9;
+            color: #0F172A;
+        }
+        .actions-dropdown-item.disable:hover {
+            background: #FEF2F2;
+            color: #DC2626;
+        }
+        .actions-dropdown-item.enable:hover {
+            background: #ECFDF5;
+            color: #10B981;
+        }
+        
+        .table-card {
+            overflow: visible !important;
+        }
+        
+        @media (max-width: 768px) {
+            .actions-dropdown-menu {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                top: auto;
+                width: 100%;
+                border-radius: 20px 20px 0 0;
+                box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+                padding: 16px;
+                animation: slideUpMobile 0.25s ease-out;
+            }
+            .actions-dropdown-item {
+                min-height: 48px; /* Taller items for mobile touch targets */
+                font-size: 14px;
+            }
+        }
+        
+        @keyframes slideUpMobile {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
     </style>
 </head>
 
@@ -202,18 +305,18 @@
                             <div style="width: 160px;">
                                 <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">Restock
                                     Date</label>
-                                <input type="date" id="restockDate" class="input-modern" style="width: 100%;">
+                                <input type="date" id="restockDate" class="input-modern" style="width: 100%; background-color: #F1F5F9; cursor: not-allowed;" disabled>
                             </div>
                             <div style="width: 140px;">
                                 <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">Restock
                                     Time</label>
-                                <input type="time" id="restockTime" class="input-modern" style="width: 100%;">
+                                <input type="time" id="restockTime" class="input-modern" style="width: 100%; background-color: #F1F5F9; cursor: not-allowed;" disabled>
                             </div>
                             <div style="flex: 1; min-width: 200px;">
                                 <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">Verified By
                                     (Checker / Supervisor)</label>
                                 <input type="text" id="restockVerifiedBy" class="form-control"
-                                    placeholder="Enter full name of verifying inspector" style="border-radius: 10px;">
+                                    placeholder="Enter full name of verifying inspector" style="border-radius: 10px; background-color: #F1F5F9; cursor: not-allowed;" readonly>
                             </div>
                         </div>
                         <div id="restockSummaryBar"
@@ -554,12 +657,12 @@
 
     <!-- MODAL: VIEW PRODUCT DETAILS -->
     <div class="modal-overlay" id="viewModal">
-        <div class="modal-card modal-card-lg" style="max-width: 650px; width: 90%;">
+        <div class="modal-card modal-card-lg" style="max-width: 850px; width: 95%;">
             <div class="modal-header">
                 <h3 class="modal-title" id="viewModalTitle">Product Details</h3>
                 <button type="button" class="btn-close" onclick="closeModal('viewModal')" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);">&times;</button>
             </div>
-            <div class="modal-body" id="viewModalBody" style="display: flex; flex-direction: column; gap: 16px; font-size: 13px; color: var(--text-main); max-height: 450px; overflow-y: auto;">
+            <div class="modal-body" id="viewModalBody" style="display: flex; flex-direction: column; gap: 16px; font-size: 14px; color: var(--text-main); max-height: 650px; overflow-y: auto;">
                 <!-- Details injected here -->
             </div>
             <div class="modal-footer" style="display: flex; justify-content: flex-end;">
@@ -634,6 +737,71 @@
                     style="width: 100%; color: var(--danger); border-color: #FECACA;">Discard Changes</button>
                 <button type="button" class="btn btn-secondary" onclick="closeModal('restockCancelModal')"
                     style="width: 100%; background: transparent; border: none; color: #64748B;">Keep Editing</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: RESTOCK REVIEW & CONFIRM -->
+    <div class="modal-overlay" id="restockReviewModal">
+        <div class="modal-card" style="max-width: 850px; width: 95%; background: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.12); border: 1px solid #E2E8F0;">
+            <div class="modal-header" style="background: #FFFFFF; border-bottom: 1px solid #F1F5F9; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="color: var(--primary); font-size: 18px; font-weight: 700; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px; font-family: 'Outfit', sans-serif;">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2.5" style="color: var(--primary); flex-shrink:0;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        Review Restock Order
+                    </h3>
+                    <p style="color: #6B7280; font-size: 11.5px; margin: 0;">Please verify the items and quantities below before processing.</p>
+                </div>
+                <button type="button" style="color: #94A3B8; background: none; border: none; cursor: pointer; padding: 4px; transition: color 0.2s;" onmouseover="this.style.color='#475569'" onmouseout="this.style.color='#94A3B8'" onclick="closeModal('restockReviewModal')">
+                    <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px; max-height: 70vh; overflow-y: auto;">
+                <!-- Review List Table -->
+                <div style="border: 1px solid #E2E8F0; border-radius: 10px; overflow-y: auto; background: #F8FAFC; max-height: 350px;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+                        <thead style="background: #F1F5F9; border-bottom: 1px solid #E2E8F0; font-size: 10px; text-transform: uppercase; color: #475569; font-weight: 700; position: sticky; top: 0; z-index: 1;">
+                            <tr>
+                                <th style="padding: 12px 16px;">Product</th>
+                                <th style="padding: 12px 16px; text-align: center; width: 140px; white-space: nowrap;">Current Stock</th>
+                                <th style="padding: 12px 16px; text-align: center; width: 140px; white-space: nowrap;">Adding Qty</th>
+                                <th style="padding: 12px 16px; text-align: center; width: 140px; white-space: nowrap;">New Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody id="restockReviewTableBody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Summary Grid -->
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 13px;">
+                    <div>
+                        <span style="color: #64748B; font-weight: 500;">Total Items to Restock:</span>
+                        <strong style="color: #0F172A; margin-left: 4px;" id="reviewTotalItems">0</strong>
+                    </div>
+                    <div>
+                        <span style="color: #64748B; font-weight: 500;">Total Units Added:</span>
+                        <strong style="color: var(--primary); margin-left: 4px;" id="reviewTotalQty">0</strong>
+                    </div>
+                    <div>
+                        <span style="color: #64748B; font-weight: 500;">Verified By:</span>
+                        <strong style="color: #0F172A; margin-left: 4px;" id="reviewVerifiedBy">—</strong>
+                    </div>
+                    <div>
+                        <span style="color: #64748B; font-weight: 500;">Date & Time:</span>
+                        <strong style="color: #0F172A; margin-left: 4px;" id="reviewDateTime">—</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #F1F5F9; background: #FFFFFF;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('restockReviewModal')" style="border-radius: 8px; font-weight: 500; font-size: 13.5px; height: 38px; padding: 0 20px; border: 1px solid #E2E8F0; background: #FFFFFF; color: #475569; cursor: pointer;" onmouseover="this.style.background='#F8FAFC'; this.style.color='#1E293B';" onmouseout="this.style.background='#FFFFFF'; this.style.color='#475569';">Cancel</button>
+                <button type="button" onclick="commitRestock()" class="btn btn-success" style="background: #10B981; border: none; border-radius: 8px; font-weight: 600; font-size: 13.5px; height: 38px; padding: 0 20px; color: white; cursor: pointer; transition: background-color 0.2s; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.backgroundColor='#059669'" onmouseout="this.style.backgroundColor='#10B981'">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.5" style="flex-shrink:0;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Confirm & Restock
+                </button>
             </div>
         </div>
     </div>
@@ -749,15 +917,40 @@
                     <span style="background-color: ${statusBg}; color: ${statusText}; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600;">${stockStatusText}</span>
                 </td>
                 <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9;">${damagedHtml}</td>
-                <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; text-align: center;">
-                    <div class="btn-group" style="display: flex; gap: 6px; justify-content: center;">
-                        <button class="btn btn-sm" style="background: #F1F5F9; border: 1px solid #E2E8F0; color: #334155; border-radius: 4px; padding: 4px 8px; font-size: 11px;" onclick="openViewModal(${p.id})">View</button>
-                        <button class="btn btn-sm" style="background: #F1F5F9; border: 1px solid #E2E8F0; color: #334155; border-radius: 4px; padding: 4px 8px; font-size: 11px;" onclick="openEditModal(${p.id})">Edit</button>
-                        ${!isVariantSubRow ? `<button class="btn btn-sm" style="background: #F1F5F9; border: 1px solid #E2E8F0; color: ${p.status === 'Disabled' ? '#10B981' : '#EF4444'}; border-radius: 4px; padding: 4px 8px; display: flex; align-items: center; justify-content: center;" onclick="toggleProductStatus(${p.id})" title="${p.status === 'Disabled' ? 'Enable' : 'Disable'}">
-                            ${p.status === 'Disabled' ?
-                    '<svg viewBox="0 0 24 24" style="width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>' :
-                    '<svg viewBox="0 0 24 24" style="width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2;"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>'}
-                        </button>` : ''}
+                <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; text-align: center; position: relative;">
+                    <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+                        <!-- Inline View Button -->
+                        <button class="action-trigger-btn" aria-label="View Product Details" data-tooltip="View Details" onclick="openViewModal(${p.id})">
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                        
+                        <!-- Three-dot Overflow Menu -->
+                        <div class="actions-dropdown-container">
+                            <button class="action-trigger-btn" aria-label="More actions" aria-haspopup="true" aria-expanded="false" data-tooltip="More actions" onclick="toggleActionsDropdown(event, ${p.id})">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                    <circle cx="12" cy="5" r="2"></circle>
+                                    <circle cx="12" cy="12" r="2"></circle>
+                                    <circle cx="12" cy="19" r="2"></circle>
+                                </svg>
+                            </button>
+                            <div id="actionsDropdown-${p.id}" class="actions-dropdown-menu" role="menu">
+                                <button class="actions-dropdown-item edit" role="menuitem" onclick="closeAllDropdowns(); openEditModal(${p.id})">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    Edit Product
+                                </button>
+                                ${!isVariantSubRow ? `
+                                <div class="actions-dropdown-divider" style="margin: 4px 0; border-top: 1px solid #E2E8F0;"></div>
+                                <button class="actions-dropdown-item ${p.status === 'Disabled' ? 'enable' : 'disable'}" role="menuitem" onclick="closeAllDropdowns(); toggleProductStatus(${p.id})" style="color: ${p.status === 'Disabled' ? '#10B981' : '#EF4444'};">
+                                    ${p.status === 'Disabled' ? 
+                                    `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg> Enable Product` : 
+                                    `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg> Disable Product`}
+                                </button>
+                                ` : ''}
+                            </div>
+                        </div>
                     </div>
                 </td>
             `;
@@ -1147,19 +1340,51 @@
             }
 
             document.getElementById('viewModalBody').innerHTML = `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 16px; margin-bottom: 4px;">
-                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">English Name:</span> <span style="font-weight: 600; color: #1E293B; font-size: 13px;">${base.name}</span></div>
-                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Chinese Name:</span> <span style="font-weight: 600; color: #1E293B; font-size: 13px;">${base.chineseName || 'N/A'}</span></div>
-                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Category:</span> <span style="font-weight: 500; color: #334155;">${base.category}</span></div>
-                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Warehouse Location:</span> <span style="font-weight: 500; color: #334155;">${base.address || 'N/A'}</span></div>
-                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Part No. (Base):</span> <span style="font-weight: 700; color: #1E293B; font-family: monospace;">${base.partNo}</span></div>
-                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Status:</span> <span style="font-weight: 600; color: ${base.status === 'Active' ? '#16A34A' : '#EF4444'};">${base.status || 'Active'}</span></div>
-                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Stock Level:</span> <span style="font-weight: 700; color: ${base.stock === 0 ? '#EF4444' : base.stock <= (base.alertLimit||5) ? '#F59E0B' : '#1E293B'};">${base.stock} units</span></div>
-                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Damaged Count:</span> <span style="font-weight: 500; color: ${(base.damaged||0) > 0 ? '#EF4444' : '#334155'};">${base.damaged || 0}</span></div>
-                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Original Price:</span> <span style="font-weight: 700; color: #1E293B;">₱${(base.price1 || 0).toLocaleString()}</span></div>
-                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Retail Price:</span> <span style="font-weight: 700; color: var(--primary);">₱${(base.price2 || 0).toLocaleString()}</span></div>
-
-                    <div><span style="color: #2563EB; font-size: 11.5px; font-weight: 600;">Dead Stock:</span> <span style="font-weight: 500; color: #334155;">${base.isDeadStock ? 'Yes' : 'No'}</span></div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 20px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 18px; margin-bottom: 4px;">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="color: #2563EB; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">English Name</span>
+                        <span style="font-weight: 600; color: #1E293B; font-size: 15px; min-height: 20px; display: inline-block;">${base.name}</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="color: #2563EB; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Chinese Name</span>
+                        <span style="font-weight: 600; color: #1E293B; font-size: 15px; min-height: 20px; display: inline-block;">${base.chineseName || 'N/A'}</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="color: #2563EB; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Category</span>
+                        <span style="font-weight: 500; color: #334155; font-size: 15px; min-height: 20px; display: inline-block;">${base.category}</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="color: #2563EB; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Warehouse Location</span>
+                        <span style="font-weight: 500; color: #334155; font-size: 15px; min-height: 20px; display: inline-block;">${base.address || 'N/A'}</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="color: #2563EB; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Part No. (Base)</span>
+                        <span style="font-weight: 700; color: #1E293B; font-family: monospace; font-size: 15px; min-height: 20px; display: inline-block;">${base.partNo}</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="color: #2563EB; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Status</span>
+                        <span style="font-weight: 600; color: ${base.status === 'Active' ? '#16A34A' : '#EF4444'}; font-size: 15px; min-height: 20px; display: inline-block;">${base.status || 'Active'}</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="color: #2563EB; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Stock Level</span>
+                        <span style="font-weight: 700; color: ${base.stock === 0 ? '#EF4444' : base.stock <= (base.alertLimit||5) ? '#F59E0B' : '#1E293B'}; font-size: 15px; min-height: 20px; display: inline-block;">${base.stock} units</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="color: #2563EB; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Damaged Count</span>
+                        <span style="font-weight: 500; color: ${(base.damaged||0) > 0 ? '#EF4444' : '#334155'}; font-size: 15px; min-height: 20px; display: inline-block;">${base.damaged || 0}</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="color: #2563EB; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Original Price</span>
+                        <span style="font-weight: 700; color: #1E293B; font-size: 15px; min-height: 20px; display: inline-block;">₱${(base.price1 || 0).toLocaleString()}</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="color: #2563EB; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Retail Price</span>
+                        <span style="font-weight: 700; color: var(--primary); font-size: 15px; min-height: 20px; display: inline-block;">₱${(base.price2 || 0).toLocaleString()}</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="color: #2563EB; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Dead Stock</span>
+                        <span style="font-weight: 500; color: #334155; font-size: 15px; min-height: 20px; display: inline-block;">${base.isDeadStock ? 'Yes' : 'No'}</span>
+                    </div>
                 </div>
                 ${variantsHtml}
                 <div style="margin-top: 14px;">
@@ -1633,7 +1858,8 @@
                         address: p.address,
                         chineseName: p.chineseName || '',
                         currentStock: p.stock,
-                        qty: parseInt(qty)
+                        qty: parseInt(qty),
+                        variantOptions: p.variantOptions || ''
                     };
                 })
                 .filter(Boolean);
@@ -1674,9 +1900,9 @@
             const pad = n => String(n).padStart(2, '0');
             const dateEl = document.getElementById('restockDate');
             const timeEl = document.getElementById('restockTime');
-            dateEl.value = restockDraft.date || `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-            timeEl.value = restockDraft.time || `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-            document.getElementById('restockVerifiedBy').value = restockDraft.verifiedBy || '';
+            dateEl.value = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+            timeEl.value = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            document.getElementById('restockVerifiedBy').value = getCurrentUser().name;
         }
 
         function enterRestockMode() {
@@ -1765,7 +1991,8 @@
                 const matchesSearch = p.name.toLowerCase().includes(searchVal) ||
                     (p.chineseName || '').toLowerCase().includes(searchVal) ||
                     p.partNo.toLowerCase().includes(searchVal) ||
-                    (p.address || '').toLowerCase().includes(searchVal);
+                    (p.address || '').toLowerCase().includes(searchVal) ||
+                    (p.variantOptions || '').toLowerCase().includes(searchVal);
                 const matchesCategory = categoryVal === 'All' || p.category === categoryVal;
                 let matchesStock = true;
                 if (stockVal === 'Low') matchesStock = p.stock > 0 && p.stock <= (p.alertLimit || 5);
@@ -1789,9 +2016,17 @@
             filtered.forEach(p => {
                 const qty = parseInt(restockDraft.qty[p.id]) || 0;
                 const tr = document.createElement('tr');
+                const isVariant = !!p.variantOptions;
+                let nameHtml;
+                if (isVariant) {
+                    const varLabel = p.variantOptions || (p.variants ? p.variants.join(', ') : 'Variant');
+                    nameHtml = `<strong style="color: #0F172A; font-size: 13px; display: block;">${p.name} <span style="color:var(--primary); font-weight: 500;">(${varLabel})</span></strong>`;
+                } else {
+                    nameHtml = `<strong style="color: #0F172A; font-size: 13px; display: block;">${p.name}</strong>`;
+                }
                 tr.innerHTML = `
                     <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9;">
-                        <strong style="color: #0F172A; font-size: 13px; display: block;">${p.name}</strong>
+                        ${nameHtml}
                         <span style="font-size: 11px; color: #94A3B8; margin-top: 2px; display: block;">${p.chineseName || ''}</span>
                     </td>
                     <td style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; color: #334155;">${p.partNo}</td>
@@ -1843,10 +2078,58 @@
                 return;
             }
 
+            // Populate Review Table
+            const tbody = document.getElementById('restockReviewTableBody');
+            tbody.innerHTML = '';
+            entries.forEach(i => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #E2E8F0';
+                
+                const isVariant = !!i.variantOptions;
+                let nameHtml;
+                if (isVariant) {
+                    nameHtml = `<div style="font-weight: 600; color: #0F172A;">${i.name} <span style="color: var(--primary); font-weight: 500;">(${i.variantOptions})</span></div>`;
+                } else {
+                    nameHtml = `<div style="font-weight: 600; color: #0F172A;">${i.name}</div>`;
+                }
+
+                tr.innerHTML = `
+                    <td style="padding: 12px 16px; text-align: left;">
+                        ${nameHtml}
+                        <div style="font-size: 11px; color: #64748B; margin-top: 1px;">Part No: ${i.partNo}</div>
+                    </td>
+                    <td style="padding: 12px 16px; text-align: center; color: #475569;">${i.currentStock} units</td>
+                    <td style="padding: 12px 16px; text-align: center; color: #10B981; font-weight: 700;">+${i.qty}</td>
+                    <td style="padding: 12px 16px; text-align: center; color: #0F172A; font-weight: 700;">${i.currentStock + i.qty} units</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Populate summaries
             const totalQty = entries.reduce((sum, i) => sum + i.qty, 0);
-            if (!confirm(`Are you sure you want to restock ${entries.length} item(s) with a total of ${totalQty} unit(s)?`)) {
-                return;
+            document.getElementById('reviewTotalItems').innerText = entries.length;
+            document.getElementById('reviewTotalQty').innerText = totalQty + ' units';
+            document.getElementById('reviewVerifiedBy').innerText = verifiedBy;
+
+            const dateStr = document.getElementById('restockDate').value;
+            const timeStr = document.getElementById('restockTime').value;
+            let d = new Date();
+            if (dateStr) {
+                const parsed = new Date(dateStr + (timeStr ? 'T' + timeStr : 'T00:00'));
+                if (!isNaN(parsed.getTime())) d = parsed;
             }
+            const dateOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+            const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+            const restockDateDisplay = d.toLocaleDateString('en-US', dateOptions) + ', ' + d.toLocaleTimeString('en-US', timeOptions);
+            document.getElementById('reviewDateTime').innerText = restockDateDisplay;
+
+            openModal('restockReviewModal');
+        }
+
+        function commitRestock() {
+            const entries = getRestockEntries();
+            const verifiedBy = document.getElementById('restockVerifiedBy').value.trim();
+            const totalQty = entries.reduce((sum, i) => sum + i.qty, 0);
 
             const products = db.getProducts();
             entries.forEach(item => {
@@ -1857,13 +2140,16 @@
 
             const dateStr = document.getElementById('restockDate').value;
             const timeStr = document.getElementById('restockTime').value;
-            let restockDateDisplay = new Date().toLocaleString();
+            let d = new Date();
             if (dateStr) {
-                const d = new Date(dateStr + (timeStr ? 'T' + timeStr : 'T00:00'));
-                if (!isNaN(d.getTime())) restockDateDisplay = d.toLocaleString();
+                const parsed = new Date(dateStr + (timeStr ? 'T' + timeStr : 'T00:00'));
+                if (!isNaN(parsed.getTime())) d = parsed;
             }
+            const dateOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+            const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+            const restockDateDisplay = d.toLocaleDateString('en-US', dateOptions) + ', ' + d.toLocaleTimeString('en-US', timeOptions);
 
-            const reasonText = `Added stock (${totalQty} unit${totalQty !== 1 ? 's' : ''} across ${entries.length} item${entries.length !== 1 ? 's' : ''})`;
+            const reasonText = `Restocked ${totalQty} unit${totalQty !== 1 ? 's' : ''} (${entries.length} item${entries.length !== 1 ? 's' : ''})`;
 
             const transactions = db.getTransactions();
             transactions.unshift({
@@ -1887,11 +2173,13 @@
                     category: i.category,
                     address: i.address,
                     qty: i.qty,
-                    currentStock: i.currentStock
+                    currentStock: i.currentStock,
+                    variantOptions: i.variantOptions || ''
                 }))
             });
             db.saveTransactions(transactions);
 
+            closeModal('restockReviewModal');
             clearRestockDraft();
             showToast('Inventory successfully restocked!');
             exitRestockView();
@@ -1901,6 +2189,50 @@
         ['restockDate', 'restockTime', 'restockVerifiedBy'].forEach(id => {
             document.addEventListener('change', e => { if (e.target.id === id) saveRestockDraft(); });
             document.addEventListener('blur', e => { if (e.target.id === id) saveRestockDraft(); }, true);
+        });
+
+        function toggleActionsDropdown(event, idx) {
+            event.stopPropagation();
+            
+            // Close all other dropdowns
+            const allDropdowns = document.querySelectorAll('.actions-dropdown-menu');
+            allDropdowns.forEach(dropdown => {
+                if (dropdown.id !== `actionsDropdown-${idx}`) {
+                    dropdown.style.display = 'none';
+                    const triggerBtn = dropdown.closest('.actions-dropdown-container')?.querySelector('.action-trigger-btn');
+                    if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            const dropdown = document.getElementById(`actionsDropdown-${idx}`);
+            const trigger = event.currentTarget;
+            if (dropdown) {
+                const isOpen = dropdown.style.display === 'flex';
+                dropdown.style.display = isOpen ? 'none' : 'flex';
+                trigger.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+            }
+        }
+
+        function closeAllDropdowns() {
+            const allDropdowns = document.querySelectorAll('.actions-dropdown-menu');
+            allDropdowns.forEach(dropdown => {
+                dropdown.style.display = 'none';
+                const triggerBtn = dropdown.closest('.actions-dropdown-container')?.querySelector('.action-trigger-btn');
+                if (triggerBtn) triggerBtn.setAttribute('aria-expanded', 'false');
+            });
+        }
+
+        // Close dropdowns on outside clicks & ESC key
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.actions-dropdown-container')) {
+                closeAllDropdowns();
+            }
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeAllDropdowns();
+            }
         });
 
         // Init loads

@@ -92,7 +92,7 @@
 
             // Aggregate data from transactions
             transactions.forEach(tx => {
-                if (!tx.customer || tx.customer === 'Guest') return;
+                if (!tx.customer || tx.customer === 'Guest' || tx.customer === 'SUPPLIER RESTOCK' || tx.status === 'Restocked') return;
                 
                 // We'll parse the date. Assuming format "MM/DD/YYYY, HH:MM:SS AM/PM" or similar Date string
                 const txDate = new Date(tx.date);

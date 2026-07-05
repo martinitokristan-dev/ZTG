@@ -432,15 +432,30 @@
                                     <div class="profile-form-grid profile-form-grid-3">
                                         <div class="form-group">
                                             <label class="form-label" for="profileCurrentPassword">Current Password</label>
-                                            <input type="password" id="profileCurrentPassword" class="form-control profile-input profile-pwd-input" disabled placeholder="Enter current password" oninput="checkProfileDirty()">
+                                            <div style="position: relative; width: 100%;">
+                                                <input type="password" id="profileCurrentPassword" class="form-control profile-input profile-pwd-input" disabled placeholder="Enter current password" oninput="checkProfileDirty()" style="padding-right: 40px;">
+                                                <button type="button" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="togglePasswordVisibility('profileCurrentPassword', this)">
+                                                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                                </button>
+                                            </div>
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label" for="profileNewPassword">New Password</label>
-                                            <input type="password" id="profileNewPassword" class="form-control profile-input profile-pwd-input" disabled placeholder="New password" oninput="checkProfileDirty()">
+                                            <div style="position: relative; width: 100%;">
+                                                <input type="password" id="profileNewPassword" class="form-control profile-input profile-pwd-input" disabled placeholder="New password" oninput="checkProfileDirty()" style="padding-right: 40px;">
+                                                <button type="button" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="togglePasswordVisibility('profileNewPassword', this)">
+                                                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                                </button>
+                                            </div>
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label" for="profileConfirmPassword">Confirm Password</label>
-                                            <input type="password" id="profileConfirmPassword" class="form-control profile-input profile-pwd-input" disabled placeholder="Confirm new password" oninput="checkProfileDirty()">
+                                            <div style="position: relative; width: 100%;">
+                                                <input type="password" id="profileConfirmPassword" class="form-control profile-input profile-pwd-input" disabled placeholder="Confirm new password" oninput="checkProfileDirty()" style="padding-right: 40px;">
+                                                <button type="button" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="togglePasswordVisibility('profileConfirmPassword', this)">
+                                                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                     <p id="passwordHint" class="profile-hint-text" style="display: none;"></p>
@@ -1040,7 +1055,12 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="empPasswordInput">Password</label>
-                        <input type="password" id="empPasswordInput" class="form-control" required placeholder="Enter login password">
+                        <div style="position: relative; width: 100%;">
+                            <input type="password" id="empPasswordInput" class="form-control" required placeholder="Enter login password" style="padding-right: 40px;">
+                            <button type="button" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="togglePasswordVisibility('empPasswordInput', this)">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            </button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="empRoleInput">Assigned Role</label>
@@ -1053,7 +1073,12 @@
                     </div>
                     <div class="form-group" style="margin-top: 10px;" id="addEmpPinGroup">
                         <label class="form-label" for="empPinInput">Manager PIN (Required for Admin/Supervisor)</label>
-                        <input type="password" id="empPinInput" class="form-control" placeholder="4-digit PIN" maxlength="4" pattern="[0-9]{4}">
+                        <div style="position: relative; width: 100%;">
+                            <input type="password" id="empPinInput" class="form-control" placeholder="4-digit PIN" maxlength="4" pattern="[0-9]{4}" style="padding-right: 40px;">
+                            <button type="button" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="togglePasswordVisibility('empPinInput', this)">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            </button>
+                        </div>
                         <small style="color: var(--text-secondary); font-size: 11px;">Only Admin and Supervisor roles need a PIN to approve voids/refunds.</small>
                     </div>
                 </div>
@@ -1087,7 +1112,12 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="editEmpPasswordInput">Password</label>
-                        <input type="password" id="editEmpPasswordInput" class="form-control" required placeholder="Enter login password">
+                        <div style="position: relative; width: 100%;">
+                            <input type="password" id="editEmpPasswordInput" class="form-control" required placeholder="Enter login password" style="padding-right: 40px;">
+                            <button type="button" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="togglePasswordVisibility('editEmpPasswordInput', this)">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            </button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="editEmpRoleInput">Assigned Role</label>
@@ -1100,7 +1130,12 @@
                     </div>
                     <div class="form-group" style="margin-top: 10px;" id="editEmpPinGroup">
                         <label class="form-label" for="editEmpPinInput">Manager PIN</label>
-                        <input type="password" id="editEmpPinInput" class="form-control" placeholder="4-digit PIN" maxlength="4" pattern="[0-9]{4}">
+                        <div style="position: relative; width: 100%;">
+                            <input type="password" id="editEmpPinInput" class="form-control" placeholder="4-digit PIN" maxlength="4" pattern="[0-9]{4}" style="padding-right: 40px;">
+                            <button type="button" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="togglePasswordVisibility('editEmpPinInput', this)">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            </button>
+                        </div>
                         <small style="color: var(--text-secondary); font-size: 11px;">Only Admin and Supervisor roles need a PIN.</small>
                     </div>
                 </div>
@@ -1596,15 +1631,15 @@
                     item.innerHTML = `
                         <span class="vitem-label">${dot}${label}</span>
                         <div class="vitem-actions">
-                            <button class="vitem-action-btn" onclick="editVariantOption('${type}',${idx})" title="Edit">Edit</button>
-                            <button class="vitem-action-btn del" onclick="removeVariantOption('${type}',${idx})" title="Remove">Remove</button>
+                            <button class="vitem-action-btn" onclick="editVariantOption('${type}',${idx})" data-tooltip="Edit">Edit</button>
+                            <button class="vitem-action-btn del" onclick="removeVariantOption('${type}',${idx})" data-tooltip="Remove">Remove</button>
                         </div>`;
                 } else {
                     item.innerHTML = `
                         <span class="vitem-label">${escHtml(val)}</span>
                         <div class="vitem-actions">
-                            <button class="vitem-action-btn" onclick="editVariantOption('${type}',${idx})" title="Edit">Edit</button>
-                            <button class="vitem-action-btn del" onclick="removeVariantOption('${type}',${idx})" title="Remove">Remove</button>
+                            <button class="vitem-action-btn" onclick="editVariantOption('${type}',${idx})" data-tooltip="Edit">Edit</button>
+                            <button class="vitem-action-btn del" onclick="removeVariantOption('${type}',${idx})" data-tooltip="Remove">Remove</button>
                         </div>`;
                 }
                 container.appendChild(item);

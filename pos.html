@@ -802,7 +802,7 @@
                     const price2 = (p.price2 || 0).toLocaleString();
                     const stockColor = isDisabled ? 'var(--text-muted)' : (p.stock === 0 ? 'var(--danger)' : (p.stock <= 5 ? 'var(--warning)' : 'var(--success)'));
 
-                    const disabledIcon = isDisabled ? `<svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: var(--danger); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; margin-left: 6px;" title="Disabled"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>` : '';
+                    const disabledIcon = isDisabled ? `<svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: var(--danger); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; margin-left: 6px; cursor: help;" data-tooltip="Disabled"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>` : '';
 
                     let displayName;
                     if (isVariantRow) {

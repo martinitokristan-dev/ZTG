@@ -360,7 +360,7 @@ function initSidebar(activePage) {
                 <div class="nav-group-label">Main</div>
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a href="dashboard.html" class="nav-link ${activePage === 'dashboard' ? 'active' : ''}">
+                        <a href="dashboard.html" class="nav-link ${activePage === 'dashboard' ? 'active' : ''}" data-tooltip="Dashboard">
                             <div class="nav-link-content">
                                 <svg><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                                 Dashboard
@@ -368,7 +368,7 @@ function initSidebar(activePage) {
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="product-management.html" class="nav-link ${activePage === 'products' ? 'active' : ''}">
+                        <a href="product-management.html" class="nav-link ${activePage === 'products' ? 'active' : ''}" data-tooltip="Product Management">
                             <div class="nav-link-content">
                                 <svg><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
                                 Product Management
@@ -376,7 +376,7 @@ function initSidebar(activePage) {
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="inventory.html" class="nav-link ${activePage === 'inventory' ? 'active' : ''}">
+                        <a href="inventory.html" class="nav-link ${activePage === 'inventory' ? 'active' : ''}" data-tooltip="Inventory">
                             <div class="nav-link-content">
                                 <svg><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                                 Inventory
@@ -384,7 +384,7 @@ function initSidebar(activePage) {
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="reservations.html" class="nav-link ${activePage === 'reservations' ? 'active' : ''}">
+                        <a href="reservations.html" class="nav-link ${activePage === 'reservations' ? 'active' : ''}" data-tooltip="Order Based">
                             <div class="nav-link-content">
                                 <svg><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                 Order Based
@@ -397,7 +397,7 @@ function initSidebar(activePage) {
                 <div class="nav-group-label">Records</div>
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a href="history-logs.html?v=${Date.now()}" class="nav-link ${activePage === 'transactions' ? 'active' : ''}">
+                        <a href="history-logs.html?v=${Date.now()}" class="nav-link ${activePage === 'transactions' ? 'active' : ''}" data-tooltip="History Logs">
                             <div class="nav-link-content">
                                 <svg><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 History Logs
@@ -405,7 +405,7 @@ function initSidebar(activePage) {
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="sales-log.html" class="nav-link ${activePage === 'sales-log' ? 'active' : ''}">
+                        <a href="sales-log.html" class="nav-link ${activePage === 'sales-log' ? 'active' : ''}" data-tooltip="Sales Log">
                             <div class="nav-link-content">
                                 <svg><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 Sales Log
@@ -413,7 +413,7 @@ function initSidebar(activePage) {
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="reports.html" class="nav-link ${activePage === 'reports' ? 'active' : ''}">
+                        <a href="reports.html" class="nav-link ${activePage === 'reports' ? 'active' : ''}" data-tooltip="Reports">
                             <div class="nav-link-content">
                                 <svg><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 00-2 2h-2a2 2 0 00-2-2z"/></svg>
                                 Reports
@@ -426,7 +426,7 @@ function initSidebar(activePage) {
                 <div class="nav-group-label">Config</div>
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a href="settings.html" class="nav-link ${activePage === 'settings' || activePage === 'profile' ? 'active' : ''}">
+                        <a href="settings.html" class="nav-link ${activePage === 'settings' || activePage === 'profile' ? 'active' : ''}" data-tooltip="System Settings">
                             <div class="nav-link-content">
                                 <svg><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                 System Settings
@@ -442,7 +442,7 @@ function initSidebar(activePage) {
                 <div class="nav-group-label">Cashier</div>
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a href="pos.html" class="nav-link ${activePage === 'pos' ? 'active' : ''}">
+                        <a href="pos.html" class="nav-link ${activePage === 'pos' ? 'active' : ''}" data-tooltip="Point of Sale (POS)">
                             <div class="nav-link-content">
                                 <svg><path d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                                 Point of Sale (POS)
@@ -450,7 +450,7 @@ function initSidebar(activePage) {
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="reservations.html" class="nav-link ${activePage === 'reservations' ? 'active' : ''}">
+                        <a href="reservations.html" class="nav-link ${activePage === 'reservations' ? 'active' : ''}" data-tooltip="Order Based">
                             <div class="nav-link-content">
                                 <svg><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                 Order Based
@@ -463,7 +463,7 @@ function initSidebar(activePage) {
                 <div class="nav-group-label">Records</div>
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a href="daily-sales.html" class="nav-link ${activePage === 'daily-sales' || activePage === 'cashier-sales' ? 'active' : ''}">
+                        <a href="daily-sales.html" class="nav-link ${activePage === 'daily-sales' || activePage === 'cashier-sales' ? 'active' : ''}" data-tooltip="Sales Log">
                             <div class="nav-link-content">
                                 <svg><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 Sales Log
@@ -471,7 +471,7 @@ function initSidebar(activePage) {
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="customer-log.html" class="nav-link ${activePage === 'customer-log' ? 'active' : ''}">
+                        <a href="customer-log.html" class="nav-link ${activePage === 'customer-log' ? 'active' : ''}" data-tooltip="Customer Log">
                             <div class="nav-link-content">
                                 <svg><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                                 Customer Log
@@ -484,7 +484,7 @@ function initSidebar(activePage) {
                 <div class="nav-group-label">Account</div>
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a href="settings.html?tab=profile" class="nav-link ${activePage === 'profile' ? 'active' : ''}">
+                        <a href="settings.html?tab=profile" class="nav-link ${activePage === 'profile' ? 'active' : ''}" data-tooltip="My Profile">
                             <div class="nav-link-content">
                                 <svg><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>
                                 My Profile
@@ -1738,7 +1738,7 @@ window.initNotifications = function() {
     wrapper.className = 'notif-wrapper';
     
     wrapper.innerHTML = `
-        <button class="notif-btn" id="notifBellBtn" aria-label="Notifications">
+        <button class="notif-btn" id="notifBellBtn" aria-label="Notifications" data-tooltip="Notifications">
             <svg viewBox="0 0 24 24" style="width: 22px; height: 22px; fill: none; stroke: var(--text-secondary, #64748B); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -1931,5 +1931,18 @@ window.showToast = function(messageOrNotif, type) {
     } else {
         console.log('Toast:', messageOrNotif, type);
     }
+};
+
+// Toggle password / PIN visibility
+window.togglePasswordVisibility = function(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    
+    const eyeOpen = `<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+    const eyeClosed = `<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+    
+    btn.innerHTML = isPassword ? eyeOpen : eyeClosed;
 };
 

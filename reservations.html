@@ -868,9 +868,9 @@
                     <td>${r.date}</td>
                     <td><code>${r.pickupDate}</code></td>
                     <td style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">
-                        <div>${formatReservedByDisplay(r)}</div>
+                        <div>${formatReservedByDisplay(r) !== '—' ? formatReservedByDisplay(r) : (r.status === 'Completed' && r.fulfilledBy ? '' : '—')}</div>
                         ${r.paymentType === 'full' ? `<div style="font-size:10px;margin-top:2px;color:#059669;">Full payment</div>` : ''}
-                        ${r.status === 'Completed' && r.fulfilledBy ? `<div style="font-size:10px;margin-top:2px;color:#059669;">Fulfilled: ${r.fulfilledBy}</div>` : ''}
+                        ${r.status === 'Completed' && r.fulfilledBy ? `<div style="font-size:10px;margin-top:2px;color:#059669;">Fulfilled by: ${r.fulfilledBy}</div>` : ''}
                     </td>
                     <td><span class="badge ${badgeClass}">${r.status}</span></td>
                     <td style="text-align: center;">

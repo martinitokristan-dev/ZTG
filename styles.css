@@ -518,12 +518,13 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 }
 .restock-footer-bar {
     position: sticky;
-    bottom: 0;
+    bottom: -32px;
     background: var(--bg-card);
     border-top: 1px solid var(--border);
-    padding: 16px 0;
-    margin-top: 16px;
+    padding: 16px 32px;
+    margin: 16px -32px -32px -32px;
     z-index: 10;
+    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.04);
 }
 .restock-review-panel {
     background: #F8FAFC;
@@ -2492,5 +2493,93 @@ tr:hover td {
 }
 .user-info-link:hover {
     background: rgba(255, 255, 255, 0.06);
+}
+
+/* Custom Premium Tooltips */
+[data-tooltip] {
+    position: relative;
+}
+[data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translate(-50%, 4px) scale(0.95);
+    background: #0F172A;
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    z-index: 1000;
+}
+[data-tooltip]::after {
+    content: '';
+    position: absolute;
+    bottom: 115%;
+    left: 50%;
+    transform: translate(-50%, 4px) scale(0.95);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #0F172A transparent transparent transparent;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+}
+[data-tooltip]:hover::before,
+[data-tooltip]:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0) scale(1);
+}
+
+/* Dropdown item tooltips positioning offset */
+.actions-dropdown-item[data-tooltip]::before {
+    left: auto;
+    right: 105%;
+    bottom: 50%;
+    transform: translate(4px, 50%) scale(0.95);
+}
+.actions-dropdown-item[data-tooltip]::after {
+    left: auto;
+    right: 100%;
+    bottom: 50%;
+    transform: translate(4px, 50%) scale(0.95);
+    border-color: transparent transparent transparent #0F172A;
+}
+.actions-dropdown-item[data-tooltip]:hover::before {
+    transform: translate(0, 50%) scale(1);
+}
+.actions-dropdown-item[data-tooltip]:hover::after {
+    transform: translate(0, 50%) scale(1);
+}
+
+/* Specific position for notification bell tooltip (appears to the left) */
+#notifBellBtn[data-tooltip]::before {
+    left: auto;
+    right: 125%;
+    bottom: 50%;
+    transform: translate(8px, 50%) scale(0.95);
+}
+#notifBellBtn[data-tooltip]::after {
+    left: auto;
+    right: 115%;
+    bottom: 50%;
+    transform: translate(8px, 50%) scale(0.95);
+    border-color: transparent transparent transparent #0F172A;
+}
+#notifBellBtn[data-tooltip]:hover::before {
+    transform: translate(0, 50%) scale(1);
+}
+#notifBellBtn[data-tooltip]:hover::after {
+    transform: translate(0, 50%) scale(1);
 }
 

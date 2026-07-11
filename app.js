@@ -1280,10 +1280,6 @@ window.showNotificationToast = function(n) {
         iconBg = '#FEF2F2';
         iconColor = '#EF4444';
         iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
-    } else if (n.type === 'insight') {
-        iconBg = '#ECFDF5';
-        iconColor = '#10B981';
-        iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`;
     } else if (n.txSubType === 'inventory_restock') {
         iconBg = '#ECFDF5';
         iconColor = '#059669';
@@ -1326,8 +1322,6 @@ window.showNotificationToast = function(n) {
             dest = n.link || (toastRole === 'Admin' ? `history-logs.html?v=${Date.now()}` : `daily-sales.html?v=${Date.now()}`);
         } else if (n.type === 'low_stock') {
             dest = toastRole === 'Admin' ? 'product-management.html' : 'pos.html';
-        } else if (n.type === 'insight') {
-            dest = 'reports.html';
         } else if (n.link) {
             dest = n.link;
         }
@@ -1442,6 +1436,13 @@ window.updateNotificationsFromDB = function() {
     let notifications = JSON.parse(localStorage.getItem('ztg_notifications') || '[]');
     let changed = false;
     
+    // Clean up any lingering insight notifications
+    const initialLen = notifications.length;
+    notifications = notifications.filter(n => n.type !== 'insight');
+    if (notifications.length !== initialLen) {
+        changed = true;
+    }
+    
     // 1. Process Low Stock Notifications
     const lowStockProductIds = new Set();
     products.forEach(p => {
@@ -1507,32 +1508,7 @@ window.updateNotificationsFromDB = function() {
         changed = true;
     }
     
-    // 3. Process Insights (Fast Moving Items)
-    const salesCounts = {};
-    transactions.forEach(t => {
-        if (t.status === 'Completed' || t.status === 'Closed') {
-            salesCounts[t.itemName] = (salesCounts[t.itemName] || 0) + (t.qty || 1);
-        }
-    });
-    Object.keys(salesCounts).forEach(itemName => {
-        const qtySold = salesCounts[itemName];
-        if (qtySold >= 8) {
-            const hasNotif = notifications.some(n => n.type === 'insight' && n.itemName === itemName);
-            if (!hasNotif) {
-                notifications.unshift({
-                    id: 'notif-insight-' + itemName.replace(/\s+/g, '-'),
-                    type: 'insight',
-                    itemName: itemName,
-                    title: 'Fast-Moving Item Insight',
-                    message: `${itemName} is fast-moving! Total ${qtySold} units sold recently.`,
-                    timestamp: Date.now(),
-                    read: false,
-                    link: 'reports.html'
-                });
-                changed = true;
-            }
-        }
-    });
+    // 3. (Process Insights removed as per requirements)
     
     if (changed || !localStorage.getItem('ztg_notifications')) {
         localStorage.setItem('ztg_notifications', JSON.stringify(notifications));
@@ -1620,10 +1596,6 @@ window.renderNotificationsUI = function(notifications) {
             iconBg = '#FEF2F2';
             iconColor = '#EF4444';
             iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
-        } else if (n.type === 'insight') {
-            iconBg = '#ECFDF5';
-            iconColor = '#10B981';
-            iconSvg = `<svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`;
         } else if (n.txSubType === 'inventory_restock') {
             iconBg = '#ECFDF5';
             iconColor = '#059669';
@@ -1681,8 +1653,6 @@ window.renderNotificationsUI = function(notifications) {
                 dest = n.link || (clickRole === 'Admin' ? `history-logs.html?v=${Date.now()}` : `daily-sales.html?v=${Date.now()}`);
             } else if (n.type === 'low_stock') {
                 dest = clickRole === 'Admin' ? 'product-management.html' : 'pos.html';
-            } else if (n.type === 'insight') {
-                dest = 'reports.html';
             } else if (n.link) {
                 dest = n.link;
             }

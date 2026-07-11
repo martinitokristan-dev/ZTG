@@ -22,17 +22,33 @@
 
             <div class="content-body">
                 <!-- Stat Cards Row -->
-                <div class="grid-3" style="grid-template-columns: 1fr 1fr; margin-bottom: 24px;">
+                <div class="grid-3" style="grid-template-columns: 1fr; margin-bottom: 24px;">
                     <div class="card stat-box">
                         <div>
-                            <span class="stat-label">My Gross Sales Revenue</span>
+                            <span class="stat-label">Gross Sales Revenue</span>
                             <div class="stat-value" id="cashierGrossSales">₱0</div>
                         </div>
                     </div>
-                    <div class="card stat-box">
-                        <div>
-                            <span class="stat-label">Accrued Commission (5%)</span>
-                            <div class="stat-value" id="cashierCommission" style="color: var(--primary);">₱0</div>
+                </div>
+
+                <!-- Filters -->
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="table-filters" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                        <div style="flex: 1; min-width: 250px; position: relative;">
+                            <input type="text" id="salesSearch" class="form-control form-control-sm" placeholder="Search customer, item, SI..." oninput="renderMySales()" style="height: 38px; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: 6px; background-color: var(--bg-card); color: var(--text-primary); width: 100%;">
+                        </div>
+                        <div style="width: 150px;">
+                            <select id="timeFilter" class="form-control form-control-sm" onchange="renderMySales()" style="height: 38px; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: 6px; background-color: var(--bg-card); color: var(--text-primary); width: 100%;">
+                                <option value="Today" selected>Today</option>
+                                <option value="All">All Time</option>
+                                <option value="This Week">This Week</option>
+                                <option value="This Month">This Month</option>
+                            </select>
+                        </div>
+                        <div style="width: 150px;">
+                            <select id="cashierFilter" class="form-control form-control-sm" onchange="renderMySales()" style="height: 38px; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: 6px; background-color: var(--bg-card); color: var(--text-primary); width: 100%;">
+                                <option value="All">All Cashiers</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -40,7 +56,7 @@
                 <!-- My Sales Ledger Table -->
                 <div class="card table-card">
                     <div class="table-header-bar">
-                        <h3 style="font-size: 16px; font-weight: 700;">My Fulfilled Sales Invoices</h3>
+                        <h3 style="font-size: 16px; font-weight: 700;">Fulfilled Sales Invoices</h3>
                     </div>
                     <div style="overflow-x: auto;">
                         <table>
@@ -72,28 +88,92 @@
     <script>
         initSidebar('daily-sales');
 
+        function loadCashiers() {
+            const user = getCurrentUser();
+            const employees = db.getEmployees() || [];
+            const filterDropdown = document.getElementById('cashierFilter');
+            filterDropdown.innerHTML = '<option value="All">All Cashiers</option>';
+            
+            employees.filter(e => e.role !== 'Admin').forEach(e => {
+                const selected = e.name.toLowerCase() === user.name.toLowerCase() ? 'selected' : '';
+                filterDropdown.innerHTML += `<option value="${e.name}" ${selected}>${e.name}</option>`;
+            });
+        }
+
+        loadCashiers();
+
+        // Parse date string to a Date object for comparison
+        function parseTxDate(dateStr) {
+            if (!dateStr) return null;
+            // Handle ISO format
+            if (dateStr.includes('T') || dateStr.match(/^\d{4}-/)) {
+                return new Date(dateStr);
+            }
+            // Handle "Jun 21, 2026, 3:14 PM" format
+            try {
+                return new Date(Date.parse(dateStr));
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function matchesTimeFilter(t, filterVal) {
+            if (filterVal === 'All') return true;
+            const txDate = parseTxDate(t.date);
+            if (!txDate || isNaN(txDate)) return true; // Can't parse, show it
+
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            if (filterVal === 'Today') {
+                const txDay = new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate());
+                return txDay.getTime() === today.getTime();
+            }
+            if (filterVal === 'This Week') {
+                const dayOfWeek = today.getDay(); // 0=Sun
+                const weekStart = new Date(today);
+                weekStart.setDate(today.getDate() - dayOfWeek);
+                return txDate >= weekStart;
+            }
+            if (filterVal === 'This Month') {
+                return txDate.getFullYear() === now.getFullYear() && txDate.getMonth() === now.getMonth();
+            }
+            return true;
+        }
+
         function renderMySales() {
             const user = getCurrentUser();
             const transactions = db.getTransactions();
             const tbody = document.getElementById('mySalesTableBody');
+            
+            const searchVal = document.getElementById('salesSearch').value.toLowerCase();
+            const cashierVal = document.getElementById('cashierFilter').value;
+            const timeVal = document.getElementById('timeFilter').value;
 
             tbody.innerHTML = '';
 
-            // Filter only Completed or PO Approved sales served by this specific cashier
-            const myCompletedSales = transactions.filter(t => 
-                (t.status === 'Completed' || t.status === 'P.O. Approved') && 
-                t.cashier.toLowerCase() === user.name.toLowerCase()
-            );
+            // Filter Completed or PO Approved sales
+            const filteredSales = transactions.filter(t => {
+                const isCorrectStatus = (t.status === 'Completed' || t.status === 'P.O. Approved');
+                if (!isCorrectStatus) return false;
+
+                const matchesCashier = (cashierVal === 'All' || t.cashier.toLowerCase() === cashierVal.toLowerCase());
+                const matchesTime = matchesTimeFilter(t, timeVal);
+                const matchesSearch = !searchVal || 
+                    (t.siNo || '').toLowerCase().includes(searchVal) ||
+                    (t.customer || '').toLowerCase().includes(searchVal) ||
+                    (t.cashier || '').toLowerCase().includes(searchVal) ||
+                    (t.itemName || '').toLowerCase().includes(searchVal);
+
+                return matchesCashier && matchesTime && matchesSearch;
+            });
 
             const products = db.getProducts();
 
             let gross = 0;
-            let commission = 0;
 
-            myCompletedSales.forEach(t => {
+            filteredSales.forEach(t => {
                 gross += t.amount;
-                const comm = t.amount * 0.05;
-                commission += comm;
 
                 let rowItems = [];
                 if (t.items && t.items.length > 0) {
@@ -189,10 +269,9 @@
             });
 
             document.getElementById('cashierGrossSales').innerText = `₱${gross.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById('cashierCommission').innerText = `₱${commission.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
-            if (myCompletedSales.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 24px 0;">You have not processed any completed transactions yet.</td></tr>';
+            if (filteredSales.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: var(--text-secondary); padding: 24px 0;">No completed transactions found for the selected filters.</td></tr>';
             }
         }
 

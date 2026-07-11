@@ -359,11 +359,6 @@
                                 <label class="form-label" style="font-size: 12px; font-weight: 500; color: #334155;">Release Notes (Optional)</label>
                                 <textarea id="ffNotes" class="form-control" placeholder="Any notes about item condition, delivery instructions, or special arrangements..." style="border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 12px; font-size: 13px; min-height: 80px; resize: vertical;"></textarea>
                             </div>
-
-                            <div style="background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 6px; padding: 12px; text-align: center;">
-                                <div id="ffCommLabel" style="font-size: 11px; color: #92400E; font-weight: 500; margin-bottom: 4px;">Commission Earned (5% of ₱0)</div>
-                                <div id="ffCommValue" style="font-size: 16px; font-weight: 700; color: #B45309;">₱0.00</div>
-                            </div>
                         </div>
 
                     </div>
@@ -554,12 +549,7 @@
                     </div>
                 </div>
 
-                <!-- Commission Earned -->
-                <div style="background: #F59E0B; border-radius: 8px; padding: 16px; text-align: center; color: white;">
-                    <div style="font-size: 11px; font-weight: 600; margin-bottom: 4px;">Commission Earned</div>
-                    <div id="fulfilledCommission" style="font-size: 24px; font-weight: 800; margin-bottom: 4px;">₱0</div>
-                    <div id="fulfilledCommissionDesc" style="font-size: 10px; font-weight: 500; opacity: 0.9;">5% of total sale (₱0)</div>
-                </div>
+                <!-- Removed Commission Earned -->
 
                 <!-- Items Released -->
                 <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 16px;">
@@ -1116,10 +1106,7 @@
             const currentUser = getCurrentUser() || { name: 'Unknown', role: 'Staff' };
             document.getElementById('ffServedBy').value = `${currentUser.name} (${currentUser.role})`;
 
-            // Commission
-            const commission = totalGross * 0.05;
-            document.getElementById('ffCommLabel').innerText = `Commission Earned (5% of ₱${totalGross.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})})`;
-            document.getElementById('ffCommValue').innerText = `₱${commission.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            // Removed Commission calculation
 
             document.getElementById('confirmFulfillBtn').onclick = () => completeReservation(id);
             openModal('fulfillOrderModal');
@@ -1261,9 +1248,7 @@
             document.getElementById('fulfilledAmountReceived').innerText = `₱${payment.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
             document.getElementById('fulfilledChangeGiven').innerText = `₱${change.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
             
-            const commission = res.total * 0.05;
-            document.getElementById('fulfilledCommission').innerText = `₱${commission.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById('fulfilledCommissionDesc').innerText = `5% of total sale (₱${res.total.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})})`;
+            // Removed Commission calculation
             
             const items = res.items && res.items.length > 0 ? res.items : [{ name: res.item, qty: res.qty || 1 }];
             document.getElementById('fulfilledItemCount').innerText = `ITEMS RELEASED (${items.length})`;

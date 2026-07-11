@@ -365,7 +365,7 @@
                         <button class="tab-btn" data-tab="general" onclick="switchTab('general', this)">General</button>
                         <button class="tab-btn" data-tab="products" onclick="switchTab('products', this)">Products Settings</button>
                         <button class="tab-btn" data-tab="alerts" onclick="switchTab('alerts', this)">Alerts & Notifications</button>
-                        <button class="tab-btn" data-tab="employees" onclick="switchTab('employees', this)">Employees</button>
+                        <button class="tab-btn" data-tab="employees" onclick="switchTab('employees', this)">Employee's role</button>
                     </div>
 
                     <!-- Tab 0: My Profile -->
@@ -402,20 +402,32 @@
                                 <div class="profile-form-grid">
                                     <div class="form-group">
                                         <label class="form-label" for="profileName">Name</label>
-                                        <input type="text" id="profileName" class="form-control profile-input" placeholder="e.g. Kyla" oninput="checkProfileDirty()">
+                                        <input type="text" id="profileName" class="form-control profile-input" placeholder="e.g. Kyla" oninput="checkProfileDirty()" disabled>
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label" for="profileEmail">Email</label>
-                                        <input type="email" id="profileEmail" class="form-control profile-input" placeholder="you@ztgheavyparts.com" oninput="checkProfileDirty()">
+                                        <input type="email" id="profileEmail" class="form-control profile-input" placeholder="you@ztgheavyparts.com" oninput="checkProfileDirty()" disabled>
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label" for="profileUsername">Login Username</label>
-                                        <input type="text" id="profileUsername" class="form-control profile-input" placeholder="e.g. admin" oninput="checkProfileDirty()">
+                                        <input type="text" id="profileUsername" class="form-control profile-input" placeholder="e.g. admin" oninput="checkProfileDirty()" disabled>
+                                    </div>
+                                    <div class="form-group" id="profilePinGroup" style="display: none;">
+                                        <label class="form-label" for="profilePin">Manager PIN</label>
+                                        <div style="position: relative; width: 100%;">
+                                            <input type="password" id="profilePin" class="form-control profile-input" placeholder="4-digit PIN" maxlength="4" pattern="[0-9]{4}" oninput="checkProfileDirty()" style="padding-right: 40px;" disabled>
+                                            <button type="button" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 4px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="togglePasswordVisibility('profilePin', this)">
+                                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                            </button>
+                                        </div>
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">Account</label>
                                         <div class="profile-readonly-field" id="profileAccountType">Administrator</div>
                                     </div>
+                                </div>
+                                <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+                                    <button type="button" id="btnToggleProfileEdit" class="btn btn-secondary btn-sm" onclick="toggleProfileEdit()">Edit Details</button>
                                 </div>
                             </section>
 
@@ -951,7 +963,7 @@
                     <div class="tab-content" id="tab-employees">
                         <div class="card table-card">
                             <div style="padding: 24px;">
-                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Employee Management</h3>
+                                <h3 style="font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; color: var(--text-primary);">Employee's role Management</h3>
                                 
                                 <div style="overflow-x: auto; margin-bottom: 16px;">
                                     <table style="width: 100%; border-collapse: collapse;">
@@ -1066,7 +1078,6 @@
                         <label class="form-label" for="empRoleInput">Assigned Role</label>
                         <select id="empRoleInput" class="form-control" required onchange="togglePinField()">
                             <option value="Cashier">Cashier</option>
-                            <option value="Admin">Admin</option>
                             <option value="Checker">Checker</option>
                             <option value="Supervisor">Supervisor</option>
                         </select>
@@ -1123,7 +1134,6 @@
                         <label class="form-label" for="editEmpRoleInput">Assigned Role</label>
                         <select id="editEmpRoleInput" class="form-control" required onchange="toggleEditPinField()">
                             <option value="Cashier">Cashier</option>
-                            <option value="Admin">Admin</option>
                             <option value="Checker">Checker</option>
                             <option value="Supervisor">Supervisor</option>
                         </select>
@@ -1294,6 +1304,30 @@
         }
 
         // Profile Helper Functions
+        let profileEditingActive = false;
+
+        function setProfileInputsDisabled(disabled) {
+            ['profileName', 'profileEmail', 'profileUsername', 'profilePin'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = disabled;
+            });
+        }
+
+        function toggleProfileEdit() {
+            profileEditingActive = !profileEditingActive;
+            const btn = document.getElementById('btnToggleProfileEdit');
+            if (profileEditingActive) {
+                btn.textContent = 'Cancel Edit';
+                setProfileInputsDisabled(false);
+                document.getElementById('profileName')?.focus();
+            } else {
+                btn.textContent = 'Edit Details';
+                setProfileInputsDisabled(true);
+                loadMyProfile();
+            }
+            checkProfileDirty();
+        }
+
         function loadMyProfile() {
             const emp = getProfileEmp();
             if (!emp) return;
@@ -1302,16 +1336,31 @@
                 name: emp.realName || emp.name || '',
                 email: emp.email || '',
                 username: emp.username || emp.id || '',
-                profilePhoto: emp.profilePhoto || ''
+                profilePhoto: emp.profilePhoto || '',
+                pin: emp.pin || ''
             };
             pendingProfilePhoto = undefined;
             passwordSectionOpen = false;
+            profileEditingActive = false;
+            const toggleBtn = document.getElementById('btnToggleProfileEdit');
+            if (toggleBtn) toggleBtn.textContent = 'Edit Details';
+            setProfileInputsDisabled(true);
 
             document.getElementById('profileName').value = profileSnapshot.name;
             document.getElementById('profileEmail').value = profileSnapshot.email;
             document.getElementById('profileUsername').value = profileSnapshot.username;
             document.getElementById('profileAccountType').textContent = getAccountRoleLabel(emp.role);
             document.getElementById('profileAccountBadge').textContent = getAccountRoleLabel(emp.role);
+
+            const pinGroup = document.getElementById('profilePinGroup');
+            const pinInput = document.getElementById('profilePin');
+            if (emp.role === 'Admin' || emp.role === 'Supervisor') {
+                if (pinGroup) pinGroup.style.display = 'block';
+                if (pinInput) pinInput.value = emp.pin || '';
+            } else {
+                if (pinGroup) pinGroup.style.display = 'none';
+                if (pinInput) pinInput.value = '';
+            }
 
             document.getElementById('profileCurrentPassword').value = '';
             document.getElementById('profileNewPassword').value = '';
@@ -1370,17 +1419,19 @@
             const nameEl = document.getElementById('profileName');
             const emailEl = document.getElementById('profileEmail');
             const usernameEl = document.getElementById('profileUsername');
+            const pinEl = document.getElementById('profilePin');
             if (!nameEl || !usernameEl) return;
 
             const name = nameEl.value.trim();
-            const email = emailEl.value.trim();
+            const email = emailEl ? emailEl.value.trim() : '';
             const username = usernameEl.value.trim();
+            const pin = pinEl ? pinEl.value.trim() : '';
             const currentPwd = document.getElementById('profileCurrentPassword')?.value || '';
             const newPwd = document.getElementById('profileNewPassword')?.value || '';
             const confirmPwd = document.getElementById('profileConfirmPassword')?.value || '';
 
             const photoChanged = pendingProfilePhoto !== undefined && pendingProfilePhoto !== profileSnapshot.profilePhoto;
-            const fieldsChanged = name !== profileSnapshot.name || email !== profileSnapshot.email || username !== profileSnapshot.username;
+            const fieldsChanged = name !== profileSnapshot.name || email !== profileSnapshot.email || username !== profileSnapshot.username || pin !== profileSnapshot.pin;
             const pwdChanged = passwordSectionOpen && (currentPwd || newPwd || confirmPwd);
 
             const dirty = photoChanged || fieldsChanged || pwdChanged;
@@ -1427,6 +1478,7 @@
             const name = document.getElementById('profileName').value.trim();
             const email = document.getElementById('profileEmail').value.trim();
             const username = document.getElementById('profileUsername').value.trim();
+            const pin = document.getElementById('profilePin')?.value.trim() || '';
             const currentPwd = document.getElementById('profileCurrentPassword').value;
             const newPwd = document.getElementById('profileNewPassword').value;
             const confirmPwd = document.getElementById('profileConfirmPassword').value;
@@ -1442,6 +1494,11 @@
             }
             if (employees.some(e => e.id !== emp.id && e.username && e.username.toLowerCase() === username.toLowerCase())) {
                 showToast('Username is already taken.', 'error');
+                return;
+            }
+
+            if ((emp.role === 'Admin' || emp.role === 'Supervisor') && pin && pin.length !== 4) {
+                showToast('PIN must be exactly 4 digits.', 'error');
                 return;
             }
 
@@ -1476,11 +1533,19 @@
             emp.realName = name;
             emp.email = email;
             emp.username = username;
+            if (emp.role === 'Admin' || emp.role === 'Supervisor') {
+                emp.pin = pin;
+            }
             if (emp.role === 'Admin') emp.name = 'Administrator';
             else emp.name = name;
 
             if (pendingProfilePhoto !== undefined) {
                 emp.profilePhoto = pendingProfilePhoto;
+            }
+
+            const empIdx = employees.findIndex(e => e.id === emp.id);
+            if (empIdx !== -1) {
+                employees[empIdx] = emp;
             }
 
             db.saveEmployees(employees);
@@ -1901,7 +1966,7 @@
 
             tbody.innerHTML = '';
 
-            employees.forEach(emp => {
+            employees.filter(emp => emp.role !== 'Admin').forEach(emp => {
                 const isInactive = emp.status === 'Inactive';
                 const statusClass = isInactive ? 'badge-secondary' : 'badge-success';
                 const toggleBtnText = isInactive ? 'Activate' : 'Deactivate';

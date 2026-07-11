@@ -66,10 +66,6 @@
             </div>
 
             <div class="content-body">
-                <!-- Out of Stock / Low Stock Alert Banners -->
-                <div id="alertsContainer">
-                    <!-- Dynamically populated by JS -->
-                </div>
 
                 <!-- Date Filter Selector Row -->
                 <div class="header-row" style="margin-top: 24px;">
@@ -239,33 +235,7 @@
             const outOfStock = products.filter(p => p.stock === 0 && p.status !== 'Archived');
             const lowStock = products.filter(p => p.stock > 0 && p.stock <= 5 && p.status !== 'Archived');
 
-            // Top banners
-            const alertsContainer = document.getElementById('alertsContainer');
-            alertsContainer.innerHTML = '';
-            if (outOfStock.length > 0) {
-                const outOfStockNames = outOfStock.map(p => `${p.name} (${p.partNo})`).join(', ');
-                alertsContainer.innerHTML += `
-                    <div class="alert-banner danger">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 11-12.73 0M12 2v10m0 4h.01"/></svg>
-                        <div class="alert-banner-content">
-                            <h4>${outOfStock.length} item${outOfStock.length > 1 ? 's' : ''} out of stock</h4>
-                            <p>${outOfStockNames}.</p>
-                        </div>
-                    </div>
-                `;
-            }
-            if (lowStock.length > 0) {
-                const lowStockNames = lowStock.map(p => `${p.name} (${p.partNo} · Qty ${p.stock})`).join(', ');
-                alertsContainer.innerHTML += `
-                    <div class="alert-banner warning">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                        <div class="alert-banner-content">
-                            <h4>${lowStock.length} item${lowStock.length > 1 ? 's' : ''} running low</h4>
-                            <p>${lowStockNames}.</p>
-                        </div>
-                    </div>
-                `;
-            }
+
 
             // Right-side list card: Critical Stock Alerts (max 4 for layout consistency)
             const criticalList = document.getElementById('criticalAlertsList');

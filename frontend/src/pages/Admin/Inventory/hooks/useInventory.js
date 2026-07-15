@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import api from '../../../../shared/api';
 import { useInventory as useGlobalInventory } from '../../../../contexts/InventoryContext';
 import { useProducts as useGlobalProducts } from '../../../../contexts/ProductContext';
+import { flattenToSellableSKUs } from '../../../../shared/utils/skuHelpers';
 
 export function useInventory() {
     // Read from global contexts (zero-fetch page load/filtering)
@@ -63,10 +64,14 @@ export function useInventory() {
         }
     };
 
-    const totalItems = filteredProducts.length;
-    const categoriesCount = new Set(filteredProducts.map(p => p.category_id)).size;
-    const outOfStockCount = filteredProducts.filter(p => p.stock === 0).length;
-    const lowStockCount = filteredProducts.filter(p => p.stock > 0 && p.stock <= (p.alert_limit || 5)).length;
+    const filteredSKUs = useMemo(() => {
+        return flattenToSellableSKUs(filteredProducts);
+    }, [filteredProducts]);
+
+    const totalItems = filteredSKUs.length;
+    const categoriesCount = new Set(filteredSKUs.map(p => p.category_id)).size;
+    const outOfStockCount = filteredSKUs.filter(p => p.stock === 0).length;
+    const lowStockCount = filteredSKUs.filter(p => p.stock > 0 && p.stock <= (p.alert_limit || 5)).length;
 
     return {
         products: filteredProducts,

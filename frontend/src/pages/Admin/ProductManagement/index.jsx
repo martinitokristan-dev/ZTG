@@ -7,6 +7,7 @@ import ViewProductModal from './modals/ViewProductModal';
 import DamageLogModal from './modals/DamageLogModal';
 import ReviewRestockModal from './modals/ReviewRestockModal';
 import LeaveRestockModal from './modals/LeaveRestockModal';
+import { flattenToSellableSKUs } from '../../../shared/utils/skuHelpers';
 
 function ProductManagement() {
     const pm = useProductManagement();
@@ -83,7 +84,7 @@ function ProductManagement() {
                     {/* VIEW 2: Batch Restock */}
                     {pm.viewMode === 'restock' && (
                         <RestockView
-                            products={pm.restockProducts.filter(p => p.parent_product_id || !p.variants || p.variants.length === 0 || p.stock > 0)}
+                            products={flattenToSellableSKUs(pm.restockProducts)}
                             categories={pm.categories}
                   variantOptions={pm.variantOptions}
                             loading={pm.loading}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useInventory } from '../../../../contexts/InventoryContext';
 import { useNotifications } from '../../../../contexts/NotificationContext';
 import { fetchDashboardData } from '../../../../shared/hooks/useDashboardCache';
+import { flattenToSellableSKUs } from '../../../../shared/utils/skuHelpers';
 
 export function useDashboard() {
     const userStr = localStorage.getItem('auth_user');
@@ -33,7 +34,8 @@ export function useDashboard() {
                 const cachedStats = await fetchDashboardData(products);
 
                 // Calculate total items on hand (sum of all stocks)
-                const totalStock = products.reduce((sum, p) => sum + (p.stock || 0), 0);
+                const sellableSKUs = flattenToSellableSKUs(products);
+                const totalStock = sellableSKUs.reduce((sum, item) => sum + (item.stock || 0), 0);
 
                 setStats({
                     totalStock: totalStock,

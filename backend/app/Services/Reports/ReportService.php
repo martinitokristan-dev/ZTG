@@ -186,10 +186,24 @@ class ReportService
     public function getInventorySummary(array $filters = []): array
     {
         // 1. Calculate status counts
-        $totalProducts = Product::whereNull('parent_product_id')->count();
-        $activeCount = Product::whereNull('parent_product_id')->where('status', 'Active')->count();
-        $lowStockCount = Product::whereNull('parent_product_id')->where('status', 'Low Stock')->count();
-        $outOfStockCount = Product::whereNull('parent_product_id')->where('status', 'No Stock')->count();
+        $sellableQuery = Product::where(function ($q) {
+            $q->whereNotNull('parent_product_id')
+              ->orWhere(function ($sub) {
+                  $sub->whereNull('parent_product_id')
+                      ->where(function ($sub2) {
+                          $sub2->where('stock', '>', 0)
+                               ->orWhereDoesntHave('variants');
+                      });
+              });
+        });
+
+        $totalProducts = (clone $sellableQuery)->count();
+        $activeCount = (clone $sellableQuery)->where('status', 'Active')->count();
+        $lowStockCount = (clone $sellableQuery)->where(function ($q) {
+            $q->where('stock', '>', 0)
+              ->whereRaw('stock <= IFNULL(alert_limit, 5)');
+        })->count();
+        $outOfStockCount = (clone $sellableQuery)->where('stock', 0)->count();
 
         // 2. Query products with filters
         $query = Product::with(['category', 'variants'])

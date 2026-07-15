@@ -8,7 +8,8 @@ const fmt = (n) => `₱${Number(n || 0).toLocaleString('en-US')}`;
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
 export default function useReservations() {
-    const { products, refetch: refetchProducts } = useProducts();
+    const { products } = useProducts();
+
     /* ── User Session ── */
     const user = (() => { try { return JSON.parse(localStorage.getItem('auth_user')); } catch { return null; } })();
     const userName = user?.real_name || user?.name || 'Staff';
@@ -72,10 +73,6 @@ export default function useReservations() {
     }, [search, statusFilter]);
 
     useEffect(() => { loadReservations(); }, [loadReservations]);
-    
-    useEffect(() => {
-        refetchProducts();
-    }, [refetchProducts]);
 
     useEffect(() => {
         const token = localStorage.getItem('auth_token');

@@ -1,16 +1,12 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import api from '../../../../shared/api';
 import { useInventory as useGlobalInventory } from '../../../../contexts/InventoryContext';
 import { useProducts as useGlobalProducts } from '../../../../contexts/ProductContext';
 
 export function useInventory() {
     // Read from global contexts (zero-fetch page load/filtering)
-    const { inventory: globalProducts, refetch: refetchInventory } = useGlobalInventory();
+    const { inventory: globalProducts } = useGlobalInventory();
     const { categories } = useGlobalProducts();
-    
-    useEffect(() => {
-        refetchInventory();
-    }, [refetchInventory]);
 
     const loading = globalProducts.length === 0;
 

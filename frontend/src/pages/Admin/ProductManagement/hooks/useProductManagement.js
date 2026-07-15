@@ -174,11 +174,14 @@ export default function useProductManagement() {
         }
 
         return () => {
+            // stopListening removes only this hook's callbacks — do NOT call
+            // echo.leaveChannel() here, which would destroy the global
+            // ProductContext and InventoryContext Pusher subscriptions.
             if (productChannel) {
-                echo.leaveChannel('private-products');
+                productChannel.stopListening('.ProductUpdated');
             }
             if (inventoryChannel) {
-                echo.leaveChannel('private-inventory');
+                inventoryChannel.stopListening('.InventoryUpdated');
             }
         };
     }, []);

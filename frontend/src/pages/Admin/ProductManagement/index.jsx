@@ -60,7 +60,7 @@ function ProductManagement() {
                     {/* VIEW 1: Products List */}
                     {pm.viewMode === 'list' && (
                         <ProductsTable
-                            products={pm.sortedProducts}
+                            products={pm.sortedProducts.filter(p => !p.parent_product_id)}
                             loading={pm.loading}
                             categories={pm.categories}
                   variantOptions={pm.variantOptions}
@@ -83,7 +83,7 @@ function ProductManagement() {
                     {/* VIEW 2: Batch Restock */}
                     {pm.viewMode === 'restock' && (
                         <RestockView
-                            products={pm.restockProducts}
+                            products={pm.restockProducts.filter(p => p.parent_product_id || !p.variants || p.variants.length === 0 || p.stock > 0)}
                             categories={pm.categories}
                   variantOptions={pm.variantOptions}
                             loading={pm.loading}

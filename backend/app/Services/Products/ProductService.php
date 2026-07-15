@@ -44,8 +44,7 @@ class ProductService
      */
     public function getAll(array $filters = []): Collection
     {
-        $query = Product::with(['category', 'variants.variantOptions.type'])
-            ->whereNull('parent_product_id');
+        $query = Product::with(['category', 'variantOptions.type', 'variants.variantOptions.type']);
 
         if (!empty($filters['search'])) {
             $query->where(function ($q) use ($filters) {

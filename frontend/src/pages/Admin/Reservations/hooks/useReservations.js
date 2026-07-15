@@ -109,26 +109,37 @@ export default function useReservations() {
         searchTimeout.current = setTimeout(() => {
             const q = val.toLowerCase();
             
-            // Flatten products to include parent products (if no variants) and child variants
+            // Flatten products to include parent products (if no variants, or if base product itself has stock) and child variants
             const searchableItems = [];
             products.forEach(p => {
-                if (p.variants && p.variants.length > 0) {
-                    p.variants.forEach(v => {
-                        const variantName = v.name || p.name;
-                        const optionValues = Array.isArray(v.variant_options)
-                            ? v.variant_options.map(opt => opt.value).join(', ')
-                            : (Array.isArray(v.variantOptions) ? v.variantOptions.map(opt => opt.value).join(', ') : '');
-                        
+                if (!p.parent_product_id) {
+                    // Base product: add if no variants OR if parent's own stock > 0
+                    if (!p.variants || p.variants.length === 0 || p.stock > 0) {
                         searchableItems.push({
-                            id: v.id,
-                            name: optionValues ? `${variantName} (${optionValues})` : variantName,
-                            part_no: v.part_no || p.part_no,
-                            stock: v.stock,
-                            price2: v.price2,
+                            id: p.id,
+                            name: p.name,
+                            part_no: p.part_no || p.partNo || 'N/A',
+                            stock: p.stock,
+                            price2: p.price2 || p.price1,
                         });
-                    });
+                    }
                 } else {
-                    searchableItems.push(p);
+                    // Variant product: add directly (since it is already flat in products list)
+                    const optionValues = Array.isArray(p.variant_options)
+                        ? p.variant_options.map(opt => opt.value).join(', ')
+                        : (Array.isArray(p.variantOptions) ? p.variantOptions.map(opt => opt.value).join(', ') : '');
+                    
+                    const displayName = optionValues && !p.name.includes(`(${optionValues})`)
+                        ? `${p.name} (${optionValues})`
+                        : p.name;
+
+                    searchableItems.push({
+                        id: p.id,
+                        name: displayName,
+                        part_no: p.part_no || p.partNo || 'N/A',
+                        stock: p.stock,
+                        price2: p.price2 || p.price1,
+                    });
                 }
             });
 

@@ -32,7 +32,9 @@ export default function usePOS() {
 
     // Filtered Products
     const filteredProducts = useMemo(() => {
-        let list = products;
+        let list = products.filter(p => 
+            !p.parent_product_id ? (!p.variants || p.variants.length === 0 || p.stock > 0) : true
+        );
         if (categoryFilter !== 'All') {
             list = list.filter(p => p.category === categoryFilter || p.category?.name === categoryFilter);
         }

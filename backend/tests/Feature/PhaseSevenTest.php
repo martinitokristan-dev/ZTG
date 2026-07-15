@@ -56,6 +56,11 @@ class PhaseSevenTest extends TestCase
         ]);
 
         $this->category = Category::create(['name' => 'Hydraulics']);
+
+        Setting::create(['key' => 'enable_stock_alerts_checkbox', 'value' => 'true']);
+        Setting::create(['key' => 'send_low_stock_alerts', 'value' => 'true']);
+        Setting::create(['key' => 'send_oos_alerts', 'value' => 'true']);
+        Setting::create(['key' => 'enable_transaction_alerts_checkbox', 'value' => 'true']);
     }
 
     /* ─── Notification Tests ──────────────────────────────── */

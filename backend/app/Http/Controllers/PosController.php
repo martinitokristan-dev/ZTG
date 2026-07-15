@@ -30,10 +30,9 @@ class PosController extends Controller
      */
     public function products(Request $request): JsonResponse
     {
-        $query = Product::with(['category', 'variants' => function ($q) {
+        $query = Product::with(['category', 'variantOptions.type', 'variants' => function ($q) {
             $q->where('status', '!=', 'Disabled');
         }])
-            ->whereNull('parent_product_id')
             ->where('status', '!=', 'Disabled');
 
         if (!$request->boolean('all')) {

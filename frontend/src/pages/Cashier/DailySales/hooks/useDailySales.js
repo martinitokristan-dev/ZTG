@@ -1,0 +1,174 @@
+import { useState, useMemo, useEffect } from 'react';
+import usePaginatedCache from '../../../../shared/hooks/usePaginatedCache';
+import echo from '../../../../lib/echo';
+
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+const fmt = (n) => `₱${Number(n || 0).toLocaleString('en-US')}`;
+
+// Today's date in YYYY-MM-DD format for the backend date_from filter
+const getTodayISO = () => new Date().toISOString().slice(0, 10);
+
+export default function useDailySales() {
+    // Filtering state (client-side search/time/cashier on top of paginated data)
+    const [searchQuery, setSearchQuery] = useState('');
+    const [timeFilter, setTimeFilter] = useState('Today');
+    const [cashierFilter, setCashierFilter] = useState('All');
+
+    /**
+     * Reuses the SAME usePaginatedCache infrastructure (module-level caches
+     * store, LRU eviction, TTL, invalidateCachePage) as Sales Log and History.
+     * The 'daily-sales' key is registered in usePaginatedCache.js alongside
+     * 'sales' and 'history' — no separate cache system.
+     *
+     * Backend filters: status=Completed,Paid,Refund,Return to avoid loading
+     * the full transaction table; date_from=today scopes to current day only.
+     */
+    const { data: transactions, loading, page, setPage, pagination, refetch } = usePaginatedCache(
+        'daily-sales',
+        '/transactions',
+        {
+            status: 'Completed,Paid,Refund,Return',
+            date_from: getTodayISO(),
+            per_page: 20
+        }
+    );
+
+    useEffect(() => {
+        const token = localStorage.getItem('auth_token');
+        const userStr = localStorage.getItem('auth_user');
+        let channel = null;
+
+        if (token && userStr) {
+            const user = JSON.parse(userStr);
+            if (['Admin', 'Supervisor', 'Cashier'].includes(user.role)) {
+                channel = echo.private('transactions')
+                    .listen('.TransactionCreated', (e) => {
+                        console.log('[Echo Debug] DailySales TransactionCreated event received:', e);
+                        refetch();
+                    })
+                    .listen('.TransactionUpdated', (e) => {
+                        console.log('[Echo Debug] DailySales TransactionUpdated event received:', e);
+                        refetch();
+                    });
+            }
+        }
+
+        return () => {
+            if (channel) {
+                echo.leaveChannel('private-transactions');
+            }
+        };
+    }, [refetch]);
+
+    // Flatten transactions into line items for the Sales Ledger display
+    const flattenedItems = useMemo(() => {
+        const result = [];
+        transactions.forEach(t => {
+            const items = (t.items && t.items.length > 0) ? t.items : [{
+                id: null,
+                name: t.itemName || 'Transaction',
+                partNo: 'N/A',
+                qty: 1,
+                price: t.amount,
+                variant: ''
+            }];
+
+            items.forEach(item => {
+                result.push({
+                    ...item,
+                    _txDate: t.date || t.created_at,
+                    _txReceipt: t.receipt_number,
+                    _txCustomer: t.customer?.name || 'Guest',
+                    _txCashier: t.cashier?.name || 'Unknown',
+                    _txPayment: t.payment_method || '—',
+                    _txStatus: t.status,
+                    _txId: t.id
+                });
+            });
+        });
+        return result;
+    }, [transactions]);
+
+    // Client-side search filter on top of paginated results
+    const filteredItems = useMemo(() => {
+        let items = flattenedItems;
+
+        if (searchQuery.trim() !== '') {
+            const q = searchQuery.toLowerCase();
+            items = items.filter(item =>
+                (item._txReceipt || '').toLowerCase().includes(q) ||
+                (item._txCustomer || '').toLowerCase().includes(q) ||
+                (item._txCashier || '').toLowerCase().includes(q) ||
+                (item.name || '').toLowerCase().includes(q) ||
+                (item.part_no || item.partNo || '').toLowerCase().includes(q)
+            );
+        }
+
+        // Time filter (applies to the already date_from=today scoped data)
+        if (timeFilter !== 'All') {
+            const now = new Date();
+            items = items.filter(item => {
+                const txDate = new Date(item._txDate);
+                if (isNaN(txDate)) return true;
+                if (timeFilter === 'Today') {
+                    return txDate.toDateString() === now.toDateString();
+                }
+                if (timeFilter === 'This Week') {
+                    const diff = Math.ceil(Math.abs(now - txDate) / (1000 * 60 * 60 * 24));
+                    return diff <= 7;
+                }
+                if (timeFilter === 'This Month') {
+                    return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+                }
+                return true;
+            });
+        }
+
+        // Cashier filter
+        if (cashierFilter !== 'All') {
+            items = items.filter(item =>
+                (item._txCashier || '').toLowerCase() === cashierFilter.toLowerCase()
+            );
+        }
+
+        return items;
+    }, [flattenedItems, searchQuery, timeFilter, cashierFilter]);
+
+    // Parse unique cashiers from the loaded page transactions to populate filter dropdown without requiring Admin role
+    const cashiersList = useMemo(() => {
+        const names = new Set();
+        transactions.forEach(t => {
+            if (t.cashier?.name) {
+                names.add(t.cashier.name);
+            }
+        });
+        return Array.from(names).sort();
+    }, [transactions]);
+
+    // Gross sales from unique Completed/Paid transactions in current page
+    const grossSales = useMemo(() => {
+        const seenIds = new Set();
+        let total = 0;
+        filteredItems.forEach(item => {
+            if (!seenIds.has(item._txId) && (item._txStatus === 'Completed' || item._txStatus === 'Paid')) {
+                seenIds.add(item._txId);
+                const tx = transactions.find(t => t.id === item._txId);
+                if (tx) total += parseFloat(tx.amount || 0);
+            }
+        });
+        return total;
+    }, [filteredItems, transactions]);
+
+    return {
+        loading,
+        items: filteredItems,
+        searchQuery, setSearchQuery,
+        timeFilter, setTimeFilter,
+        cashierFilter, setCashierFilter,
+        cashiersList,
+        grossSales,
+        page, setPage, pagination,
+        fmt,
+        fmtDate
+    };
+}

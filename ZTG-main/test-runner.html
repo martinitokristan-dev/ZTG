@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZTG Automated Test Runner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --card-bg: rgba(17, 25, 40, 0.75);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.15);
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Gradient background animations */
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+        body::before {
+            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+            top: -100px;
+            left: -100px;
+            animation: float 20s infinite alternate;
+        }
+        body::after {
+            background: radial-gradient(circle, #3b82f6 0%, transparent 70%);
+            bottom: -100px;
+            right: -100px;
+            animation: float 25s infinite alternate-reverse;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(50px, 50px) scale(1.2); }
+        }
+
+        /* Top Bar styling */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: rgba(10, 15, 30, 0.5);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand span {
+            color: var(--primary);
+        }
+
+        .brand .badge {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #818cf8;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Premium Buttons */
+        .btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        /* Dashboard layout */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            grid-template-rows: 1fr 220px;
+            grid-template-areas: 
+                "sidebar main"
+                "console main";
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            max-height: calc(100vh - 65px);
+            min-height: 0;
+        }
+
+        /* Sidebar steps card */
+        .sidebar {
+            grid-area: sidebar;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .step-item.active {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.04);
+            box-shadow: inset 0 0 10px rgba(99, 102, 241, 0.05);
+        }
+
+        .step-item.success {
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.02);
+        }
+
+        .step-item.failed {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.02);
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 12px;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary);
+        }
+
+        .step-item.active .step-icon {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 0 10px var(--primary);
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        .step-item.success .step-icon {
+            background: var(--success);
+            color: white;
+        }
+
+        .step-item.failed .step-icon {
+            background: var(--error);
+            color: white;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 4px var(--primary); }
+            100% { box-shadow: 0 0 12px var(--primary); }
+        }
+
+        .step-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .step-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .step-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* Main View - Frame & Iframe */
+        .main-pane {
+            grid-area: main;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .frame-header {
+            height: 40px;
+            background: rgba(10, 15, 30, 0.7);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 12px;
+        }
+
+        .frame-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .frame-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .frame-dot.red { background: #ef4444; }
+        .frame-dot.yellow { background: #f59e0b; }
+        .frame-dot.green { background: #10b981; }
+
+        .frame-address-bar {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--text-secondary);
+            padding: 4px 12px;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .frame-address-bar svg {
+            width: 12px;
+            height: 12px;
+            opacity: 0.5;
+        }
+
+        .iframe-container {
+            flex: 1;
+            position: relative;
+            background: #ffffff;
+        }
+
+        #test-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+
+        /* Console Output Card */
+        .console-pane {
+            grid-area: console;
+            background: #060913;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .console-header {
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .console-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .console-body {
+            flex: 1;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 12px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            scroll-behavior: smooth;
+        }
+
+        .log-entry {
+            line-height: 1.5;
+            word-break: break-all;
+            display: flex;
+            gap: 8px;
+        }
+
+        .log-entry .timestamp {
+            color: #4b5563;
+            flex-shrink: 0;
+            user-select: none;
+        }
+
+        .log-entry .prefix {
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+
+        .log-entry.success { color: #34d399; }
+        .log-entry.success .prefix { color: #10b981; }
+
+        .log-entry.error { color: #f87171; }
+        .log-entry.error .prefix { color: #ef4444; }
+
+        .log-entry.warning { color: #fbbf24; }
+        .log-entry.warning .prefix { color: #f59e0b; }
+
+        .log-entry.info { color: #60a5fa; }
+        .log-entry.info .prefix { color: #3b82f6; }
+
+        .log-entry.system { color: #a78bfa; }
+        .log-entry.system .prefix { color: #8b5cf6; }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checkbox-container input {
+            cursor: pointer;
+        }
+
+        /* Overlay loader / splash screen */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(11, 15, 25, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            transition: opacity 0.4s ease;
+        }
+
+        .overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .overlay-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .overlay-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="brand">
+            ZTG <span>Heavy Parts</span> <div class="badge">E2E Flow Engine</div>
+        </div>
+        <div class="controls">
+            <button id="btnRun" class="btn btn-primary" onclick="startTestSuite()">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Run Test Suite
+            </button>
+            <button id="btnRestore" class="btn btn-secondary btn-danger" onclick="confirmRestoreDB()" disabled>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                Restore DB State
+            </button>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- Sidebar Step Indicators -->
+        <div class="sidebar">
+            <h2 class="section-title">
+                Test Progress
+                <span id="progressText" style="font-size: 12px; font-weight: 600; color: var(--primary);">Idle</span>
+            </h2>
+            <div class="steps-list">
+                <div id="step-0" class="step-item">
+                    <div class="step-icon">0</div>
+                    <div class="step-info">
+                        <span class="step-name">Backup & Seeding</span>
+                        <span class="step-desc">Back up original database and set up testing sandbox.</span>
+                    </div>
+                </div>
+                <div id="step-1" class="step-item">
+                    <div class="step-icon">1</div>
+                    <div class="step-info">
+                        <span class="step-name">Add New Product</span>
+                        <span class="step-desc">Create a product and verify it is written to the database.</span>
+                    </div>
+                </div>
+                <div id="step-2" class="step-item">
+                    <div class="step-icon">2</div>
+                    <div class="step-info">
+                        <span class="step-name">Process Direct Checkout</span>
+                        <span class="step-desc">Add product to cart, check out, and assert stock deduction.</span>
+                    </div>
+                </div>
+                <div id="step-3" class="step-item">
+                    <div class="step-icon">3</div>
+                    <div class="step-info">
+                        <span class="step-name">Process Refund</span>
+                        <span class="step-desc">Request refund for checkout item with stock restoration.</span>
+                    </div>
+                </div>
+                <div id="step-4" class="step-item">
+                    <div class="step-icon">4</div>
+                    <div class="step-info">
+                        <span class="step-name">Process Return</span>
+                        <span class="step-desc">Buy product again, return it, and assert database updates.</span>
+                    </div>
+                </div>
+                <div id="step-5" class="step-item">
+                    <div class="step-icon">5</div>
+                    <div class="step-info">
+                        <span class="step-name">Process Void</span>
+                        <span class="step-desc">Buy product again, void the transaction, assert stock restoration.</span>
+                    </div>
+                </div>
+                <div id="step-6" class="step-item">
+                    <div class="step-icon">6</div>
+                    <div class="step-info">
+                        <span class="step-name">Reservation (Admin)</span>
+                        <span class="step-desc">Process an order based reservation as Admin.</span>
+                    </div>
+                </div>
+                <div id="step-7" class="step-item">
+                    <div class="step-icon">7</div>
+                    <div class="step-info">
+                        <span class="step-name">Reservation (Cashier)</span>
+                        <span class="step-desc">Process an order based reservation as Cashier.</span>
+                    </div>
+                </div>
+                <div id="step-8" class="step-item">
+                    <div class="step-icon">8</div>
+                    <div class="step-info">
+                        <span class="step-name">Teardown & Clean</span>
+                        <span class="step-desc">Restore the original user database to its active state.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Visual View -->
+        <div class="main-pane">
+            <div class="frame-header">
+                <div class="frame-dots">
+                    <div class="frame-dot red"></div>
+                    <div class="frame-dot yellow"></div>
+                    <div class="frame-dot green"></div>
+                </div>
+                <div class="frame-address-bar" id="address-bar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <span>Click Run to start the visual automation session</span>
+                </div>
+            </div>
+            <div class="iframe-container">
+                <iframe id="test-iframe"></iframe>
+                <div id="iframe-overlay" class="overlay">
+                    <div class="overlay-title">Visual Automation Sandbox</div>
+                    <div class="overlay-desc">Click "Run Test Suite" to witness browser-driven automation live.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terminal Console Logs -->
+        <div class="console-pane">
+            <div class="console-header">
+                <div class="console-title">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                    Console Output Log
+                </div>
+                <div style="display: flex; gap: 16px;">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="autoScroll" checked> Auto-Scroll
+                    </label>
+                    <span style="color: rgba(255,255,255,0.2); pointer-events: none;">|</span>
+                    <span style="cursor: pointer; font-size: 11px; font-weight: 600; color: var(--text-secondary);" onclick="clearLogs()" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-secondary)'">Clear Console</span>
+                </div>
+            </div>
+            <div class="console-body" id="console-log">
+                <div class="log-entry system"><span class="timestamp">[14:26:26]</span><span class="prefix">[SYSTEM]</span> Ready to perform E2E flow tests. Click "Run Test Suite" to execute.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Automation Logic -->
+    <script>
+        const iframe = document.getElementById('test-iframe');
+        const addressBar = document.getElementById('address-bar').querySelector('span');
+        const consoleEl = document.getElementById('console-log');
+        const btnRun = document.getElementById('btnRun');
+        const btnRestore = document.getElementById('btnRestore');
+
+        let originalData = null;
+        let testProductId = null;
+        let currentStepIndex = -1;
+
+        // Sleep Helper
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // Console Logging Logger
+        function log(message, type = 'system') {
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0];
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `<span class="timestamp">[${timeStr}]</span><span class="prefix">[${type.toUpperCase()}]</span> <span>${message}</span>`;
+            consoleEl.appendChild(entry);
+
+            if (document.getElementById('autoScroll').checked) {
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+            }
+        }
+
+        function clearLogs() {
+            consoleEl.innerHTML = '';
+            log('Console cleared.', 'system');
+        }
+
+        // Visual step indicators updater
+        function updateStepUI(index, status) {
+            document.querySelectorAll('.step-item').forEach((item, idx) => {
+                item.classList.remove('active');
+                if (idx === index) {
+                    item.classList.add('active');
+                    if (status) {
+                        item.classList.add(status);
+                    }
+                }
+            });
+            
+            const currentItem = document.getElementById(`step-${index}`);
+            if (currentItem) {
+                currentItem.className = 'step-item'; // reset
+                if (status) {
+                    currentItem.classList.add(status);
+                } else {
+                    currentItem.classList.add('active');
+                }
+            }
+        }
+
+        // Frame URL Mock Address bar
+        function updateAddressBar(url) {
+            addressBar.innerText = window.location.origin + window.location.pathname.replace('test-runner.html', url);
+        }
+
+        // Iframe navigation loader promise helper
+        function navigateIframe(url) {
+            return new Promise((resolve, reject) => {
+                updateAddressBar(url);
+                iframe.src = url;
+                
+                let isResolved = false;
+                const onLoad = () => {
+                    if (isResolved) return;
+                    isResolved = true;
+                    
+                    // Bypass alerts / confirms / prints
+                    const win = iframe.contentWindow;
+                    win.alert = (msg) => {
+                        log(`Alert bypassed: "${msg}"`, 'warning');
+                    };
+                    win.confirm = (msg) => {
+                        log(`Confirm dialog bypassed: "${msg}" (approved)`, 'warning');
+                        return true;
+                    };
+                    win.print = () => {
+                        log(`Receipt print preview triggered & bypassed.`, 'info');
+                    };
+
+                    resolve(iframe);
+                };
+
+                iframe.onload = onLoad;
+
+                // Timeout fallback if it doesn't load in 8s
+                setTimeout(() => {
+                    if (!isResolved) {
+                        isResolved = true;
+                        reject(new Error(`Navigation timeout loading: ${url}`));
+                    }
+                }, 8000);
+            });
+        }
+
+        // Perform E2E Database Sandboxing
+        function runDatabaseBackup() {
+            log('Backing up local database...', 'system');
+            originalData = {
+                products: localStorage.getItem('ztg_products'),
+                employees: localStorage.getItem('ztg_employees'),
+                transactions: localStorage.getItem('ztg_transactions'),
+                pending_pos: localStorage.getItem('ztg_pending_pos'),
+                reservations: localStorage.getItem('ztg_reservations'),
+                categories: localStorage.getItem('ztg_categories'),
+                sessionUser: sessionStorage.getItem('ztg_current_user')
+            };
+
+            const countProducts = originalData.products ? JSON.parse(originalData.products).length : 0;
+            const countTx = originalData.transactions ? JSON.parse(originalData.transactions).length : 0;
+            log(`Backup created. Found ${countProducts} products and ${countTx} transactions in active storage.`, 'success');
+        }
+
+        function restoreOriginalDatabase() {
+            log('Initiating teardown: Restoring database state...', 'system');
+            if (!originalData) {
+                log('Teardown error: No original database backup found to restore!', 'error');
+                return;
+            }
+
+            const keys = {
+                products: 'ztg_products',
+                employees: 'ztg_employees',
+                transactions: 'ztg_transactions',
+                pending_pos: 'ztg_pending_pos',
+                reservations: 'ztg_reservations',
+                categories: 'ztg_categories'
+            };
+
+            for (const [key, storageKey] of Object.entries(keys)) {
+                if (originalData[key] !== null) {
+                    localStorage.setItem(storageKey, originalData[key]);
+                } else {
+                    localStorage.removeItem(storageKey);
+                }
+            }
+
+            if (originalData.sessionUser !== null) {
+                sessionStorage.setItem('ztg_current_user', originalData.sessionUser);
+            } else {
+                sessionStorage.removeItem('ztg_current_user');
+            }
+
+            log('Database restored back to user state successfully.', 'success');
+            btnRestore.disabled = true;
+        }
+
+        function confirmRestoreDB() {
+            if (confirm('Are you sure you want to stop testing and restore the database to its pre-test state immediately?')) {
+                restoreOriginalDatabase();
+                updateStepUI(8, 'success');
+                btnRun.disabled = false;
+                document.getElementById('iframe-overlay').classList.remove('hidden');
+                document.getElementById('progressText').innerText = 'Aborted / Restored';
+                document.getElementById('progressText').style.color = 'var(--error)';
+            }
+        }
+
+        // MAIN CONTROLLER RUNNER
+        async function startTestSuite() {
+            btnRun.disabled = true;
+            btnRestore.disabled = false;
+            document.getElementById('iframe-overlay').classList.add('hidden');
+            
+            clearLogs();
+            log('Starting automated ZTG E2E Flow Test Suite...', 'system');
+
+            try {
+                // STEP 0: BACKUP AND SEEDING
+                updateStepUI(0, 'active');
+                document.getElementById('progressText').innerText = 'Step 0/8';
+                document.getElementById('progressText').style.color = 'var(--primary)';
+                runDatabaseBackup();
+                await sleep(500);
+
+                // Setup employee and session seeds
+                log('Seeding authentication details and manager user...', 'system');
+                const seedEmployees = [
+                    { id: 'EMP-000', name: 'Administrator', realName: 'Kyla', role: 'Admin', status: 'Active', pin: '1234', password: 'admin123', username: 'admin', profilePhoto: '' },
+                    { id: 'EMP-001', name: 'Maria Santos', realName: 'Maria Santos', role: 'Cashier', status: 'Active', pin: '1111', password: 'cashier1', username: 'EMP-001', profilePhoto: '' }
+                ];
+                localStorage.setItem('ztg_employees', JSON.stringify(seedEmployees));
+                
+                // Clear transactions and seed clean product base for consistent testing
+                localStorage.setItem('ztg_transactions', JSON.stringify([]));
+                localStorage.setItem('ztg_products', JSON.stringify([
+                    { id: 1, name: 'Base Hydraulic Valve', chineseName: '液压阀', partNo: 'BHV-01', category: 'Hydraulics', address: 'B-01-1', stock: 10, price1: 1500, price2: 1700, salesCount: 0, status: 'Active', damaged: 0 }
+                ]));
+                localStorage.setItem('ztg_categories', JSON.stringify(['Hydraulics', 'Filters', 'Undercarriage']));
+
+                // Seed login session directly
+                sessionStorage.setItem('ztg_current_user', JSON.stringify({
+                    id: 'EMP-000',
+                    name: 'Administrator',
+                    realName: 'Kyla',
+                    role: 'Admin',
+                    profilePhoto: ''
+                }));
+                log('Seeding session completed. Sandbox database created.', 'success');
+                updateStepUI(0, 'success');
+                await sleep(1000);
+
+                // STEP 1: ADD PRODUCT
+                updateStepUI(1, 'active');
+                document.getElementById('progressText').innerText = 'Step 1/8';
+                log('Step 1: Adding a new product in Product Management...', 'info');
+                
+                await navigateIframe('product-management.html');
+                await sleep(1000);
+
+                const pmDoc = iframe.contentDocument;
+                log('Opening the product addition form...', 'info');
+                pmDoc.getElementById('btnAddProduct').click();
+                await sleep(600);
+
+                log('Filling out new product details...', 'info');
+                pmDoc.getElementById('addPartNo').value = 'TEST-WIDGET-01';
+                pmDoc.getElementById('addCategory').value = 'Hydraulics';
+                pmDoc.getElementById('addName').value = 'E2E Test Widget';
+                pmDoc.getElementById('addChineseName').value = '测试小工具';
+                pmDoc.getElementById('addAisle').value = 'X';
+                pmDoc.getElementById('addCarrier').value = '99';
+                pmDoc.getElementById('addHang').value = '9';
+                pmDoc.getElementById('addPrice1').value = '1200';
+                pmDoc.getElementById('addPrice2').value = '1350';
+                pmDoc.getElementById('addStock').value = '15';
+                pmDoc.getElementById('addAlert').value = '5';
+                pmDoc.getElementById('addStatus').value = 'Active';
+                pmDoc.getElementById('addNotes').value = 'Created automatically by testing script.';
+
+                await sleep(600);
+                log('Submitting the product creation form...', 'info');
+                pmDoc.querySelector('#addItemForm button[type="submit"]').click();
+                
+                // Let database write complete
+                await sleep(1500);
+
+                // Verify the product exists in local storage
+                const products = JSON.parse(localStorage.getItem('ztg_products') || '[]');
+                const testProduct = products.find(p => p.partNo === 'TEST-WIDGET-01');
+                if (!testProduct) {
+                    throw new Error('Assertion failed: Test Widget was not found in the products database.');
+                }
+                
+                testProductId = testProduct.id; // Store for next steps
+                log(`Assertion Passed: Product "${testProduct.name}" exists in database. ID: ${testProductId}, Stock: ${testProduct.stock}`, 'success');
+                updateStepUI(1, 'success');
+                await sleep(1500);
+
+                // STEP 2: BUY PRODUCT (CHECKOUT)
+                updateStepUI(2, 'active');
+                document.getElementById('progressText').innerText = 'Step 2/8';
+                log('Step 2: Processing checkout/purchase in POS page...', 'info');
+
+                await navigateIframe('pos.html');
+                await sleep(1200);
+
+                log(`Adding 3 units of Product ID ${testProductId} to shopping cart...`, 'info');
+                iframe.contentWindow.addDirectToCart(testProductId, 'price1');
+                await sleep(300);
+                iframe.contentWindow.addDirectToCart(testProductId, 'price1');
+                await sleep(300);
+                iframe.contentWindow.addDirectToCart(testProductId, 'price1');
+                await sleep(500);
+
+                // Verify cart qty via DOM
+                const posDoc = iframe.contentDocument;
+                const posCartItems = posDoc.querySelectorAll('#cartItemsList > div');
+                if (posCartItems.length === 0) {
+                    throw new Error('Assertion failed: Cart is empty.');
+                }
+                const firstItemQty = posCartItems[0].querySelector('input[type="number"]').value;
+                if (firstItemQty !== '3') {
+                    throw new Error(`Assertion failed: Cart has quantity ${firstItemQty}, expected 3.`);
+                }
+                log(`Assertion Passed: Shopping cart verified with 3 units of E2E Test Widget.`, 'success');
+
+                log('Opening the Checkout Review panel...', 'info');
+                iframe.contentWindow.openCheckoutReviewModal();
+                await sleep(600);
+
+                log('Entering customer information and cash payment method...', 'info');
+                posDoc.getElementById('posCustomerName').value = 'Test Customer';
+                posDoc.getElementById('posCustomerPhone').value = '09123456789';
+                posDoc.getElementById('posPaymentMethod').value = 'Cash';
+                
+                // Manually trigger amount tendered input
+                const tenderedInput = posDoc.getElementById('amountTendered');
+                tenderedInput.value = '5000';
+                tenderedInput.dispatchEvent(new Event('input'));
+                await sleep(500);
+
+                log('Completing sale checkout transaction...', 'info');
+                iframe.contentWindow.processDirectCheckout();
+                await sleep(1500); // Allow modal close and db update
+
+                // Verify stock deduction in database
+                const prodsAfterBuy = JSON.parse(localStorage.getItem('ztg_products') || '[]');
+                const testProdAfterBuy = prodsAfterBuy.find(p => p.id === testProductId);
+                if (testProdAfterBuy.stock !== 12) {
+                    throw new Error(`Assertion failed: Expected stock of 12 (15 - 3), but found ${testProdAfterBuy.stock}.`);
+                }
+                log(`Assertion Passed: Product stock reduced correctly to 12.`, 'success');
+
+                const txAfterBuy = JSON.parse(localStorage.getItem('ztg_transactions') || '[]');
+                const saleTx = txAfterBuy.find(t => t.customer === 'Test Customer' && t.status === 'Completed');
+                if (!saleTx) {
+                    throw new Error('Assertion failed: Sale transaction record was not found in transactions database.');
+                }
+                
+                const testTxSiNo = saleTx.siNo;
+                log(`Assertion Passed: Checkout successful! Transaction SI Number: ${testTxSiNo}, Total Paid: ₱${saleTx.amount}`, 'success');
+                updateStepUI(2, 'success');
+                await sleep(1500);
+
+                // STEP 3: PROCESS REFUND
+                updateStepUI(3, 'active');
+                document.getElementById('progressText').innerText = 'Step 3/8';
+                log('Step 3: Processing product refund with stock restoration in History Logs...', 'info');
+
+                await navigateIframe('history-logs.html');
+                await sleep(1200);
+
+                // Find index of our sale transaction
+                const logsTxs = JSON.parse(localStorage.getItem('ztg_transactions') || '[]');
+                const buyTxIndex = logsTxs.findIndex(t => t.siNo === testTxSiNo);
+                if (buyTxIndex === -1) {
+                    throw new Error(`Assertion failed: Could not locate transaction ${testTxSiNo} in local history list.`);
+                }
+
+                log(`Opening the transaction refund dialog for ${testTxSiNo}...`, 'info');
+                iframe.contentWindow.openRefundModal(buyTxIndex);
+                await sleep(600);
+
+                const logsDoc = iframe.contentDocument;
+                log('Configuring refund options (refund 1 item, return to stock, approve via admin pin)...', 'info');
+                
+                // Select refund radio type
+                logsDoc.querySelector('input[name="refundType"][value="Refund"]').click();
+                
+                // Select the item checkbox
+                const refundChk = logsDoc.querySelector('.refund-item-checkbox');
+                if (refundChk) {
+                    refundChk.checked = true;
+                    refundChk.dispatchEvent(new Event('change'));
+                }
+                
+                // Set refund qty to 1
+                const refundQtyInput = logsDoc.querySelector('.refund-item-qty');
+                if (refundQtyInput) {
+                    refundQtyInput.value = '1';
+                    refundQtyInput.dispatchEvent(new Event('change'));
+                }
+
+                // Check stock restoration
+                logsDoc.getElementById('checkRestoreStock').checked = true;
+                logsDoc.getElementById('checkMarkDamaged').checked = false;
+
+                // Select reason
+                logsDoc.querySelector('input[name="refundReason"][value="Item Damaged / Defective"]').click();
+
+                // Approver and PIN
+                logsDoc.getElementById('refundApprover').value = 'EMP-000';
+                logsDoc.getElementById('refundApprovalCode').value = '1234'; // admin PIN
+
+                await sleep(800);
+                log('Submitting the refund request...', 'info');
+                logsDoc.getElementById('refundForm').dispatchEvent(new Event('submit'));
+                await sleep(1500); // wait for update
+
+                // Verify refund updates
+                const prodsAfterRefund = JSON.parse(localStorage.getItem('ztg_products') || '[]');
+                const testProdAfterRefund = prodsAfterRefund.find(p => p.id === testProductId);
+                if (testProdAfterRefund.stock !== 13) {
+                    throw new Error(`Assertion failed: Stock after refund should be 13, but found ${testProdAfterRefund.stock}`);
+                }
+                log(`Assertion Passed: Stock correctly restored to 13 (12 + 1).`, 'success');
+
+                const txAfterRefund = JSON.parse(localStorage.getItem('ztg_transactions') || '[]');
+                const refundRecord = txAfterRefund.find(t => t.siNo === testTxSiNo);
+                if (refundRecord.status !== 'Refund') {
+                    throw new Error(`Assertion failed: Transaction status is "${refundRecord.status}", expected "Refund".`);
+                }
+                log(`Assertion Passed: Transaction status updated to "Refund" in sales history database.`, 'success');
+                updateStepUI(3, 'success');
+                await sleep(1500);
+
+                // STEP 4: PROCESS RETURN / EXCHANGE
+                updateStepUI(4, 'active');
+                document.getElementById('progressText').innerText = 'Step 4/8';
+                log('Step 4: Buying product again and processing a return (exchange/store credit)...', 'info');
+
+                // Navigate to POS to buy again
+                await navigateIframe('pos.html');
+                await sleep(1000);
+
+                log('Adding 1 unit of E2E Test Widget to cart...', 'info');
+                iframe.contentWindow.addDirectToCart(testProductId, 'price1');
+                await sleep(400);
+
+                iframe.contentWindow.openCheckoutReviewModal();
+                await sleep(500);
+
+                const posDoc2 = iframe.contentDocument;
+                posDoc2.getElementById('posCustomerName').value = 'Test Return Customer';
+                posDoc2.getElementById('posCustomerPhone').value = '09876543210';
+                posDoc2.getElementById('posPaymentMethod').value = 'Cash';
+                posDoc2.getElementById('amountTendered').value = '2000';
+                posDoc2.getElementById('amountTendered').dispatchEvent(new Event('input'));
+                await sleep(400);
+
+                iframe.contentWindow.processDirectCheckout();
+                await sleep(1500);
+
+                // Verify stock became 12
+                const prodsAfterBuy2 = JSON.parse(localStorage.getItem('ztg_products') || '[]');
+                if (prodsAfterBuy2.find(p => p.id === testProductId).stock !== 12) {
+                    throw new Error('Assertion failed: Stock did not decrease to 12 after the second purchase.');
+                }
+                log('Purchase completed. Stock reduced to 12.', 'success');
+
+                const transactions2 = JSON.parse(localStorage.getItem('ztg_transactions') || '[]');
+                const returnSaleTx = transactions2.find(t => t.customer === 'Test Return Customer' && t.status === 'Completed');
+                const returnSiNo = returnSaleTx.siNo;
+
+                // Load history logs to process return
+                await navigateIframe('history-logs.html');
+                await sleep(1000);
+
+                const logsTxs2 = JSON.parse(localStorage.getItem('ztg_transactions') || '[]');
+                const returnTxIndex = logsTxs2.findIndex(t => t.siNo === returnSiNo);
+                
+                log(`Opening return interface for transaction ${returnSiNo}...`, 'info');
+                iframe.contentWindow.openRefundModal(returnTxIndex);
+                await sleep(500);
+
+                const logsDoc2 = iframe.contentDocument;
+                // Select "Return" type
+                logsDoc2.querySelector('input[name="refundType"][value="Return"]').click();
+                
+                // Select checkbox and set qty
+                const chk2 = logsDoc2.querySelector('.refund-item-checkbox');
+                if (chk2) chk2.checked = true;
+                const qty2 = logsDoc2.querySelector('.refund-item-qty');
+                if (qty2) qty2.value = '1';
+
+                // Check stock restore
+                logsDoc2.getElementById('checkRestoreStock').checked = true;
+                logsDoc2.querySelector('input[name="refundReason"][value="Wrong Item Given"]').click();
+                logsDoc2.getElementById('refundApprover').value = 'EMP-000';
+                logsDoc2.getElementById('refundApprovalCode').value = '1234';
+
+                await sleep(500);
+                log('Submitting the product return form...', 'info');
+                logsDoc2.getElementById('refundForm').dispatchEvent(new Event('submit'));
+                await sleep(1500);
+
+                // Assertions
+                const prodsAfterReturn = JSON.parse(localStorage.getItem('ztg_products') || '[]');
+                if (prodsAfterReturn.find(p => p.id === testProductId).stock !== 13) {
+                    throw new Error('Assertion failed: Stock should be 13 after return restoration.');
+                }
+                log('Assertion Passed: Stock successfully restored back to 13 after return.', 'success');
+
+                const txsAfterReturn = JSON.parse(localStorage.getItem('ztg_transactions') || '[]');
+                const returnRecord = txsAfterReturn.find(t => t.siNo === returnSiNo);
+                if (returnRecord.status !== 'Return') {
+                    throw new Error(`Assertion failed: Expected transaction status to be "Return", found "${returnRecord.status}".`);
+                }
+                log('Assertion Passed: Transaction status updated to "Return" in database logs.', 'success');
+                updateStepUI(4, 'success');
+                await sleep(1500);
+
+                // STEP 5: PROCESS VOID
+                updateStepUI(5, 'active');
+                document.getElementById('progressText').innerText = 'Step 5/8';
+                log('Step 5: Buying product again and voiding the entire transaction in History Logs...', 'info');
+
+                // POS buy 3rd time
+                await navigateIframe('pos.html');
+                await sleep(1000);
+
+                log('Adding 2 units of E2E Test Widget to cart...', 'info');
+                iframe.contentWindow.addDirectToCart(testProductId, 'price1');
+                await sleep(300);
+                iframe.contentWindow.addDirectToCart(testProductId, 'price1');
+                await sleep(400);
+
+                iframe.contentWindow.openCheckoutReviewModal();
+                await sleep(500);
+
+                const posDoc3 = iframe.contentDocument;
+                posDoc3.getElementById('posCustomerName').value = 'Test Void Customer';
+                posDoc3.getElementById('posPaymentMethod').value = 'GCash'; // immediate complete
+                await sleep(400);
+
+                iframe.contentWindow.processDirectCheckout();
+                await sleep(1500);
+
+                // Verify stock became 11
+                const prodsAfterBuy3 = JSON.parse(localStorage.getItem('ztg_products') || '[]');
+                if (prodsAfterBuy3.find(p => p.id === testProductId).stock !== 11) {
+                    throw new Error('Assertion failed: Stock should be 11 (13 - 2) after checkout.');
+                }
+                log('Purchase complete. Stock reduced to 11.', 'success');
+
+                const transactions3 = JSON.parse(localStorage.getItem('ztg_transactions') || '[]');
+                const voidSaleTx = transactions3.find(t => t.customer === 'Test Void Customer' && t.status === 'Completed');
+                const voidSiNo = voidSaleTx.siNo;
+
+                // Navigate to history logs
+                await navigateIframe('history-logs.html');
+                await sleep(1000);
+
+                const logsTxs3 = JSON.parse(localStorage.getItem('ztg_transactions') || '[]');
+                const voidTxIndex = logsTxs3.findIndex(t => t.siNo === voidSiNo);
+
+                log(`Opening void modal interface for transaction ${voidSiNo}...`, 'info');
+                iframe.contentWindow.openVoidModal(voidTxIndex);
+                await sleep(600);
+
+                const logsDoc3 = iframe.contentDocument;
+                log('Filling out void authorization details (admin approval PIN)...', 'info');
+                logsDoc3.getElementById('voidReason').value = 'Wrong Transaction / Input Error';
+                logsDoc3.getElementById('voidRestoreStock').checked = true;
+                logsDoc3.getElementById('voidAdminSelect').value = 'EMP-000';
+                logsDoc3.getElementById('voidAdminPin').value = '1234';
+
+                await sleep(500);
+                log('Submitting void request...', 'info');
+                logsDoc3.getElementById('voidForm').dispatchEvent(new Event('submit'));
+                await sleep(1500);
+
+                // Assertions
+                const prodsAfterVoid = JSON.parse(localStorage.getItem('ztg_products') || '[]');
+                if (prodsAfterVoid.find(p => p.id === testProductId).stock !== 13) {
+                    throw new Error('Assertion failed: Stock should be restored to 13 (11 + 2) after voiding.');
+                }
+                log('Assertion Passed: Stock successfully restored back to 13 after void operation.', 'success');
+
+                const txsAfterVoid = JSON.parse(localStorage.getItem('ztg_transactions') || '[]');
+                const voidRecord = txsAfterVoid.find(t => t.siNo === voidSiNo);
+                if (voidRecord.status !== 'Void') {
+                    throw new Error(`Assertion failed: Expected transaction status to be "Void", found "${voidRecord.status}".`);
+                }
+                log('Assertion Passed: Transaction status updated to "Void" in database records.', 'success');
+                updateStepUI(5, 'success');
+                await sleep(1500);
+
+                // STEP 6: RESERVATION (ADMIN)
+                updateStepUI(6, 'active');
+                document.getElementById('progressText').innerText = 'Step 6/8';
+                log('Step 6: Creating an Order Based Reservation as Admin...', 'info');
+                
+                await navigateIframe('reservations.html');
+                await sleep(1000);
+
+                log('Opening the New Reservation modal...', 'info');
+                iframe.contentWindow.openAddResModal();
+                await sleep(600);
+
+                const resDoc = iframe.contentDocument;
+                log('Adding 2 units of E2E Test Widget to reservation cart...', 'info');
+                iframe.contentWindow.productSearchState = iframe.contentWindow.productSearchState || {};
+                iframe.contentWindow.productSearchState['resProductSearch'] = { selectedId: testProductId };
+                iframe.contentWindow.addResCartItem();
+                await sleep(400);
+                
+                // Set qty to 2
+                resDoc.querySelectorAll('input[type="number"]')[0].value = 2;
+                iframe.contentWindow.updateResCartQty(0, 2);
+                await sleep(400);
+
+                log('Filling out reservation customer details and deposit...', 'info');
+                resDoc.getElementById('resCustName').value = 'Test Admin Res Customer';
+                resDoc.getElementById('resCustPhone').value = '09001112222';
+                resDoc.getElementById('resPaymentType').value = 'deposit50';
+                iframe.contentWindow.onResPaymentTypeChange();
+                
+                resDoc.getElementById('resDeposit').value = '1500';
+
+                await sleep(600);
+                log('Submitting the reservation...', 'info');
+                resDoc.getElementById('addResForm').dispatchEvent(new Event('submit'));
+                await sleep(1500);
+
+                const resList = JSON.parse(localStorage.getItem('ztg_reservations') || '[]');
+                const testRes = resList.find(r => r.customer === 'Test Admin Res Customer');
+                if (!testRes) {
+                    throw new Error('Assertion failed: Reservation record was not created.');
+                }
+                if (testRes.status !== 'Pending') {
+                    throw new Error(`Assertion failed: Expected reservation status "Pending", found "${testRes.status}".`);
+                }
+                log(`Assertion Passed: Reservation successfully created with 2 units. Reservation ID: ${testRes.id}`, 'success');
+                updateStepUI(6, 'success');
+                await sleep(1500);
+
+                // STEP 7: RESERVATION (CASHIER)
+                updateStepUI(7, 'active');
+                document.getElementById('progressText').innerText = 'Step 7/8';
+                log('Step 7: Creating an Order Based Reservation as Cashier...', 'info');
+                
+                log('Switching session to Cashier (EMP-001)...', 'info');
+                sessionStorage.setItem('ztg_current_user', JSON.stringify({
+                    id: 'EMP-001',
+                    name: 'Cashier',
+                    realName: 'Jane',
+                    role: 'Cashier',
+                    profilePhoto: ''
+                }));
+                
+                await navigateIframe('reservations.html');
+                await sleep(1000);
+
+                log('Opening the New Reservation modal...', 'info');
+                iframe.contentWindow.openAddResModal();
+                await sleep(600);
+
+                const resDoc2 = iframe.contentDocument;
+                log('Adding 1 unit of E2E Test Widget to reservation cart...', 'info');
+                iframe.contentWindow.productSearchState = iframe.contentWindow.productSearchState || {};
+                iframe.contentWindow.productSearchState['resProductSearch'] = { selectedId: testProductId };
+                iframe.contentWindow.addResCartItem();
+                await sleep(400);
+
+                log('Filling out reservation customer details and full payment...', 'info');
+                resDoc2.getElementById('resCustName').value = 'Test Cashier Res Customer';
+                resDoc2.getElementById('resCustPhone').value = '09334445555';
+                resDoc2.getElementById('resPaymentType').value = 'full';
+                iframe.contentWindow.onResPaymentTypeChange();
+                
+                resDoc2.getElementById('resDeposit').value = '1500';
+
+                await sleep(600);
+                log('Submitting the reservation...', 'info');
+                resDoc2.getElementById('addResForm').dispatchEvent(new Event('submit'));
+                await sleep(1500);
+
+                const resList2 = JSON.parse(localStorage.getItem('ztg_reservations') || '[]');
+                const testRes2 = resList2.find(r => r.customer === 'Test Cashier Res Customer');
+                if (!testRes2) {
+                    throw new Error('Assertion failed: Cashier reservation record was not created.');
+                }
+                if (testRes2.reservedByRole !== 'Cashier') {
+                    throw new Error(`Assertion failed: Expected reservation creator role "Cashier", found "${testRes2.reservedByRole}".`);
+                }
+                log(`Assertion Passed: Reservation successfully created by Cashier. Reservation ID: ${testRes2.id}`, 'success');
+                updateStepUI(7, 'success');
+                await sleep(1500);
+
+                // STEP 8: TEARDOWN AND CLEAN
+                updateStepUI(8, 'active');
+                document.getElementById('progressText').innerText = 'Step 8/8';
+                restoreOriginalDatabase();
+                await sleep(1000);
+                
+                log('ALL TESTS COMPLETED SUCCESSFULLY!', 'success');
+                log('SUMMARY: Added Product -> Sale -> Refund -> Return -> Void -> Admin Reservation -> Cashier Reservation. All tests passed.', 'success');
+                
+                updateStepUI(8, 'success');
+                document.getElementById('progressText').innerText = 'Success / Idle';
+                document.getElementById('progressText').style.color = 'var(--success)';
+                btnRun.disabled = false;
+                
+                await sleep(500);
+                document.getElementById('iframe-overlay').classList.remove('hidden');
+
+            } catch (err) {
+                log(`TEST FAILURE: ${err.message}`, 'error');
+                console.error(err);
+                
+                // Mark current step as failed
+                const items = document.querySelectorAll('.step-item');
+                items.forEach(item => {
+                    if (item.classList.contains('active')) {
+                        item.classList.remove('active');
+                        item.classList.add('failed');
+                    }
+                });
+
+                document.getElementById('progressText').innerText = 'Failed';
+                document.getElementById('progressText').style.color = 'var(--error)';
+                
+                // Safety database restore
+                log('Exception encountered. Executing safety restore of user database...', 'warning');
+                restoreOriginalDatabase();
+                btnRun.disabled = false;
+                
+                await sleep(500);
+                document.getElementById('iframe-overlay').classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

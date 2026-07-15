@@ -1,0 +1,250 @@
+/**
+ * printReceipt.js
+ * Generates an HTML receipt string and triggers the browser's print dialog.
+ * 
+ * @param {Object} options Options for printing
+ * @param {string} options.type 'Sales' | 'Refund' | 'Return' | 'Void'
+ * @param {string} options.invoiceNo E.g. 'SI-2026-101'
+ * @param {string} options.date Date string
+ * @param {string} options.customer Customer name
+ * @param {string} options.phone Customer phone
+ * @param {string} options.buyerTin Customer TIN
+ * @param {string} options.buyerAddress Customer Address
+ * @param {Array}  options.items Array of item objects
+ * @param {number} options.total Total amount
+ * @param {string} options.payment Payment method (e.g., 'Cash', 'GCash')
+ * @param {number} options.tendered Amount tendered
+ * @param {number} options.change Change amount
+ * @param {string} options.servedBy Cashier name
+ * @param {string} options.docType Document type ('S.I.', 'D.R.', 'C.I.')
+ * @param {string} options.originalInvoice Original invoice number (for refund/return)
+ * @param {string} options.reason Reason (for refund/return/void)
+ * @param {string} options.approver Approver name
+ * @param {string} options.approvalCode Approval code
+ * @param {string} options.splitDetails HTML string for split payment breakdown
+ */
+export function printUnifiedReceipt(options) {
+    const {
+        type = 'Sales',
+        invoiceNo = '',
+        date = '',
+        customer = 'Walk-in',
+        phone = '',
+        buyerTin = '',
+        buyerAddress = '',
+        items = [],
+        total = 0,
+        payment = '',
+        tendered = 0,
+        change = 0,
+        servedBy = '',
+        docType = 'S.I.',
+        originalInvoice = '',
+        reason = '',
+        approver = '',
+        approvalCode = '',
+        splitDetails = ''
+    } = options;
+
+    // Type-specific styling
+    const typeConfig = {
+        Sales: {
+            color: '#059669',
+            bgLight: '#ECFDF5',
+            border: '#6EE7B7',
+            label: docType === 'D.R.' ? 'DELIVERY RECEIPT' : docType === 'C.I.' ? 'CHARGE INVOICE' : 'SALES INVOICE',
+            badge: docType === 'D.R.' ? 'D.R.' : docType === 'C.I.' ? 'C.I.' : 'S.I.',
+        },
+        Refund: {
+            color: '#DC2626',
+            bgLight: '#FEF2F2',
+            border: '#FCA5A5',
+            label: 'REFUND INVOICE',
+            badge: 'REFUND',
+        },
+        Return: {
+            color: '#D97706',
+            bgLight: '#FFFBEB',
+            border: '#FDE68A',
+            label: 'RETURN / EXCHANGE INVOICE',
+            badge: 'RETURN',
+        },
+        Void: {
+            color: '#7F1D1D',
+            bgLight: '#FEF2F2',
+            border: '#FECACA',
+            label: 'VOID NOTICE',
+            badge: 'VOID',
+        }
+    };
+    const cfg = typeConfig[type] || typeConfig['Sales'];
+
+    // Items table rows
+    const itemsRows = items.map(item => `
+        <tr style="border-bottom: 1px dashed #E5E7EB;">
+            <td style="padding: 5px 4px; font-size: 11px; line-height: 1.4;">
+                ${item.name || '—'}<br>
+                <span style="color: #6B7280; font-size: 10px;">Part #: ${item.partNo || item.part_no || '—'}</span>
+            </td>
+            <td style="padding: 5px 4px; text-align: center; font-size: 11px; width: 28px;">${item.unit || 'pc'}</td>
+            <td style="padding: 5px 4px; text-align: center; font-size: 11px; width: 28px;">${item.qty || item.quantity}</td>
+            <td style="padding: 5px 4px; text-align: right; font-size: 11px; width: 68px;">&#8369;${Number(item.price || item.retail_price || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            <td style="padding: 5px 4px; text-align: right; font-weight: 700; font-size: 11px; width: 72px;">&#8369;${Number(item.total || ((item.price || item.retail_price || 0) * (item.qty || item.quantity))).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+        </tr>
+    `).join('');
+
+    // Payment summary lines
+    let paymentLines = '';
+    if (splitDetails) {
+        paymentLines = splitDetails;
+    } else {
+        paymentLines += `<tr><td style="padding:3px 0;font-size:11px;color:#374151;">Payment Method:</td><td style="padding:3px 0;font-size:11px;text-align:right;font-weight:600;">${payment || '—'}</td></tr>`;
+        if (tendered > 0 && type === 'Sales') {
+            paymentLines += `<tr><td style="padding:3px 0;font-size:11px;color:#374151;">Cash Tendered:</td><td style="padding:3px 0;font-size:11px;text-align:right;">&#8369;${Number(tendered).toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>`;
+            paymentLines += `<tr><td style="padding:3px 0;font-size:11px;color:#374151;">Change:</td><td style="padding:3px 0;font-size:11px;text-align:right;">&#8369;${Number(change).toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>`;
+        }
+    }
+
+    // Reference block (non-Sales types)
+    const refBlock = (type !== 'Sales') ? `
+        <tr style="border-top: 1px dashed #ccc;"><td colspan="2" style="padding-top: 8px;"></td></tr>
+        <tr><td style="font-size:11px;color:#6B7280;padding:3px 0;">Original Invoice:</td><td style="font-size:11px;font-weight:700;text-align:right;">${originalInvoice || '—'}</td></tr>
+        <tr><td style="font-size:11px;color:#6B7280;padding:3px 0;">Reason:</td><td style="font-size:11px;text-align:right;">${reason || '—'}</td></tr>
+        <tr><td style="font-size:11px;color:#6B7280;padding:3px 0;">Processed By:</td><td style="font-size:11px;font-weight:600;text-align:right;">${approver || '—'}</td></tr>
+        ${approvalCode ? `<tr><td style="font-size:11px;color:#6B7280;padding:3px 0;">Approval Code:</td><td style="font-size:11px;text-align:right;">${approvalCode}</td></tr>` : ''}
+    ` : '';
+
+    // Full receipt HTML
+    const receiptHtml = `
+        <div style="font-family: 'Courier New', Courier, monospace; width: 320px; margin: 0 auto; padding: 20px; color: #111; font-size: 12px; line-height: 1.5;">
+
+            <!-- Company Header -->
+            <div style="text-align: center; margin-bottom: 12px;">
+                <div style="font-size: 16px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">ZTG HEAVY PARTS</div>
+                <div style="font-size: 10px; color: #374151; margin-top: 2px;">VAT Registered</div>
+                <div style="font-size: 10px; color: #374151;">TIN: 000-123-456-000</div>
+                <div style="font-size: 10px; color: #374151;">123 Industrial Ave., Brgy. San Jose</div>
+                <div style="font-size: 10px; color: #374151;">Quezon City, Metro Manila</div>
+                <div style="font-size: 10px; color: #374151;">Tel: (02) 8888-0000</div>
+            </div>
+
+            <!-- Type Badge -->
+            <div style="text-align: center; border: 2px solid ${cfg.color}; background: ${cfg.bgLight}; color: ${cfg.color}; padding: 6px 0; margin: 10px 0; font-size: 14px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">
+                ${cfg.label}
+            </div>
+
+            <!-- Invoice Number & Date -->
+            <div style="border: 1px dashed #ccc; padding: 8px; margin-bottom: 10px;">
+                <table style="width:100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="font-size:11px; color:#6B7280;">Invoice No.:</td>
+                        <td style="font-size:12px; font-weight:900; text-align:right; color:${cfg.color};">${invoiceNo}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:11px; color:#6B7280;">Date & Time:</td>
+                        <td style="font-size:11px; text-align:right;">${date}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:11px; color:#6B7280;">Served By:</td>
+                        <td style="font-size:11px; text-align:right; font-weight:600;">${servedBy || '—'}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Sold To Block -->
+            <div style="border: 1px dashed #ccc; padding: 8px; margin-bottom: 10px;">
+                <div style="font-size:10px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:4px;">Sold To / Customer</div>
+                <table style="width:100%; border-collapse:collapse;">
+                    <tr><td style="font-size:10px;color:#6B7280;width:55px;">Name:</td><td style="font-size:11px;font-weight:700;">${customer || 'Walk-in'}</td></tr>
+                    <tr><td style="font-size:10px;color:#6B7280;">Address:</td><td style="font-size:11px;">${buyerAddress || '—'}</td></tr>
+                    <tr><td style="font-size:10px;color:#6B7280;">TIN:</td><td style="font-size:11px;font-weight:600;">${buyerTin || 'N/A (Walk-in)'}</td></tr>
+                    ${phone ? `<tr><td style="font-size:10px;color:#6B7280;">Tel:</td><td style="font-size:11px;">${phone}</td></tr>` : ''}
+                </table>
+            </div>
+
+            <!-- Items Table -->
+            <div style="margin-bottom: 10px;">
+                <table style="width:100%; border-collapse: collapse; border-top: 2px solid #111; border-bottom: 1px dashed #ccc;">
+                    <thead>
+                        <tr style="border-bottom: 1px dashed #999;">
+                            <th style="padding:5px 4px; text-align:left; font-size:10px; font-weight:700; text-transform:uppercase;">Description</th>
+                            <th style="padding:5px 4px; text-align:center; font-size:10px; font-weight:700; width:28px;">Unit</th>
+                            <th style="padding:5px 4px; text-align:center; font-size:10px; font-weight:700; width:28px;">Qty</th>
+                            <th style="padding:5px 4px; text-align:right; font-size:10px; font-weight:700; width:68px;">Price</th>
+                            <th style="padding:5px 4px; text-align:right; font-size:10px; font-weight:700; width:72px;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsRows || '<tr><td colspan="5" style="padding:8px 4px; text-align:center; font-size:11px; color:#6B7280;">No items</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- VAT Breakdown + Totals -->
+            <div style="margin-bottom: 10px;">
+                <table style="width:100%; border-collapse: collapse;">
+                    <tr><td style="padding:2px 0;font-size:10px;color:#6B7280;">VATable Sales:</td><td style="padding:2px 0;font-size:10px;text-align:right;color:#6B7280;">&#8369;${(Number(total)/1.12).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+                    <tr><td style="padding:2px 0;font-size:10px;color:#6B7280;">VAT Amount (12%):</td><td style="padding:2px 0;font-size:10px;text-align:right;color:#6B7280;">&#8369;${(Number(total)-Number(total)/1.12).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+                    <tr><td style="padding:2px 0;font-size:10px;color:#6B7280;">VAT-Exempt Sales:</td><td style="padding:2px 0;font-size:10px;text-align:right;color:#6B7280;">&#8369;0.00</td></tr>
+                    <tr><td style="padding:2px 0;font-size:10px;color:#6B7280;">Zero-Rated Sales:</td><td style="padding:2px 0;font-size:10px;text-align:right;color:#6B7280;">&#8369;0.00</td></tr>
+                    <tr style="border-top: 2px solid #111; border-bottom: 2px solid #111;">
+                        <td style="padding:5px 0;font-size:13px;font-weight:900;">${type==='Refund'?'TOTAL REFUND:':type==='Return'?'TOTAL RETURN:':type==='Void'?'VOIDED AMOUNT:':'TOTAL AMOUNT DUE:'}</td>
+                        <td style="padding:5px 0;font-size:13px;font-weight:900;text-align:right;color:${cfg.color};">&#8369;${Number(total).toLocaleString(undefined,{minimumFractionDigits:2})}</td>
+                    </tr>
+                    ${paymentLines}
+                    ${refBlock}
+                </table>
+            </div>
+
+            <!-- Footer -->
+            <div style="text-align: center; border-top: 1px dashed #999; padding-top: 10px; margin-top: 10px;">
+                <div style="font-size: 9px; color: #6B7280; line-height: 1.6;">
+                    <div>ATP No.: ZTG-ATP-2024-001</div>
+                    <div>Valid Until: December 31, 2029</div>
+                    <div>Acknowledgement Certificate No.: AC-2024-ZTG-001</div>
+                    <div style="margin-top:3px;">Software Provider: ZTG POS System v2.0</div>
+                    <div style="margin-top: 6px; font-size: 11px; font-style: italic; color: #374151;">Thank you for your business!</div>
+                    <div style="margin-top: 2px;">— ZTG Heavy Parts —</div>
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    // Render via print-section (same-page approach consistent across all types)
+    let printStyle = document.getElementById('print-style-receipt');
+    if (!printStyle) {
+        printStyle = document.createElement('style');
+        printStyle.id = 'print-style-receipt';
+        printStyle.innerHTML = `
+            @media print {
+                body * { visibility: hidden !important; }
+                #ztg-print-receipt, #ztg-print-receipt * { visibility: visible !important; }
+                #ztg-print-receipt {
+                    position: absolute; left: 0; top: 0; width: 100%;
+                    background: #fff; z-index: 999999; display: flex;
+                    justify-content: center; padding: 0; margin: 0;
+                }
+            }
+            @page { margin: 0.5cm; }
+        `;
+        document.head.appendChild(printStyle);
+    }
+
+    let printDiv = document.getElementById('ztg-print-receipt');
+    if (!printDiv) {
+        printDiv = document.createElement('div');
+        printDiv.id = 'ztg-print-receipt';
+        document.body.appendChild(printDiv);
+    }
+    
+    printDiv.innerHTML = receiptHtml;
+
+    // Small delay to ensure styles and DOM updates are applied before printing
+    setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+            printDiv.innerHTML = '';
+        }, 1000);
+    }, 100);
+}

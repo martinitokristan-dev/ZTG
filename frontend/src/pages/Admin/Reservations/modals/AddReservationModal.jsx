@@ -1,0 +1,206 @@
+import React from 'react';
+
+export default function AddReservationModal({
+    isOpen, onClose, onSubmit,
+    custName, setCustName, custPhone, setCustPhone, custEmail, setCustEmail,
+    pickupDate, setPickupDate, pickupTime, setPickupTime, notes, setNotes,
+    paymentType, setPaymentType, paymentMethod, setPaymentMethod,
+    cartItems, productSearch, suggestions, addError, addLoading,
+    handleProductSearch, addToCart, removeFromCart, updateQty,
+    subtotal, tax, total, depositAmt, balance, fmt
+}) {
+    if (!isOpen) return null;
+
+    return (
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+            <div className="modal-card" style={{ maxWidth: '1050px' }}>
+                <div className="modal-header">
+                    <h3 className="modal-title">New Order-Based</h3>
+                    <button className="modal-close" onClick={onClose}>
+                        <svg viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <div className="modal-body" style={{ display: 'flex', gap: '24px', minHeight: '500px' }}>
+
+                        {/* LEFT COLUMN */}
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div style={{ background: '#EBF5FF', color: '#1E40AF', padding: '12px 16px', borderRadius: '6px', fontSize: '11px', fontWeight: 500 }}>
+                                Create an order for customer pickup/delivery with deposit. Items will be held until pickup date.
+                            </div>
+
+                            {addError && (
+                                <div style={{ background: 'var(--danger-light)', border: '1px solid rgba(239,68,68,0.2)', color: 'var(--danger)', padding: '10px 14px', borderRadius: '6px', fontSize: '13px' }}>
+                                    {addError}
+                                </div>
+                            )}
+
+                            <div>
+                                <h4 style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', marginBottom: '12px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Customer Information</h4>
+                                <div className="form-group" style={{ marginBottom: '12px' }}>
+                                    <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Customer Name <span style={{ color: 'var(--danger)' }}>*</span></label>
+                                    <input type="text" className="form-control" required placeholder="Enter customer name" value={custName} onChange={(e) => setCustName(e.target.value)} style={{ fontSize: '13px' }} />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: '12px' }}>
+                                    <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Contact Number <span style={{ color: 'var(--danger)' }}>*</span></label>
+                                    <input type="tel" className="form-control" required placeholder="09XX-XXX-XXXX" value={custPhone} onChange={(e) => setCustPhone(e.target.value)} style={{ fontSize: '13px' }} />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                    <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Email Address (Optional)</label>
+                                    <input type="email" className="form-control" placeholder="customer@example.com" value={custEmail} onChange={(e) => setCustEmail(e.target.value)} style={{ fontSize: '13px' }} />
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', marginBottom: '12px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Order Details</h4>
+                                <div className="form-group" style={{ marginBottom: '12px' }}>
+                                    <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Pickup Date <span style={{ color: 'var(--danger)' }}>*</span></label>
+                                    <input type="date" className="form-control" required value={pickupDate} onChange={(e) => setPickupDate(e.target.value)} style={{ fontSize: '13px' }} />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: '12px' }}>
+                                    <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Expected Pickup Time</label>
+                                    <input type="time" className="form-control" value={pickupTime} onChange={(e) => setPickupTime(e.target.value)} style={{ fontSize: '13px' }} />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                    <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Order Notes</label>
+                                    <textarea className="form-control" placeholder="Special instructions, delivery address, or other notes..." value={notes} onChange={(e) => setNotes(e.target.value)} style={{ fontSize: '13px', minHeight: '80px', resize: 'vertical' }} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* RIGHT COLUMN */}
+                        <div style={{ flex: '1.2', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div>
+                                <h4 style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', marginBottom: '12px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Items to Order</h4>
+
+                                {/* Product search */}
+                                <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'flex-start' }}>
+                                    <div style={{ flex: 1, position: 'relative' }}>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Search by name or part number..."
+                                            value={productSearch}
+                                            onChange={(e) => handleProductSearch(e.target.value)}
+                                            style={{ fontSize: '13px' }}
+                                            autoComplete="off"
+                                        />
+                                        {suggestions.length > 0 && (
+                                            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: '#fff', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: 'var(--shadow-md)', maxHeight: '200px', overflowY: 'auto', marginTop: '4px' }}>
+                                                {suggestions.map(p => (
+                                                    <div key={p.id} onClick={() => addToCart(p)} style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid #F1F5F9', fontSize: '13px' }}
+                                                        onMouseEnter={(e) => e.currentTarget.style.background = '#F8FAFC'}
+                                                        onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}>
+                                                        <strong style={{ display: 'block' }}>{p.name}</strong>
+                                                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{p.part_no} · Stock: {p.stock} · {fmt(p.price2)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Cart table */}
+                                <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                                        <thead style={{ background: '#F8FAFC', borderBottom: '1px solid var(--border)' }}>
+                                            <tr>
+                                                <th style={{ textAlign: 'left', padding: '10px 16px', color: '#64748B', fontWeight: 600, fontSize: '10px', textTransform: 'uppercase' }}>Product</th>
+                                                <th style={{ textAlign: 'center', padding: '10px 16px', color: '#64748B', fontWeight: 600, fontSize: '10px', textTransform: 'uppercase' }}>Qty</th>
+                                                <th style={{ textAlign: 'right', padding: '10px 16px', color: '#64748B', fontWeight: 600, fontSize: '10px', textTransform: 'uppercase' }}>Price</th>
+                                                <th style={{ textAlign: 'right', padding: '10px 16px', color: '#64748B', fontWeight: 600, fontSize: '10px', textTransform: 'uppercase' }}>Total</th>
+                                                <th style={{ width: '40px' }}></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {cartItems.length === 0 ? (
+                                                <tr><td colSpan="5" style={{ padding: '20px', textAlign: 'center', color: '#94A3B8' }}>No items added yet.</td></tr>
+                                            ) : cartItems.map(c => (
+                                                <tr key={c.product_id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                                    <td style={{ padding: '10px 16px' }}>
+                                                        <strong style={{ display: 'block', fontSize: '12px' }}>{c.name}</strong>
+                                                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{c.part_no}</span>
+                                                    </td>
+                                                    <td style={{ padding: '10px 16px', textAlign: 'center' }}>
+                                                        <input type="number" min="1" max={c.stock} value={c.qty} onChange={(e) => updateQty(c.product_id, e.target.value)}
+                                                            style={{ width: '56px', textAlign: 'center', padding: '4px 6px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13px', fontWeight: 600 }} />
+                                                    </td>
+                                                    <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--text-secondary)' }}>{fmt(c.price)}</td>
+                                                    <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: 'var(--primary)' }}>{fmt(c.price * c.qty)}</td>
+                                                    <td style={{ padding: '10px 16px', textAlign: 'center' }}>
+                                                        <button type="button" onClick={() => removeFromCart(c.product_id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: '4px' }}>
+                                                            <svg viewBox="0 0 24 24" style={{ width: '16px', height: '16px', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }}><path d="M18 6L6 18M6 6l12 12"/></svg>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Totals */}
+                                <div style={{ background: '#DBEAFE', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#3B82F6', fontSize: '12px' }}>
+                                        <span>Subtotal</span><span>{fmt(subtotal)}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#3B82F6', fontSize: '12px' }}>
+                                        <span>Tax (12%)</span><span>{fmt(tax)}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', paddingTop: '8px', borderTop: '1px solid rgba(59,130,246,0.2)' }}>
+                                        <span style={{ fontSize: '14px', fontWeight: 700, color: '#1E40AF' }}>Total Amount</span>
+                                        <span style={{ fontSize: '16px', fontWeight: 800, color: '#1E40AF' }}>{fmt(total)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', marginBottom: '12px', letterSpacing: '0.5px', textTransform: 'uppercase', marginTop: '8px' }}>Payment Details</h4>
+                                <div className="form-group" style={{ marginBottom: '12px' }}>
+                                    <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Payment Type</label>
+                                    <select className="form-control" value={paymentType} onChange={(e) => setPaymentType(e.target.value)} style={{ fontSize: '13px' }}>
+                                        <option value="deposit50">50% Deposit (Balance on Pickup)</option>
+                                        <option value="full">Full Payment (100%)</option>
+                                    </select>
+                                </div>
+                                <div className="form-group" style={{ marginBottom: '12px' }}>
+                                    <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>
+                                        Amount Collected &nbsp;
+                                        <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: '10px', fontWeight: 700, padding: '1px 6px', borderRadius: '10px' }}>
+                                            {paymentType === 'full' ? '100%' : '50% Required'}
+                                        </span>
+                                    </label>
+                                    <input type="text" className="form-control" readOnly value={fmt(depositAmt)}
+                                        style={{ fontSize: '14px', fontWeight: 700, background: '#FFFBEB', border: '1px solid #FDE68A', color: '#92400E', cursor: 'not-allowed' }} />
+                                    <p style={{ fontSize: '10px', color: '#92400E', margin: '4px 0 0', fontWeight: 500 }}>
+                                        {paymentType === 'full' ? 'Full payment collected upfront.' : 'Auto-calculated as 50% of total. Balance due on pickup.'}
+                                    </p>
+                                </div>
+                                <div className="form-group" style={{ marginBottom: '12px' }}>
+                                    <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Payment Method</label>
+                                    <select className="form-control" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} style={{ fontSize: '13px' }}>
+                                        <option value="Cash">Cash</option>
+                                        <option value="GCash">GCash</option>
+                                        <option value="Bank">Bank Transfer</option>
+                                    </select>
+                                </div>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                    <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Balance Due</label>
+                                    <input type="text" className="form-control" readOnly value={fmt(balance)}
+                                        style={{ fontSize: '14px', fontWeight: 700, background: '#F8FAFC', border: '1px solid var(--border)', color: '#334155' }} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                        <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+                        <button type="submit" className="btn btn-primary" disabled={addLoading}>
+                            {addLoading ? 'Creating...' : 'Create Order'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}

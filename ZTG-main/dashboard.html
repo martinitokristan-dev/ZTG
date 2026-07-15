@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | ZTG Heavy Parts</title>
+    <link rel="stylesheet" href="styles.css?v=2">
+    <style>
+        .reports-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .reports-table th {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            font-weight: 700;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+        }
+        .reports-table td {
+            font-size: 13px;
+            color: var(--text-primary);
+            padding: 14px 16px;
+            border-bottom: 1px solid #F1F5F9;
+            vertical-align: middle;
+        }
+        .reports-table tr:last-child td {
+            border-bottom: none;
+        }
+        .rank-cell {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .perf-bar-track {
+            width: 100%;
+            max-width: 160px;
+            height: 6px;
+            background: #E2E8F0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .perf-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: #3B82F6;
+            transition: width 0.4s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar"></div>
+
+        <!-- Main Workspace -->
+        <div class="main-workspace">
+            <div class="top-bar">
+                <div>
+                    <div class="top-bar-title" id="dashboardGreeting" style="font-size: 22px; font-weight: 700; letter-spacing: -0.02em;">Good morning</div>
+                    <div class="page-description" id="dashboardWelcomeSub" style="margin-top: 4px;">Here's your store at a glance.</div>
+                </div>
+            </div>
+
+            <div class="content-body">
+
+                <!-- Date Filter Selector Row -->
+                <div class="header-row" style="margin-top: 24px;">
+                    <div></div>
+                    <div class="table-filters">
+                        <button class="filter-pill active">Today</button>
+                        <button class="filter-pill">This Week</button>
+                        <button class="filter-pill">This Month</button>
+                        <button class="filter-pill">This Year</button>
+                    </div>
+                </div>
+
+                <!-- 4 Stat Cards Row -->
+                <div class="grid-4">
+                    <div class="card stat-box">
+                        <div>
+                            <span class="stat-label">Total Items</span>
+                            <div class="stat-value" id="statTotalItems">0</div>
+                        </div>
+                        <span class="stat-trend trend-up" id="statTotalItemsTrend">▲ Stock items on hand</span>
+                    </div>
+                    <div class="card stat-box">
+                        <div>
+                            <span class="stat-label">Today's Revenue</span>
+                            <div class="stat-value" id="statTodayRevenue">₱0</div>
+                        </div>
+                        <span class="stat-trend trend-up" id="statTodayRevenueTrend">▲ Real-time sales total</span>
+                    </div>
+                    <div class="card stat-box">
+                        <div>
+                            <span class="stat-label">Employees</span>
+                            <div class="stat-value" id="statEmployeesCount">0</div>
+                        </div>
+                        <span class="stat-trend" id="statEmployeesTrend">Active store workers</span>
+                    </div>
+                    <div class="card stat-box">
+                        <div>
+                            <span class="stat-label">Top Product</span>
+                            <div class="stat-value" style="font-size: 16px; line-height: 1.4; margin-top: 16px;" id="statTopProductName">None</div>
+                        </div>
+                        <span class="stat-trend trend-up" id="statTopProductQty">0 units sold</span>
+                    </div>
+                </div>
+
+                <!-- Row of Graphs and Stock Warning list -->
+                <div class="grid-3" style="grid-template-columns: 2fr 1fr;">
+                    <!-- Col 1: Sales Trend Line Chart -->
+                    <div class="card">
+                        <div class="justify-between align-center" style="display: flex;">
+                            <h3 style="font-size: 16px; font-weight: 700;">Sales Trend — Last 7 Days</h3>
+                            <span style="font-size: 12px; color: var(--text-secondary);">Jun 8 - Jun 14</span>
+                        </div>
+                        <div class="chart-container" style="height: 200px;">
+                            <!-- SVG Polyline chart -->
+                            <svg viewBox="0 0 500 150" style="width: 100%; height: 100%;">
+                                <!-- Grid Lines -->
+                                <line x1="0" y1="30" x2="500" y2="30" stroke="#E2E8F0" stroke-dasharray="4" />
+                                <line x1="0" y1="75" x2="500" y2="75" stroke="#E2E8F0" stroke-dasharray="4" />
+                                <line x1="0" y1="120" x2="500" y2="120" stroke="#E2E8F0" stroke-dasharray="4" />
+                                
+                                <!-- Polyline graph -->
+                                <polyline fill="none" stroke="#3B82F6" stroke-width="3" 
+                                    points="0,110 80,95 160,120 240,60 320,80 400,45 480,35" />
+                                
+                                <!-- Scatter points -->
+                                <circle cx="0" cy="110" r="4" fill="#3B82F6" />
+                                <circle cx="80" cy="95" r="4" fill="#3B82F6" />
+                                <circle cx="160" cy="120" r="4" fill="#3B82F6" />
+                                <circle cx="240" cy="60" r="4" fill="#3B82F6" />
+                                <circle cx="320" cy="80" r="4" fill="#3B82F6" />
+                                <circle cx="400" cy="45" r="4" fill="#3B82F6" />
+                                <circle cx="480" cy="35" r="4" fill="#3B82F6" />
+
+                                <!-- Label texts -->
+                                <text x="0" y="145" font-size="10" fill="#64748B">Mon</text>
+                                <text x="80" y="145" font-size="10" fill="#64748B">Tue</text>
+                                <text x="160" y="145" font-size="10" fill="#64748B">Wed</text>
+                                <text x="240" y="145" font-size="10" fill="#64748B">Thu</text>
+                                <text x="320" y="145" font-size="10" fill="#64748B">Fri</text>
+                                <text x="400" y="145" font-size="10" fill="#64748B">Sat</text>
+                                <text x="480" y="145" font-size="10" fill="#64748B">Sun</text>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Col 2: Low / No stock list -->
+                    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">Critical Stock Alerts</h3>
+                            <div id="criticalAlertsList" style="display: flex; flex-direction: column; gap: 12px;">
+                                <!-- Dynamically populated by JS -->
+                            </div>
+                        </div>
+                        <a href="product-management.html" class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 16px;">Manage Stock</a>
+                    </div>
+                </div>
+
+                <!-- Top Selling Products Table Card -->
+                <div class="card table-card" style="margin-top: 24px;">
+                    <div class="table-header-bar">
+                        <h3 style="font-size: 16px; font-weight: 700;">Top Selling Products</h3>
+                        <a href="reports.html" class="btn btn-secondary btn-sm">View Full Reports</a>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="reports-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Product</th>
+                                    <th>Part Number</th>
+                                    <th>Category</th>
+                                    <th>Units Sold</th>
+                                    <th>Revenue</th>
+                                    <th>Sales Performance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topSellingTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        function updateDashboard() {
+            const currentUser = getCurrentUser();
+            const displayName = getEmployeeDisplayName(currentUser);
+            const greeting = getTimeGreeting();
+            document.getElementById('dashboardGreeting').innerText = `${greeting}, ${displayName}`;
+            document.getElementById('dashboardWelcomeSub').innerHTML = `You're signed in as <strong>${currentUser.role}</strong>. Here's your store at a glance.`;
+
+            initSidebar('dashboard');
+
+            const products = db.getProducts();
+            const transactions = db.getTransactions();
+            const employees = db.getEmployees();
+
+            // 1. Calculate and update stat cards
+            // Stat 1: Total Items (Sum of all stocks)
+            const totalItems = products.reduce((sum, p) => sum + (p.stock || 0), 0);
+            document.getElementById('statTotalItems').innerText = totalItems.toLocaleString();
+            
+            // Stat 2: Today's Revenue
+            const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const todayCompletedTxs = transactions.filter(t => t.date === todayStr && t.status === 'Completed');
+            const todayRevenue = todayCompletedTxs.reduce((sum, t) => sum + t.amount, 0);
+            document.getElementById('statTodayRevenue').innerText = `₱${todayRevenue.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+
+            // Stat 3: Employees count
+            document.getElementById('statEmployeesCount').innerText = employees.length.toString();
+
+            // Stat 4: Top Product
+            let topProduct = { name: 'None', salesCount: -1 };
+            products.forEach(p => {
+                if ((p.salesCount || 0) > topProduct.salesCount) {
+                    topProduct = p;
+                }
+            });
+            document.getElementById('statTopProductName').innerText = topProduct.name;
+            document.getElementById('statTopProductQty').innerText = `${topProduct.salesCount || 0} units sold`;
+
+            // 2. Generate stock alerts
+            const outOfStock = products.filter(p => p.stock === 0 && p.status !== 'Archived');
+            const lowStock = products.filter(p => p.stock > 0 && p.stock <= 5 && p.status !== 'Archived');
+
+
+
+            // Right-side list card: Critical Stock Alerts (max 4 for layout consistency)
+            const criticalList = document.getElementById('criticalAlertsList');
+            criticalList.innerHTML = '';
+            
+            const criticalProducts = [...outOfStock, ...lowStock].slice(0, 4);
+            criticalProducts.forEach(p => {
+                const isOut = p.stock === 0;
+                const badge = isOut ? '<span class="badge badge-danger">Out of stock</span>' : `<span class="badge badge-warning">Qty: ${p.stock}</span>`;
+                criticalList.innerHTML += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div>
+                            <span style="font-size: 13px; font-weight: 600;">${p.name}</span>
+                            <span style="display:block; font-size: 11px; color: var(--text-secondary);">${p.partNo}</span>
+                        </div>
+                        ${badge}
+                    </div>
+                `;
+            });
+            if (criticalProducts.length === 0) {
+                criticalList.innerHTML = '<div style="font-size: 13px; color: var(--text-secondary); text-align: center; padding: 12px 0;">All stocks healthy.</div>';
+            }
+
+            // 3. Populate Top Selling Products
+            const topBody = document.getElementById('topSellingTableBody');
+            topBody.innerHTML = '';
+
+            const demoTopSelling = [
+                { name: 'Engine Oil Filter',    partNo: 'EOF-102', category: 'Filters',       qty: 127, revenue: 107950 },
+                { name: 'Hydraulic Pump',       partNo: 'HP-001',  category: 'Hydraulics',    qty: 85,  revenue: 212500 },
+                { name: 'Fuel Filter Primary',  partNo: 'FLT-008', category: 'Filters',       qty: 68,  revenue: 30600  },
+                { name: 'Bucket Cylinder',      partNo: 'BC-104',  category: 'Hydraulics',    qty: 42,  revenue: 189000 },
+                { name: 'Rubber Track 400mm',   partNo: 'RT-400',  category: 'Undercarriage', qty: 28,  revenue: 238000 }
+            ];
+
+            const completed = transactions.filter(t => t.status === 'Completed' || t.status === 'Paid' || t.status === 'P.O. Approved');
+            
+            // Build from real transactions, fall back to demo
+            let topArr = [];
+            const productSalesMap = {};
+
+            completed.forEach(t => {
+                const prod = products.find(p => p.name === t.itemName);
+                if (!prod) return;
+                if (!productSalesMap[prod.id]) {
+                    productSalesMap[prod.id] = { name: prod.name, partNo: prod.partNo, category: prod.category, qty: 0, revenue: 0 };
+                }
+                productSalesMap[prod.id].qty     += t.qty;
+                productSalesMap[prod.id].revenue += t.amount;
+            });
+
+            topArr = Object.values(productSalesMap).sort((a, b) => b.qty - a.qty).slice(0, 5);
+            if (topArr.length < 3) topArr = demoTopSelling;
+
+            const maxRev = topArr[0] ? topArr[0].revenue : 1;
+
+            topArr.forEach((item, idx) => {
+                const pct = Math.round((item.revenue / maxRev) * 100);
+                const tr  = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="rank-cell">${idx + 1}</td>
+                    <td style="font-weight: 700;">${item.name}</td>
+                    <td style="color: var(--text-secondary);">${item.partNo}</td>
+                    <td>${item.category}</td>
+                    <td>${item.qty.toLocaleString()}</td>
+                    <td style="font-weight: 700;">₱${item.revenue.toLocaleString()}</td>
+                    <td>
+                        <div class="perf-bar-track">
+                            <div class="perf-bar-fill" style="width: ${pct}%;"></div>
+                        </div>
+                    </td>
+                `;
+                topBody.appendChild(tr);
+            });
+        }
+
+        // Run on load
+        updateDashboard();
+    </script>
+</body>
+</html>

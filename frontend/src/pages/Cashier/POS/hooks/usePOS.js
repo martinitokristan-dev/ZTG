@@ -1,0 +1,239 @@
+import { useState, useMemo } from 'react';
+import { useProducts } from '../../../../contexts/ProductContext';
+import { invalidateCachePage } from '../../../../shared/hooks/usePaginatedCache';
+import useCustomerCache, { resetCustomerCache } from '../../../../shared/hooks/useCustomerCache';
+import { resetDashboardCache } from '../../../../shared/hooks/useDashboardCache';
+import { resetReportsCache } from '../../../../shared/hooks/useReportsCache';
+import api from '../../../../shared/api';
+
+const fmt = (n) => `₱${Number(n || 0).toLocaleString('en-US')}`;
+
+export default function usePOS() {
+    const { products, categories: backendCategories } = useProducts();
+    const loadingProducts = products.length === 0;
+    const [searchQuery, setSearchQuery] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('All');
+
+    // Cart state
+    const [cart, setCart] = useState([]);
+    const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+    
+    // Customer Fields
+    const [existingCustomerSearch, setExistingCustomerSearch] = useState('');
+    const [selectedCustomer, setSelectedCustomer] = useState(null); // Full customer object if selected
+    const [newCustomerName, setNewCustomerName] = useState('');
+    const [customerPhone, setCustomerPhone] = useState('');
+    const [customerTin, setCustomerTin] = useState('');
+    const [customerAddress, setCustomerAddress] = useState('');
+    // Customer data — sourced from shared cache module (no duplicate /customer-log fetch)
+    const { customers: customersList } = useCustomerCache();
+
+    // Modals
+
+    // Filtered Products
+    const filteredProducts = useMemo(() => {
+        let list = products;
+        if (categoryFilter !== 'All') {
+            list = list.filter(p => p.category === categoryFilter || p.category?.name === categoryFilter);
+        }
+        if (searchQuery.trim() !== '') {
+            const q = searchQuery.toLowerCase();
+            list = list.filter(p => 
+                (p.name || '').toLowerCase().includes(q) ||
+                (p.part_no || p.partNo || '').toLowerCase().includes(q)
+            );
+        }
+        return list;
+    }, [products, categoryFilter, searchQuery]);
+
+    // Unique categories for pills
+    const categories = useMemo(() => {
+        const cats = new Set(products.map(p => p.category?.name || p.category).filter(Boolean));
+        return ['All', ...Array.from(cats)];
+    }, [products]);
+
+    // Cart Actions
+    const addToCart = (product, priceTier = 'price1') => {
+        if (product.stock <= 0) {
+            alert("This item is out of stock!");
+            return;
+        }
+
+        setCart(prev => {
+            const existing = prev.find(item => item.id == product.id && (item.priceTier || 'price1') === priceTier);
+            if (existing) {
+                // Sum total quantities in cart for this product to prevent exceeding stock
+                const totalQtyInCart = prev
+                    .filter(item => item.id == product.id)
+                    .reduce((sum, item) => sum + item.qty, 0);
+
+                if (totalQtyInCart >= product.stock) {
+                    alert("Cannot exceed available stock.");
+                    return prev;
+                }
+                return prev.map(item => (item.id == product.id && (item.priceTier || 'price1') === priceTier) ? { ...item, qty: item.qty + 1 } : item);
+            } else {
+                return [...prev, { ...product, qty: 1, priceTier }];
+            }
+        });
+    };
+
+    const updateCartQty = (productId, priceTier, delta) => {
+        setCart(prev => prev.map(item => {
+            if (item.id == productId && (item.priceTier || 'price1') === priceTier) {
+                const newQty = item.qty + delta;
+                if (newQty <= 0) return null; // Will filter out below
+
+                // Sum total quantities in cart for this product to prevent exceeding stock
+                const totalQtyInCart = prev
+                    .filter(i => i.id == productId && (i.priceTier || 'price1') !== priceTier)
+                    .reduce((sum, i) => sum + i.qty, 0) + newQty;
+
+                if (totalQtyInCart > item.stock) {
+                    alert("Cannot exceed available stock.");
+                    return item;
+                }
+                return { ...item, qty: newQty };
+            }
+            return item;
+        }).filter(Boolean));
+    };
+
+    const removeFromCart = (productId, priceTier) => {
+        setCart(prev => prev.filter(item => !(item.id == productId && (item.priceTier || 'price1') === priceTier)));
+    };
+
+    const updateCartItemPriceTier = (productId, oldTier, newTier) => {
+        setCart(prev => {
+            const index = prev.findIndex(item => item.id == productId && (item.priceTier || 'price1') === oldTier);
+            if (index === -1) return prev;
+
+            const next = [...prev];
+            const item = next[index];
+
+            // Check if there is already an item with the same id and the new price tier
+            const matchIndex = next.findIndex((c, i) => i !== index && c.id == productId && (c.priceTier || 'price1') === newTier);
+
+            if (matchIndex !== -1) {
+                // Merge quantity
+                const targetItem = next[matchIndex];
+                const totalQtyInCart = next
+                    .filter(i => i.id == productId && (i.priceTier || 'price1') !== newTier && (i.priceTier || 'price1') !== oldTier)
+                    .reduce((sum, i) => sum + i.qty, 0) + targetItem.qty + item.qty;
+
+                if (totalQtyInCart > item.stock) {
+                    alert("Merging would exceed available stock.");
+                    return prev;
+                }
+                
+                next[matchIndex] = { ...targetItem, qty: targetItem.qty + item.qty };
+                next.splice(index, 1);
+            } else {
+                next[index] = { ...item, priceTier: newTier };
+            }
+
+            return next;
+        });
+    };
+
+    const clearCart = () => setCart([]);
+
+    // Cart Totals
+    const cartTotals = useMemo(() => {
+        let vatInclusiveTotal = 0;
+        cart.forEach(item => {
+            const price = item.priceTier === 'price2' ? parseFloat(item.price2 || 0) : parseFloat(item.price1 || 0);
+            vatInclusiveTotal += price * item.qty;
+        });
+        
+        // VAT-inclusive logic: The price already includes the 12% tax.
+        const preVatSubtotal = vatInclusiveTotal / 1.12;
+        const tax = vatInclusiveTotal - preVatSubtotal;
+        
+        return { 
+            subtotal: preVatSubtotal, 
+            tax: tax, 
+            total: vatInclusiveTotal 
+        };
+    }, [cart]);
+
+    // Submit Checkout
+    const processCheckout = async (payload) => {
+        try {
+            // Map cart items for backend CheckoutRequest validator
+            const mappedCart = cart.map(item => ({
+                product_id: item.id,
+                qty: item.qty,
+                price_tier: item.priceTier || 'price1'
+            }));
+
+            // Map customer and payment details for backend CheckoutRequest validator
+            const fullPayload = {
+                cart: mappedCart,
+                customer_name: selectedCustomer ? selectedCustomer.name : (newCustomerName || 'Walk-in'),
+                customer_phone: customerPhone || '',
+                customer_tin: customerTin || '',
+                customer_address: customerAddress || '',
+                doc_type: payload.doc_type,
+                payment_method: payload.payment.method === 'Bank Transfer' ? 'Bank' : payload.payment.method,
+                amount_tendered: payload.payment.amount_tendered || null,
+                split_method_1: payload.payment.split?.[0]?.method === 'Bank Transfer' ? 'Bank' : (payload.payment.split?.[0]?.method || null),
+                split_amount_1: payload.payment.split?.[0]?.amount || null,
+                split_method_2: payload.payment.split?.[1]?.method === 'Bank Transfer' ? 'Bank' : (payload.payment.split?.[1]?.method || null),
+                split_amount_2: payload.payment.split?.[1]?.amount || null,
+            };
+
+            const res = await api.post('/pos/checkout', fullPayload);
+            if (res.status === 200 || res.status === 201) {
+                invalidateCachePage('sales', 1);
+                invalidateCachePage('history', 1);
+                invalidateCachePage('daily-sales', 1);
+
+                // Only reset customer cache if a new customer was registered
+                const registeredNewCustomer = !selectedCustomer && newCustomerName.trim() !== '';
+                if (registeredNewCustomer) {
+                    resetCustomerCache();
+                }
+
+                resetDashboardCache();
+                resetReportsCache();
+                clearCart();
+                setSelectedCustomer(null);
+                setNewCustomerName('');
+                setCustomerPhone('');
+                setCustomerTin('');
+                setCustomerAddress('');
+                setExistingCustomerSearch('');
+                return { success: true, transaction: res.data.transaction };
+            }
+        } catch (err) {
+            console.error("Checkout failed:", err);
+            return { success: false, error: err.response?.data?.message || err.message };
+        }
+    };
+
+    return {
+        products: filteredProducts,
+        loadingProducts,
+        categories,
+        searchQuery, setSearchQuery,
+        categoryFilter, setCategoryFilter,
+        
+        cart,
+        addToCart, updateCartQty, removeFromCart, updateCartItemPriceTier, clearCart,
+        cartTotals,
+        
+        existingCustomerSearch, setExistingCustomerSearch,
+        selectedCustomer, setSelectedCustomer,
+        newCustomerName, setNewCustomerName,
+        customerPhone, setCustomerPhone,
+        customerTin, setCustomerTin,
+        customerAddress, setCustomerAddress,
+        customersList,
+        
+        showCheckoutModal, setShowCheckoutModal,
+        processCheckout,
+        
+        fmt
+    };
+}

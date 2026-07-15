@@ -1,0 +1,334 @@
+<?php
+
+namespace App\Services\Transactions;
+
+use App\Enums\TransactionStatus;
+use App\Enums\TransactionType;
+use App\Models\Setting;
+use App\Models\Transaction;
+use App\Models\TransactionItem;
+use App\Models\User;
+use App\Services\Products\ProductService;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
+use App\Events\InventoryUpdated;
+use App\Events\TransactionUpdated;
+
+class TransactionService
+{
+    protected ProductService $productService;
+
+    public function __construct(ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
+
+    /**
+     * List transactions with optional filters.
+     * Returns latest-first, paginated 20 per page.
+     */
+    public function getAll(array $filters = []): LengthAwarePaginator
+    {
+        $query = Transaction::with(['customer', 'cashier', 'approver', 'items.product'])
+            ->latest('date');
+
+        if (!empty($filters['status'])) {
+            $statuses = array_map('trim', explode(',', $filters['status']));
+            $query->whereIn('status', $statuses);
+        }
+
+        if (!empty($filters['type'])) {
+            $query->where('type', $filters['type']);
+        }
+
+        if (!empty($filters['payment_method'])) {
+            $method = $filters['payment_method'];
+            if ($method === 'Cash') {
+                $query->where(function ($q) {
+                    $q->where('payment_method', 'Cash')
+                      ->orWhere('payment_method', 'like', 'Split: Cash %')
+                      ->orWhere('payment_method', 'like', '% + Cash %');
+                });
+            } elseif ($method === 'Bank') {
+                $query->where('payment_method', 'like', '%Bank%');
+            } else {
+                $query->where('payment_method', 'like', '%' . $method . '%');
+            }
+        }
+
+        if (!empty($filters['cashier_id'])) {
+            $query->where('cashier_id', $filters['cashier_id']);
+        }
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('date', '>=', $filters['date_from']);
+        }
+
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('date', '<=', $filters['date_to']);
+        }
+
+        if (!empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('si_no', 'like', '%' . $filters['search'] . '%')
+                  ->orWhere('or_no', 'like', '%' . $filters['search'] . '%')
+                  ->orWhereHas('customer', function ($cq) use ($filters) {
+                      $cq->where('name', 'like', '%' . $filters['search'] . '%');
+                  });
+            });
+        }
+
+        return $query->paginate(20);
+    }
+
+    /**
+     * Get a single transaction with all relationships.
+     */
+    public function show(int $id): Transaction
+    {
+        return Transaction::with(['customer', 'cashier', 'approver', 'items.product'])
+            ->findOrFail($id);
+    }
+
+    /**
+     * Verify a user's PIN.
+     * On failure, logs a Security Alert transaction.
+     */
+    public function verifyPin(int $userId, string $pin, ?string $context = null): bool
+    {
+        $user = User::find($userId);
+
+        if (!$user || $user->pin !== $pin) {
+            // Log a security alert for failed PIN attempt
+            Transaction::create([
+                'si_no'          => 'SEC-' . now()->timestamp,
+                'date'           => now(),
+                'cashier_id'     => $userId,
+                'total_qty'      => 0,
+                'amount'         => 0,
+                'payment_method' => 'N/A',
+                'status'         => TransactionStatus::SECURITY_ALERT->value,
+                'type'           => TransactionType::SYSTEM->value,
+                'internal_notes' => 'Failed PIN attempt' . ($context ? " — {$context}" : '') . '. Approver ID: ' . $userId,
+            ]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check the daily void/refund limit from settings.
+     */
+    private function checkDailyVoidLimit(int $cashierId): void
+    {
+        $limitSetting = Setting::where('key', 'daily_void_limit')->first();
+        $limit = $limitSetting ? (int) $limitSetting->value : 5;
+
+        $todayVoids = Transaction::where('cashier_id', $cashierId)
+            ->whereIn('status', [
+                TransactionStatus::VOID->value,
+                TransactionStatus::REFUND->value,
+                TransactionStatus::RETURN->value,
+            ])
+            ->whereDate('date', today())
+            ->count();
+
+        if ($todayVoids >= $limit) {
+            throw ValidationException::withMessages([
+                'limit' => ["Daily void/refund limit of {$limit} has been reached for today."],
+            ]);
+        }
+    }
+
+    /**
+     * Process a refund or return on selected items.
+     */
+    public function processRefundOrReturn(Transaction $transaction, array $data, int $cashierId): Transaction
+    {
+        $refundType  = $data['refund_type'];
+        $approverId  = $data['approver_id'];
+        $pin         = $data['approval_pin'];
+        $restoreStock= $data['restore_stock'];
+        $markDamaged = $data['mark_damaged'];
+        $reason      = $data['reason'];
+
+        // 1. Ensure transaction is Completed before refunding
+        $currentStatus = is_object($transaction->status) ? $transaction->status->value : $transaction->status;
+        if ($currentStatus !== 'Completed') {
+            throw ValidationException::withMessages([
+                'transaction' => ['Only completed transactions can be refunded or returned.'],
+            ]);
+        }
+
+        // 2. Verify approver PIN
+        $contextMsg = "for {$refundType} on invoice {$transaction->si_no}. Approver ID: {$approverId}";
+        if (!$this->verifyPin($approverId, $pin, $contextMsg)) {
+            throw ValidationException::withMessages([
+                'approval_pin' => ['Invalid approver PIN. The failed attempt has been logged.'],
+            ]);
+        }
+
+        // 3. Check daily void limit
+        $this->checkDailyVoidLimit($cashierId);
+
+        $updated = DB::transaction(function () use ($transaction, $data, $cashierId, $refundType, $restoreStock, $markDamaged, $reason, $approverId, $pin) {
+            $refundedItems = $data['items'];
+            $totalRefundAmount = 0;
+            $invActions = [];
+
+            foreach ($refundedItems as $refundEntry) {
+                $item = TransactionItem::findOrFail($refundEntry['item_id']);
+
+                // Ensure item belongs to this transaction
+                if ($item->transaction_id !== $transaction->id) {
+                    throw ValidationException::withMessages([
+                        'items' => ["Item ID {$item->id} does not belong to this transaction."],
+                    ]);
+                }
+
+                $qty = min($refundEntry['qty'], $item->qty);
+                $totalRefundAmount += $item->price * $qty;
+
+                $product = $item->product;
+
+                if ($restoreStock && $product) {
+                    $newStock = $product->stock + $qty;
+                    $newStatus = $this->productService->calculateStatus(
+                        $newStock,
+                        $product->alert_limit,
+                        is_object($product->status) ? $product->status->value : $product->status
+                    );
+                    $product->update(['stock' => $newStock, 'status' => $newStatus]);
+                    $invActions[] = "Restocked to Shelf ({$qty} × {$product->part_no})";
+                }
+
+                if ($markDamaged && $product) {
+                    $product->update(['damaged' => $product->damaged + $qty]);
+                    $invActions[] = "Moved to Scrap/Damaged ({$qty} × {$product->part_no})";
+                }
+            }
+
+            // Apply 12% VAT-inclusive amount
+            $vatAmount = round($totalRefundAmount * 1.12, 2);
+
+            // Build OR No
+            $orPrefix = $refundType === 'Refund' ? 'OR-RFD' : 'OR-RTN';
+            $orNo = $orPrefix . '-' . now()->timestamp;
+
+            // Determine action_type string
+            $actionType = $refundType === 'Refund'
+                ? 'Refunded via ' . (is_object($transaction->payment_method) ? $transaction->payment_method->value : $transaction->payment_method)
+                : 'Exchange / Store Credit';
+
+            $approver = User::find($approverId);
+
+            $transaction->update([
+                'status'      => $refundType,
+                'refund_reason'=> $reason,
+                'action_type' => $actionType,
+                'inv_action'  => implode('; ', $invActions) ?: 'No Stock Action',
+                'approver_id' => $approverId,
+                'approval_code'=> $pin,
+                'or_no'       => $orNo,
+                'amount'      => $vatAmount,
+            ]);
+
+            return $transaction->fresh(['customer', 'cashier', 'approver', 'items.product']);
+        });
+
+        // Dispatch real-time events outside the DB transaction block
+        if ($restoreStock) {
+            foreach ($updated->items as $item) {
+                if ($item->product) {
+                    event(new InventoryUpdated($item->product_id, (int) $item->product->stock));
+                }
+            }
+        }
+        event(new TransactionUpdated($updated));
+
+        return $updated;
+    }
+
+    /**
+     * Void an entire transaction.
+     */
+    public function processVoid(Transaction $transaction, array $data, int $cashierId): Transaction
+    {
+        $adminId      = $data['admin_id'];
+        $adminPin     = $data['admin_pin'];
+        $voidReason   = $data['void_reason'];
+        $restoreStock = $data['restore_stock'];
+
+        // 1. Ensure transaction is Completed
+        $currentStatus = is_object($transaction->status) ? $transaction->status->value : $transaction->status;
+        if ($currentStatus !== 'Completed') {
+            throw ValidationException::withMessages([
+                'transaction' => ['Only completed transactions can be voided.'],
+            ]);
+        }
+
+        // 2. Verify admin PIN
+        $contextMsg = "Void on invoice {$transaction->si_no}. Admin ID: {$adminId}";
+        if (!$this->verifyPin($adminId, $adminPin, $contextMsg)) {
+            throw ValidationException::withMessages([
+                'admin_pin' => ['Invalid admin PIN. The failed attempt has been logged.'],
+            ]);
+        }
+
+        // 3. Check daily limit
+        $this->checkDailyVoidLimit($cashierId);
+
+        $updated = DB::transaction(function () use ($transaction, $adminId, $adminPin, $voidReason, $restoreStock) {
+            $invAction = 'No Stock Restoration';
+
+            if ($restoreStock) {
+                $invActions = [];
+                foreach ($transaction->items as $item) {
+                    $product = $item->product;
+                    if ($product) {
+                        $newStock = $product->stock + $item->qty;
+                        $newStatus = $this->productService->calculateStatus(
+                            $newStock,
+                            $product->alert_limit,
+                            is_object($product->status) ? $product->status->value : $product->status
+                        );
+                        $product->update(['stock' => $newStock, 'status' => $newStatus]);
+                        $invActions[] = "Restocked ({$item->qty} × {$product->part_no})";
+                    }
+                }
+                $invAction = implode('; ', $invActions) ?: 'Restocked to Shelf';
+            }
+
+            $orNo = 'OR-VOID-' . now()->timestamp;
+            $approver = User::find($adminId);
+
+            $transaction->update([
+                'status'        => TransactionStatus::VOID->value,
+                'void_reason'   => $voidReason,
+                'approver_id'   => $adminId,
+                'approval_code' => $adminPin,
+                'or_no'         => $orNo,
+                'inv_action'    => $invAction,
+            ]);
+
+            return $transaction->fresh(['customer', 'cashier', 'approver', 'items.product']);
+        });
+
+        // Dispatch real-time events outside the DB transaction block
+        if ($restoreStock) {
+            foreach ($updated->items as $item) {
+                if ($item->product) {
+                    event(new InventoryUpdated($item->product_id, (int) $item->product->stock));
+                }
+            }
+        }
+        event(new TransactionUpdated($updated));
+
+        return $updated;
+    }
+}

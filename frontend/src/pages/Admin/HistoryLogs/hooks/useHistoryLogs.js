@@ -1,0 +1,176 @@
+import { useState, useMemo, useEffect } from 'react';
+import api from '../../../../shared/api';
+import usePaginatedCache, { invalidateCachePage } from '../../../../shared/hooks/usePaginatedCache';
+import echo from '../../../../lib/echo';
+import { resetDashboardCache } from '../../../../shared/hooks/useDashboardCache';
+import { resetReportsCache } from '../../../../shared/hooks/useReportsCache';
+
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+const fmt = (n) => `₱${Number(n || 0).toLocaleString('en-US')}`;
+
+export default function useHistoryLogs() {
+    // Filtering
+    const [activeTab, setActiveTab] = useState('All'); // All, Refund, Return, Void
+    const [searchQuery, setSearchQuery] = useState('');
+    const [paymentFilter, setPaymentFilter] = useState('All');
+    
+    // Modal states
+    const [showRefundModal, setShowRefundModal] = useState(false);
+    const [selectedTxForRefund, setSelectedTxForRefund] = useState(null);
+
+    const [showVoidModal, setShowVoidModal] = useState(false);
+    const [selectedTxForVoid, setSelectedTxForVoid] = useState(null);
+
+    const [showViewModal, setShowViewModal] = useState(false);
+    const [selectedTxForView, setSelectedTxForView] = useState(null);
+
+    // Map UI states to backend API query params
+    const statusParam = activeTab === 'All' ? '' : activeTab;
+    const paymentParam = paymentFilter === 'All' ? '' : paymentFilter;
+    const searchParam = searchQuery.trim();
+
+    const queryParams = useMemo(() => ({
+        status: statusParam,
+        type: paymentParam,
+        search: searchParam,
+    }), [statusParam, paymentParam, searchParam]);
+
+    const { data: transactions, loading, page, setPage, pagination, refetch } = usePaginatedCache('history', '/transactions', queryParams);
+
+    useEffect(() => {
+        const token = localStorage.getItem('auth_token');
+        const userStr = localStorage.getItem('auth_user');
+        let channel = null;
+
+        if (token && userStr) {
+            const user = JSON.parse(userStr);
+            if (['Admin', 'Supervisor', 'Cashier'].includes(user.role)) {
+                channel = echo.private('transactions')
+                    .listen('.TransactionCreated', (e) => {
+                        console.log('[Echo Debug] HistoryLogs TransactionCreated event received:', e);
+                        refetch();
+                    })
+                    .listen('.TransactionUpdated', (e) => {
+                        console.log('[Echo Debug] HistoryLogs TransactionUpdated event received:', e);
+                        refetch();
+                    });
+            }
+        }
+
+        return () => {
+            if (channel) {
+                echo.leaveChannel('private-transactions');
+            }
+        };
+    }, [refetch]);
+
+    const loadHistory = () => {
+        invalidateCachePage('history', page);
+        invalidateCachePage('sales', page);
+        invalidateCachePage('daily-sales', 1);
+        resetDashboardCache();
+        resetReportsCache();
+    };
+
+    // Derived filtered list (No longer filtered client-side, using paginated results directly)
+    let filteredList = transactions;
+
+    // Modal handlers
+    const handleOpenRefund = (tx) => {
+        setSelectedTxForRefund(tx);
+        setShowRefundModal(true);
+    };
+
+    const handleCloseRefund = () => {
+        setSelectedTxForRefund(null);
+        setShowRefundModal(false);
+    };
+
+    const handleSubmitRefund = async (payload) => {
+        try {
+            await api.post(`/transactions/${selectedTxForRefund.id}/${payload.type.toLowerCase()}`, payload);
+            handleCloseRefund();
+            loadHistory();
+        } catch (err) {
+            console.error("Refund failed:", err);
+            alert("Action failed: " + (err.response?.data?.message || err.message));
+        }
+    };
+
+    const handleOpenVoid = (tx) => {
+        setSelectedTxForVoid(tx);
+        setShowVoidModal(true);
+    };
+
+    const handleCloseVoid = () => {
+        setSelectedTxForVoid(null);
+        setShowVoidModal(false);
+    };
+
+    const handleOpenView = (tx) => {
+        setSelectedTxForView(tx);
+        setShowViewModal(true);
+    };
+
+    const handleCloseView = () => {
+        setSelectedTxForView(null);
+        setShowViewModal(false);
+    };
+
+    const handleVoid = async (txId, payload) => {
+        try {
+            await api.post(`/transactions/${txId}/void`, payload);
+            handleCloseVoid();
+            loadHistory();
+        } catch (err) {
+            console.error("Void failed:", err);
+            alert("Void failed: " + (err.response?.data?.message || err.message));
+        }
+    };
+
+    const handleSearchTransaction = async (siNo) => {
+        if (!siNo) return null;
+        // Search locally first
+        const found = transactions.find(t => 
+            (t.si_no && t.si_no.toLowerCase() === siNo.toLowerCase()) || 
+            (t.receipt_number && t.receipt_number.toLowerCase() === siNo.toLowerCase()) ||
+            (t.or_no && t.or_no.toLowerCase() === siNo.toLowerCase())
+        );
+        if (found) {
+            setSelectedTxForRefund(found);
+            return found;
+        }
+        return null;
+    };
+
+    return {
+        loading,
+        transactions: filteredList,
+        page,
+        setPage,
+        pagination,
+        activeTab,
+        setActiveTab,
+        searchQuery,
+        setSearchQuery,
+        paymentFilter,
+        setPaymentFilter,
+        showRefundModal,
+        selectedTxForRefund,
+        handleOpenRefund,
+        handleCloseRefund,
+        handleSubmitRefund,
+        handleSearchTransaction,
+        showVoidModal,
+        selectedTxForVoid,
+        handleOpenVoid,
+        handleCloseVoid,
+        handleVoid,
+        showViewModal,
+        selectedTxForView,
+        handleOpenView,
+        handleCloseView,
+        fmt,
+        fmtDate
+    };
+}

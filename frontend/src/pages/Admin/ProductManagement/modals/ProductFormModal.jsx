@@ -1,0 +1,272 @@
+import React from 'react';
+
+const ImageUploadDropzone = ({ image, onUpload }) => (
+    <div style={{ border: '2px dashed var(--border)', borderRadius: '8px', padding: '20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '16px', backgroundColor: '#F8FAFC', cursor: 'pointer', position: 'relative' }}>
+        <input type="file" accept="image/*" onChange={onUpload} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
+        {image ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                <img src={image} alt="Preview" style={{ maxHeight: '120px', borderRadius: '4px', objectFit: 'cover' }} />
+                <span style={{ fontSize: '12px', color: 'var(--primary)', fontWeight: 600 }}>Replace product image</span>
+            </div>
+        ) : (
+            <>
+                <svg viewBox="0 0 24 24" style={{ width: '32px', height: '32px', fill: 'none', stroke: 'currentColor', strokeWidth: 2, display: 'block', margin: '0 auto 8px auto', opacity: 0.5 }}>
+                    <path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Click to upload product image or drag and drop<br />
+                <span style={{ fontSize: '11px', opacity: 0.7 }}>SVG, PNG, JPG or GIF (max. 800x400px)</span>
+            </>
+        )}
+    </div>
+);
+
+export default function ProductFormModal({
+    isOpen, mode,
+    onClose, onSubmit,
+    formData, setFormData,
+    categories, variantOptions,
+    handleAddressChange, handleImageUpload,
+    errorMessage, selectedProduct,
+}) {
+    if (!isOpen) return null;
+
+    const isEdit = mode === 'edit';
+    const title = isEdit ? `Edit Product: ${selectedProduct?.name}` : 'Add New Product';
+    const submitLabel = isEdit ? 'Update Product' : 'Add Product';
+
+    return (
+        <div className="modal-overlay">
+            <div className="modal-card modal-card-lg" style={{ maxWidth: '700px', width: '90%' }}>
+                <form onSubmit={onSubmit}>
+                    <div className="modal-header">
+                        <h3 className="modal-title">{title}</h3>
+                        <button type="button" className="modal-close" onClick={onClose}>
+                            <svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }}>
+                                <path d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                        {errorMessage && <div style={{ padding: '12px', background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#991B1B', borderRadius: '6px', fontSize: '13px', fontWeight: 600, marginBottom: '16px' }}>{errorMessage}</div>}
+
+                        <ImageUploadDropzone image={formData.image} onUpload={handleImageUpload} />
+
+                        {/* Basic Information Section */}
+                        <div className="section-header">Basic Information</div>
+                        <div className="grid-2">
+                            <div className="form-group">
+                                <label className="form-label">Part Number <span style={{ color: 'red' }}>*</span></label>
+                                <input type="text" className="form-control" required placeholder="e.g. TRK-003" value={formData.part_no} onChange={(e) => setFormData({ ...formData, part_no: e.target.value })} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Category <span style={{ color: 'red' }}>*</span></label>
+                                <select className="form-control" required value={formData.category_id} onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}>
+                                    <option value="">Select Category</option>
+                                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="grid-2">
+                            <div className="form-group">
+                                <label className="form-label">English Name <span style={{ color: 'red' }}>*</span></label>
+                                <input type="text" className="form-control" required placeholder="e.g. Track Link Assembly" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Chinese Name <span style={{ color: 'red' }}>*</span></label>
+                                <input type="text" className="form-control" required placeholder="e.g. 履带链节总成" value={formData.chinese_name} onChange={(e) => setFormData({ ...formData, chinese_name: e.target.value })} />
+                            </div>
+                        </div>
+
+                        {/* Warehouse Address Section */}
+                        <div className="section-header">Warehouse Address / Location</div>
+                        <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                            <div className="form-group">
+                                <label className="form-label">Aisle</label>
+                                <input type="text" className="form-control" placeholder="e.g. A" value={formData.aisle} onChange={(e) => handleAddressChange('aisle', e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Carrier</label>
+                                <input type="text" className="form-control" placeholder="e.g. 12" value={formData.carrier} onChange={(e) => handleAddressChange('carrier', e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Hang</label>
+                                <input type="text" className="form-control" placeholder="e.g. 3" value={formData.hang} onChange={(e) => handleAddressChange('hang', e.target.value)} />
+                            </div>
+                        </div>
+
+                        {/* Pricing & Stock Alert levels */}
+                        <div className="section-header">Pricing & Stock Alerts</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '16px' }}>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">Original Price <span style={{ color: 'red' }}>*</span></label>
+                                <input type="number" className="form-control" required min="0" step="any" placeholder="₱0.00" value={formData.price1 === 0 ? '' : formData.price1} onChange={(e) => setFormData({ ...formData, price1: e.target.value === '' ? '' : parseFloat(e.target.value) })} />
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">Retail Price</label>
+                                <input type="number" className="form-control" min="0" step="any" placeholder="₱0.00" value={formData.price2 === 0 ? '' : formData.price2} onChange={(e) => setFormData({ ...formData, price2: e.target.value === '' ? '' : parseFloat(e.target.value) })} />
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">Initial Stock <span style={{ color: 'red' }}>*</span></label>
+                                <input type="number" className="form-control" required min="0" placeholder="0" value={formData.stock === 0 ? '' : formData.stock} onChange={(e) => setFormData({ ...formData, stock: e.target.value === '' ? '' : parseInt(e.target.value) })} />
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">Alert Level <span style={{ color: 'red' }}>*</span></label>
+                                <input type="number" className="form-control" required min="1" placeholder="5" value={formData.alert_limit === 0 ? '' : formData.alert_limit} onChange={(e) => setFormData({ ...formData, alert_limit: e.target.value === '' ? '' : parseInt(e.target.value) })} />
+                            </div>
+                        </div>
+
+                        {/* Status & Variants */}
+                        <div className="section-header">Status & Variants</div>
+                        <div className="grid-2">
+                            <div className="form-group">
+                                <label className="form-label">Product Status</label>
+                                <select className="form-control" value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })}>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingTop: '24px' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-main)', cursor: 'pointer' }}>
+                                    <input type="checkbox" style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }} checked={formData.is_dead_stock} onChange={(e) => setFormData({ ...formData, is_dead_stock: e.target.checked })} />
+                                    Mark as Dead Stock
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: '12px', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px', backgroundColor: 'var(--bg-main, #f5f6fa)', marginBottom: '16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>Product Variants</span>
+                                <button type="button" className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px' }}
+                                    onClick={() => {
+                                        const newVariants = [...(formData.variants || []), {
+                                            name: '', part_no: formData.part_no ? `${formData.part_no}-` : '',
+                                            price1: formData.price1 || 0, price2: formData.price2 || 0,
+                                            stock: 0, alert_limit: formData.alert_limit || 5, option_ids: []
+                                        }];
+                                        setFormData({ ...formData, variants: newVariants });
+                                    }}>
+                                    <svg viewBox="0 0 24 24" style={{ width: '12px', height: '12px', fill: 'none', stroke: 'currentColor', strokeWidth: 2.5 }}><path d="M12 5v14M5 12h14" /></svg>
+                                    Add Variant
+                                </button>
+                            </div>
+
+                            {(!formData.variants || formData.variants.length === 0) ? (
+                                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center', padding: '10px 0' }}>
+                                    No variants added yet. Click "Add Variant" to configure options.
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {formData.variants.map((variant, idx) => (
+                                        <div key={idx} style={{ padding: '12px', border: '1px solid var(--border)', borderRadius: '6px', backgroundColor: 'white', position: 'relative' }}>
+                                            <button type="button" onClick={() => {
+                                                const nv = [...formData.variants];
+                                                nv.splice(idx, 1);
+                                                setFormData({ ...formData, variants: nv });
+                                            }} style={{ position: 'absolute', top: '8px', right: '8px', color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
+                                            
+                                            <div className="grid-2" style={{ marginBottom: '12px' }}>
+                                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                                    <label className="form-label">Variant Name *</label>
+                                                    <input type="text" className="form-control" required value={variant.name} onChange={(e) => {
+                                                        const nv = [...formData.variants]; nv[idx].name = e.target.value; setFormData({ ...formData, variants: nv });
+                                                    }} />
+                                                </div>
+                                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                                    <label className="form-label">Variant Part No. *</label>
+                                                    <input type="text" className="form-control" required value={variant.part_no} onChange={(e) => {
+                                                        const nv = [...formData.variants]; nv[idx].part_no = e.target.value; setFormData({ ...formData, variants: nv });
+                                                    }} />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid-4" style={{ gap: '12px', marginBottom: '12px' }}>
+                                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                                    <label className="form-label">Orig. Price</label>
+                                                    <input type="number" className="form-control" required min="0" value={variant.price1 === 0 ? '' : variant.price1} onChange={(e) => {
+                                                        const nv = [...formData.variants]; nv[idx].price1 = e.target.value === '' ? '' : parseFloat(e.target.value); setFormData({ ...formData, variants: nv });
+                                                    }} />
+                                                </div>
+                                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                                    <label className="form-label">Retail Price</label>
+                                                    <input type="number" className="form-control" min="0" value={variant.price2 === 0 ? '' : variant.price2} onChange={(e) => {
+                                                        const nv = [...formData.variants]; nv[idx].price2 = e.target.value === '' ? '' : parseFloat(e.target.value); setFormData({ ...formData, variants: nv });
+                                                    }} />
+                                                </div>
+                                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                                    <label className="form-label">Initial Stock</label>
+                                                    <input type="number" className="form-control" required min="0" value={variant.stock === 0 ? '' : variant.stock} onChange={(e) => {
+                                                        const nv = [...formData.variants]; nv[idx].stock = e.target.value === '' ? '' : parseInt(e.target.value); setFormData({ ...formData, variants: nv });
+                                                    }} />
+                                                </div>
+                                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                                    <label className="form-label">Alert Lvl</label>
+                                                    <input type="number" className="form-control" required min="0" value={variant.alert_limit === 0 ? '' : variant.alert_limit} onChange={(e) => {
+                                                        const nv = [...formData.variants]; nv[idx].alert_limit = e.target.value === '' ? '' : parseInt(e.target.value); setFormData({ ...formData, variants: nv });
+                                                    }} />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid-2" style={{ borderTop: '1px solid var(--border)', paddingTop: '12px', marginTop: '4px' }}>
+                                                {(() => {
+                                                    const selectedCatId = parseInt(formData.category_id);
+                                                    if (!selectedCatId) return <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Select a category first.</div>;
+                                                    
+                                                    const selectedCatObj = categories.find(c => c.id === selectedCatId);
+                                                    if (!selectedCatObj || !selectedCatObj.variants || selectedCatObj.variants.length === 0) {
+                                                        return <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>No variant types are assigned to this category.</div>;
+                                                    }
+                                                    
+                                                    const allowedTypes = selectedCatObj.variants; // e.g. ['size', 'quality']
+                                                    const filteredOptions = variantOptions?.filter(v => allowedTypes.includes(v.name.toLowerCase()));
+                                                    
+                                                    return filteredOptions && filteredOptions.map(vType => (
+                                                    <div className="form-group" key={vType.id} style={{ marginBottom: 0 }}>
+                                                        <label className="form-label" style={{ color: 'var(--primary)' }}>{vType.name}</label>
+                                                        <select className="form-control" style={{ backgroundColor: '#F8FAFC' }}
+                                                            value={variant.option_ids?.find(id => vType.options.some(opt => opt.id === id)) || ''}
+                                                            onChange={(e) => {
+                                                                const val = parseInt(e.target.value);
+                                                                const nv = [...formData.variants];
+                                                                const oldIds = nv[idx].option_ids || [];
+                                                                const filteredIds = oldIds.filter(id => !vType.options.some(opt => opt.id === id));
+                                                                if (!isNaN(val)) filteredIds.push(val);
+                                                                nv[idx].option_ids = filteredIds;
+                                                                setFormData({ ...formData, variants: nv });
+                                                            }}>
+                                                            <option value="">-- None --</option>
+                                                            {vType.options.map(opt => <option key={opt.id} value={opt.id}>{opt.value}</option>)}
+                                                        </select>
+                                                    </div>
+                                                ))})()}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Initial Damaged / Scrap Count</label>
+                            <input type="number" className="form-control" min="0" value={formData.damaged} onChange={(e) => setFormData({ ...formData, damaged: parseInt(e.target.value) || 0 })} />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Notes / Description</label>
+                            <textarea className="form-control" rows="2" placeholder="Enter optional notes..." value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })}></textarea>
+                        </div>
+                    </div>
+
+                    <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Fields marked with <span style={{ color: 'red' }}>*</span> are required.</div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+                            <button type="submit" className="btn btn-primary">{submitLabel}</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}

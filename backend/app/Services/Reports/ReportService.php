@@ -206,7 +206,11 @@ class ReportService
         if (!empty($filters['search'])) {
             $query->where(function ($q) use ($filters) {
                 $q->where('name', 'like', '%' . $filters['search'] . '%')
-                  ->orWhere('part_no', 'like', '%' . $filters['search'] . '%');
+                  ->orWhere('part_no', 'like', '%' . $filters['search'] . '%')
+                  ->orWhereHas('variants', function ($sub) use ($filters) {
+                      $sub->where('name', 'like', '%' . $filters['search'] . '%')
+                          ->orWhere('part_no', 'like', '%' . $filters['search'] . '%');
+                  });
             });
         }
 

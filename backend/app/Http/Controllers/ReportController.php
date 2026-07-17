@@ -36,9 +36,11 @@ class ReportController extends Controller
     /**
      * Sales Summary Report.
      */
-    public function salesSummary(): JsonResponse
+    public function salesSummary(Request $request): JsonResponse
     {
-        $data = $this->reportService->getSalesSummary();
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        $data = $this->reportService->getSalesSummary($startDate, $endDate);
         return response()->json($data);
     }
 
@@ -48,16 +50,20 @@ class ReportController extends Controller
     public function productPerformance(Request $request): JsonResponse
     {
         $deadStockDays = (int) $request->input('dead_stock_days', 30);
-        $data = $this->reportService->getProductPerformance($deadStockDays);
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        $data = $this->reportService->getProductPerformance($deadStockDays, $startDate, $endDate);
         return response()->json($data);
     }
 
     /**
      * Refund / Void Analysis.
      */
-    public function refundVoidAnalysis(): JsonResponse
+    public function refundVoidAnalysis(Request $request): JsonResponse
     {
-        $data = $this->reportService->getRefundVoidAnalysis();
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        $data = $this->reportService->getRefundVoidAnalysis($startDate, $endDate);
         return response()->json($data);
     }
 

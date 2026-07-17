@@ -1,10 +1,11 @@
 import React from 'react';
 
-export default function ProductReportTab({ productPerformance, refundVoidAnalysis }) {
-    const { top_sellers = [], dead_stock = [] } = productPerformance || {};
+export default function ProductReportTab({ productPerformance, refundVoidAnalysis, startDate, setStartDate, endDate, setEndDate }) {
+    const { top_sellers = [], dead_stock = [], totals = {} } = productPerformance || {};
     
-    const refundsCount = refundVoidAnalysis?.total_refunds || 0;
-    const damagedCount = 0; // Backend endpoint might need expanding for damaged items if needed
+    const returnsCount = totals.returns_qty || 0;
+    const refundsCount = totals.refunds_qty || 0;
+    const damagedCount = totals.damaged_qty || 0;
 
     return (
         <div>
@@ -12,9 +13,9 @@ export default function ProductReportTab({ productPerformance, refundVoidAnalysi
                 <div style={{ padding: 0, margin: 0, display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Date Range:</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} />
+                        <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} value={startDate} onChange={e => setStartDate(e.target.value)} />
                         <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>to</span>
-                        <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} />
+                        <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} value={endDate} onChange={e => setEndDate(e.target.value)} />
                     </div>
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '12px' }}>Category:</span>
                     <select className="form-control form-control-sm" style={{ width: '180px' }}>
@@ -34,7 +35,7 @@ export default function ProductReportTab({ productPerformance, refundVoidAnalysi
                 </div>
                 <div className="kpi-card">
                     <div className="kpi-label">Total Returns</div>
-                    <div className="kpi-value">{refundsCount}</div>
+                    <div className="kpi-value">{returnsCount}</div>
                 </div>
                 <div className="kpi-card">
                     <div className="kpi-label">Total Refunds</div>
@@ -64,15 +65,17 @@ export default function ProductReportTab({ productPerformance, refundVoidAnalysi
                             </tr>
                         </thead>
                         <tbody>
-                            {top_sellers.slice(0, 10).map((p, i) => (
+                            {top_sellers.length === 0 ? (
+                                <tr><td colSpan="9" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No product movement for the selected date range.</td></tr>
+                            ) : top_sellers.slice(0, 10).map((p, i) => (
                                 <tr key={i}>
                                     <td>{p.part_no || 'N/A'}</td>
                                     <td>{p.name}</td>
                                     <td>{p.category || 'Uncategorized'}</td>
                                     <td>{p.sales_count}</td>
-                                    <td>0</td>
-                                    <td>0</td>
-                                    <td>0</td>
+                                    <td>{p.returns_count || 0}</td>
+                                    <td>{p.refunds_count || 0}</td>
+                                    <td>{p.damaged_count || 0}</td>
                                     <td>{p.stock}</td>
                                     <td>{p.stock > 0 ? 'In Stock' : 'Out of Stock'}</td>
                                 </tr>

@@ -1,11 +1,5 @@
 import React from 'react';
-
-const statusBadge = (status) => {
-    const s = (status?.value || status || '').toLowerCase();
-    if (s === 'completed') return <span className="badge badge-success">Completed</span>;
-    if (s === 'cancelled') return <span className="badge badge-danger">Cancelled</span>;
-    return <span className="badge badge-warning">Pending</span>;
-};
+import StatusBadge from '../../../shared/components/StatusBadge';
 
 export default function ReservationsTable({
     reservations, loading,
@@ -84,7 +78,7 @@ export default function ReservationsTable({
                                         <td style={{ fontSize: '12px', color: fulfilledByName ? 'var(--success)' : 'var(--text-muted)' }}>
                                             {fulfilledByName ? `Fulfilled by: ${fulfilledByName}` : (r.reserved_by?.real_name || r.reserved_by?.name || '—')}
                                         </td>
-                                        <td>{statusBadge(r.status)}</td>
+                                        <td><StatusBadge status={r.status?.value || r.status || 'Pending'} /></td>
                                         <td style={{ textAlign: 'center' }}>
                                             {isPending ? (
                                                 <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>

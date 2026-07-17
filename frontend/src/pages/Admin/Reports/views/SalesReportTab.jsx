@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import api from '../../../../shared/api';
 import { resetReportsCache } from '../../../../shared/hooks/useReportsCache';
+import StatusBadge from '../../../../shared/components/StatusBadge';
 
-export default function SalesReportTab({ salesSummary, fmt, fmtDate, isReportGenerated, setIsReportGenerated }) {
+export default function SalesReportTab({ salesSummary, fmt, fmtDate, isReportGenerated, setIsReportGenerated, startDate, setStartDate, endDate, setEndDate }) {
     const [confirming, setConfirming] = useState(false);
 
     const handleConfirm = async () => {
@@ -25,12 +26,12 @@ export default function SalesReportTab({ salesSummary, fmt, fmtDate, isReportGen
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
                 <div style={{ padding: 0, margin: 0, display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    {/* Placeholder filters to match mockup visually */}
+                    {/* Date Filters */}
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Date Range:</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} />
+                        <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} value={startDate} onChange={e => setStartDate(e.target.value)} />
                         <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>to</span>
-                        <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} />
+                        <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} value={endDate} onChange={e => setEndDate(e.target.value)} />
                     </div>
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '12px' }}>Cashier:</span>
                     <select className="form-control form-control-sm" style={{ width: '160px' }}>
@@ -77,7 +78,7 @@ export default function SalesReportTab({ salesSummary, fmt, fmtDate, isReportGen
                 </div>
                 <div className="kpi-card">
                     <div className="kpi-label">Total Items Sold</div>
-                    <div className="kpi-value">{salesSummary ? salesSummary.total_items_sold || 0 : '0'}</div>
+                    <div className="kpi-value">{salesSummary ? salesSummary.total_items_sold : '0'}</div>
                 </div>
             </div>
 
@@ -98,7 +99,29 @@ export default function SalesReportTab({ salesSummary, fmt, fmtDate, isReportGen
                             </tr>
                         </thead>
                         <tbody>
-                            <tr><td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Available in Sales Log module</td></tr>
+                            {!salesSummary?.transactions || salesSummary.transactions.length === 0 ? (
+                                <tr><td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No transactions found for the selected date range.</td></tr>
+                            ) : (
+                                salesSummary.transactions.map((tx, i) => {
+                                    const isDeduction = (tx.status === 'Refund' || tx.status === 'Return' || tx.status === 'Void');
+                                    const amountColor = isDeduction ? 'var(--danger, #DC2626)' : 'var(--success, #16A34A)';
+                                    const amountPrefix = isDeduction ? '- ' : '';
+                                    const productNames = tx.items?.map(item => item.product?.name || item.name || '—').join(', ') || '—';
+                                    
+                                    return (
+                                        <tr key={tx.id || i}>
+                                            <td style={{ color: '#64748B' }}>{fmtDate(tx.date || tx.created_at)}</td>
+                                            <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{tx.si_no || tx.receipt_number || '-'}</td>
+                                            <td><span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{productNames}</span></td>
+                                            <td style={{ color: 'var(--text-secondary)' }}>{tx.total_qty || tx.items?.reduce((s, it) => s + (it.qty||0), 0) || 0}</td>
+                                            <td style={{ fontWeight: '700', color: amountColor }}>{amountPrefix}{fmt(tx.amount)}</td>
+                                            <td style={{ color: 'var(--text-secondary)' }}>{tx.payment_method}</td>
+                                            <td style={{ color: 'var(--text-secondary)' }}>{(tx.cashier?.name || '-').split(' ')[0]}</td>
+                                            <td><StatusBadge status={tx.status} /></td>
+                                        </tr>
+                                    );
+                                })
+                            )}
                         </tbody>
                     </table>
                 </div>

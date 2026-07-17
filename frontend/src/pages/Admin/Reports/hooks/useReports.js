@@ -14,10 +14,17 @@ export default function useReports() {
     const [customerLog, setCustomerLog] = useState([]);
     const [isReportGenerated, setIsReportGenerated] = useState(false);
 
+    // Global Date Range State
+    const today = new Date();
+    const tzOffset = today.getTimezoneOffset() * 60000;
+    const localISOTime = (new Date(Date.now() - tzOffset)).toISOString().slice(0, 10);
+    const [startDate, setStartDate] = useState(localISOTime);
+    const [endDate, setEndDate] = useState(localISOTime);
+
     const loadReports = async () => {
         try {
             setLoading(true);
-            const cachedStats = await fetchReportsData();
+            const cachedStats = await fetchReportsData(startDate, endDate);
 
             setSalesSummary(cachedStats.salesSummary);
             setProductPerformance(cachedStats.productPerformance);
@@ -33,7 +40,7 @@ export default function useReports() {
 
     useEffect(() => {
         loadReports();
-    }, []);
+    }, [startDate, endDate]);
 
     return {
         loading,
@@ -43,6 +50,8 @@ export default function useReports() {
         customerLog,
         isReportGenerated,
         setIsReportGenerated,
+        startDate, setStartDate,
+        endDate, setEndDate,
         fmt,
         fmtDate
     };

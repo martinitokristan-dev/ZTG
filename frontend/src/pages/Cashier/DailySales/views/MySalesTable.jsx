@@ -1,4 +1,5 @@
 import React from 'react';
+import StatusBadge from '../../../../shared/components/StatusBadge';
 
 export default function MySalesTable({ loading, items, fmt, fmtDate }) {
     if (loading) {
@@ -12,37 +13,6 @@ export default function MySalesTable({ loading, items, fmt, fmtDate }) {
             </div>
         );
     }
-
-    const getStatusBadge = (status) => {
-        let bg = '#FEF3C7', color = '#D97706', icon = (
-            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" strokeWidth="2.5" style={{ flexShrink: 0, display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}>
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-        );
-        let text = 'Pending';
-
-        if (status === 'Completed' || status === 'Paid' || status === 'P.O. Approved') {
-            bg = '#DCFCE7'; color = '#16A34A'; text = 'Completed';
-            icon = (
-                <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" strokeWidth="2.5" style={{ flexShrink: 0, display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}>
-                    <polyline points="20 6 9 17 4 12"/>
-                </svg>
-            );
-        } else if (status === 'Refund' || status === 'Return') {
-            bg = '#FEE2E2'; color = '#DC2626'; text = 'Refund';
-            icon = (
-                <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" strokeWidth="2.5" style={{ flexShrink: 0, display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}>
-                    <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
-                </svg>
-            );
-        }
-
-        return (
-            <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '700', backgroundColor: bg, color: color, display: 'inline-flex', alignItems: 'center' }}>
-                {icon} {text}
-            </span>
-        );
-    };
 
     return (
         <div className="card table-card" style={{ background: '#FFFFFF', borderRadius: '10px', border: '1px solid var(--border)' }}>
@@ -85,7 +55,7 @@ export default function MySalesTable({ loading, items, fmt, fmtDate }) {
                                     <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{item._txCustomer}</td>
                                     <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{item._txPayment}</td>
                                     <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{(item._txCashier || '-').split(' ')[0]}</td>
-                                    <td style={{ padding: '16px' }}>{getStatusBadge(item._txStatus)}</td>
+                                    <td style={{ padding: '16px' }}><StatusBadge status={item._txStatus} /></td>
                                 </tr>
                             );
                         })}

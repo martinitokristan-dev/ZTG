@@ -54,6 +54,9 @@ export default function POS() {
                             customerAddress={pos.customerAddress}
                             setCustomerAddress={pos.setCustomerAddress}
                             
+                            selectedCustomer={pos.selectedCustomer}
+                            setSelectedCustomer={pos.setSelectedCustomer}
+                            
                             customersList={pos.customersList}
                             
                             setShowCheckoutModal={pos.setShowCheckoutModal}

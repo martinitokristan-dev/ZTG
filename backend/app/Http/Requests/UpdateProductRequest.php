@@ -37,7 +37,7 @@ class UpdateProductRequest extends FormRequest
             'variants'                => 'nullable|array',
             'variants.*.id'           => 'nullable|integer|exists:products,id',
             'variants.*.name'         => 'required_with:variants|string|max:255',
-            'variants.*.part_no'      => 'required_with:variants|string|max:50|distinct',
+            'variants.*.part_no'      => 'required_with:variants|string|max:50|distinct|different:part_no',
             'variants.*.stock'        => 'required_with:variants|integer|min:0',
             'variants.*.alert_limit'  => 'nullable|integer|min:0',
             'variants.*.price1'       => 'required_with:variants|numeric|min:0',
@@ -49,6 +49,14 @@ class UpdateProductRequest extends FormRequest
             'variants.*.damaged'      => 'nullable|integer|min:0',
             'variants.*.option_ids'   => 'required_with:variants|array',
             'variants.*.option_ids.*' => 'exists:variant_options,id',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'variants.*.part_no.different' => 'A variant cannot have the same part number as the main product.',
+            'variants.*.part_no.distinct'  => 'Each variant must have a unique part number.',
         ];
     }
 }

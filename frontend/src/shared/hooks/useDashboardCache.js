@@ -36,7 +36,8 @@ export async function fetchDashboardData(products) {
             todayRevenue: summaryRes.data.total_revenue || 0,
             employeeCount: Array.isArray(employeesRes.data) ? employeesRes.data.length : 0,
             topProduct,
-            topSellers
+            topSellers,
+            last7Days: summaryRes.data.last_7_days || []
         };
 
         dashboardCache.data = stats;

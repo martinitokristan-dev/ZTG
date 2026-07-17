@@ -41,7 +41,8 @@ export function useDashboard() {
                     totalStock: totalStock,
                     todayRevenue: cachedStats.todayRevenue,
                     employeeCount: cachedStats.employeeCount,
-                    topProduct: cachedStats.topProduct
+                    topProduct: cachedStats.topProduct,
+                    last7Days: cachedStats.last7Days || []
                 });
 
                 const topSellers = cachedStats.topSellers;

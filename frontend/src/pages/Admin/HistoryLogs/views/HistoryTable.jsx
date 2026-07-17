@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { printUnifiedReceipt } from '../../../../utils/printReceipt';
+import StatusBadge from '../../../../shared/components/StatusBadge';
 
 export default function HistoryTable({ 
     loading, transactions, fmt, fmtDate, 
@@ -63,14 +64,6 @@ export default function HistoryTable({
         );
     }
 
-    const getStatusStyle = (status) => {
-        if (status === 'Completed') return { color: '#10B981', fontWeight: '600' };
-        if (status === 'Refund') return { color: '#DC2626', fontWeight: '600' };
-        if (status === 'Return') return { color: '#F59E0B', fontWeight: '600' };
-        if (status === 'Void') return { backgroundColor: '#DC2626', color: '#FFFFFF', padding: '2px 8px', borderRadius: '4px', fontWeight: '700', display: 'inline-block' };
-        return { color: '#94A3B8', fontWeight: '600' };
-    };
-
     return (
         <div className="card table-card">
             <div style={{ overflowX: 'auto' }}>
@@ -118,7 +111,7 @@ export default function HistoryTable({
                                     <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{(tx.cashier?.name || 'Unknown').split(' ')[0]}</td>
                                     <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{tx.payment_method || '—'}</td>
                                     <td style={{ padding: '16px' }}>
-                                        <span style={getStatusStyle(tx.status)}>{tx.status || 'Completed'}</span>
+                                        <StatusBadge status={tx.status || 'Completed'} />
                                     </td>
                                     <td style={{ padding: '16px', color: '#64748B', fontSize: '12px' }}>
                                         {tx.status === 'Refund' || tx.status === 'Return' ? (tx.refund_reason || '—') : 

@@ -172,7 +172,7 @@ export default function usePOS() {
             // Map customer and payment details for backend CheckoutRequest validator
             const fullPayload = {
                 cart: mappedCart,
-                customer_name: selectedCustomer ? selectedCustomer.name : (newCustomerName || 'Walk-in'),
+                customer_name: selectedCustomer ? selectedCustomer.name : (existingCustomerSearch || newCustomerName || 'Walk-in'),
                 customer_phone: customerPhone || '',
                 customer_tin: customerTin || '',
                 customer_address: customerAddress || '',

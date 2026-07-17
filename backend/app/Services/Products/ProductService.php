@@ -125,7 +125,7 @@ class ProductService
                         'price2'            => $variantData['price2'],
                         'status'            => $variantStatus,
                         'notes'             => $variantData['notes'] ?? null,
-                        'image'             => $variantData['image'] ?? null,
+                        'image'             => !empty($variantData['image']) ? $variantData['image'] : ($data['image'] ?? null),
                         'is_dead_stock'     => $variantData['is_dead_stock'] ?? false,
                         'damaged'           => $variantData['damaged'] ?? 0,
                     ]);
@@ -226,7 +226,7 @@ class ProductService
                             'price2'            => $variantData['price2'],
                             'status'            => $variantStatus,
                             'notes'             => array_key_exists('notes', $variantData) ? $variantData['notes'] : ($variant ? $variant->notes : null),
-                            'image'             => $variantData['image'] ?? null,
+                            'image'             => !empty($variantData['image']) ? $variantData['image'] : ($data['image'] ?? null),
                             'is_dead_stock'     => array_key_exists('is_dead_stock', $variantData) ? $variantData['is_dead_stock'] : ($variant ? $variant->is_dead_stock : false),
                             'damaged'           => array_key_exists('damaged', $variantData) ? $variantData['damaged'] : ($variant ? $variant->damaged : 0),
                         ];

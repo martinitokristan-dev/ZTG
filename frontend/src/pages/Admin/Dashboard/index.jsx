@@ -70,7 +70,7 @@ export default function Dashboard() {
                         <StatCards stats={stats} />
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24, alignItems: 'start' }}>
-                            <SalesTrendChart />
+                            <SalesTrendChart last7Days={stats.last7Days || []} />
                             <CriticalStockAlerts />
                         </div>
 

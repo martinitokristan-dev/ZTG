@@ -14,6 +14,8 @@ export default function CartSidebar({
     customerTin, setCustomerTin,
     customerAddress, setCustomerAddress,
     
+    selectedCustomer, setSelectedCustomer,
+    
     customersList,
     
     setShowCheckoutModal,
@@ -62,6 +64,9 @@ export default function CartSidebar({
                                 onBlur={() => setIsDropdownOpen(false)}
                                 onChange={(e) => {
                                     setExistingCustomerSearch(e.target.value);
+                                    if (selectedCustomer && selectedCustomer.name !== e.target.value) {
+                                        setSelectedCustomer(null);
+                                    }
                                     if (e.target.value) setError('');
                                 }}
                             />
@@ -75,6 +80,7 @@ export default function CartSidebar({
                                             onMouseDown={(e) => {
                                                 // Prevent input blur from triggering before selection registers
                                                 e.preventDefault();
+                                                setSelectedCustomer(c);
                                                 setExistingCustomerSearch(c.name);
                                                 setCustomerPhone(c.contact || c.contact_number || c.phone || '');
                                                 setCustomerTin(c.tin || '');

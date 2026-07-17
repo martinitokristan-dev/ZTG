@@ -61,6 +61,9 @@ class PhaseSevenTest extends TestCase
         Setting::create(['key' => 'send_low_stock_alerts', 'value' => 'true']);
         Setting::create(['key' => 'send_oos_alerts', 'value' => 'true']);
         Setting::create(['key' => 'enable_transaction_alerts_checkbox', 'value' => 'true']);
+        Setting::create(['key' => 'send_void_transaction_alerts', 'value' => 'true']);
+        Setting::create(['key' => 'send_refund_alerts', 'value' => 'true']);
+        Setting::create(['key' => 'send_return_alerts', 'value' => 'true']);
     }
 
     /* ─── Notification Tests ──────────────────────────────── */
@@ -134,8 +137,8 @@ class PhaseSevenTest extends TestCase
             'type'           => TransactionType::SALE->value,
         ]);
 
-        // Should log a transaction notification
-        $this->assertDatabaseHas('notifications', [
+        // 'Completed' transactions no longer generate notifications to reduce noise.
+        $this->assertDatabaseMissing('notifications', [
             'type'           => NotificationType::TRANSACTION->value,
             'transaction_id' => $tx->id,
             'title'          => 'Sale Completed',

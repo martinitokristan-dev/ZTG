@@ -4,7 +4,7 @@ export default function ProductsTab({
     activeSubTab, setActiveSubTab, settings, handleSettingInputChange, handleToggleSetting,
     categories, setSelectedCategory, setCategoryName, setShowCategoryModal, handleDeleteCategory, setCategoryVariants,
     newOptionValue, setNewOptionValue, handleAddVariantOption, handleDeleteVariantOption, getOptionsForType,
-    handleSaveBulkSettings
+    handleSaveBulkSettings, handleUpdateVariantOption
 }) {
     return (
         <div className="prod-tabs-layout">

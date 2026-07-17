@@ -44,9 +44,9 @@ export default function Reports() {
                         <div style={{ padding: '40px', textAlign: 'center', color: '#64748B' }}>Loading reports data...</div>
                     ) : (
                         <>
-                            {activeTab === 'sales' && <SalesReportTab salesSummary={rep.salesSummary} fmt={rep.fmt} fmtDate={rep.fmtDate} isReportGenerated={rep.isReportGenerated} setIsReportGenerated={rep.setIsReportGenerated} />}
-                            {activeTab === 'products' && <ProductReportTab productPerformance={rep.productPerformance} refundVoidAnalysis={rep.refundVoidAnalysis} />}
-                            {activeTab === 'payments' && <PaymentMethodsTab salesSummary={rep.salesSummary} fmt={rep.fmt} />}
+                            {activeTab === 'sales' && <SalesReportTab salesSummary={rep.salesSummary} fmt={rep.fmt} fmtDate={rep.fmtDate} isReportGenerated={rep.isReportGenerated} setIsReportGenerated={rep.setIsReportGenerated} startDate={rep.startDate} setStartDate={rep.setStartDate} endDate={rep.endDate} setEndDate={rep.setEndDate} />}
+                            {activeTab === 'products' && <ProductReportTab productPerformance={rep.productPerformance} refundVoidAnalysis={rep.refundVoidAnalysis} startDate={rep.startDate} setStartDate={rep.setStartDate} endDate={rep.endDate} setEndDate={rep.setEndDate} />}
+                            {activeTab === 'payments' && <PaymentMethodsTab salesSummary={rep.salesSummary} fmt={rep.fmt} startDate={rep.startDate} setStartDate={rep.setStartDate} endDate={rep.endDate} setEndDate={rep.setEndDate} />}
                         </>
                     )}
                 </div>

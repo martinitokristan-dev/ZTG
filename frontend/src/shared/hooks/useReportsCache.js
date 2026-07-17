@@ -12,22 +12,20 @@ export const resetReportsCache = () => {
     reportsCache = { data: null, fetchedAt: 0, promise: null };
 };
 
-export async function fetchReportsData() {
-    const now = Date.now();
-    if (reportsCache.data && (now - reportsCache.fetchedAt < TTL_MS)) {
-        return reportsCache.data;
-    }
+export async function fetchReportsData(startDate, endDate) {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    const qs = params.toString() ? `?${params.toString()}` : '';
 
-    if (reportsCache.promise) {
-        return reportsCache.promise;
-    }
-
+    // Always fetch fresh data if dates are provided, bypassing the TTL cache
+    // Or we can just ignore TTL for now as the user expects fresh data on date change
     reportsCache.promise = Promise.all([
-        api.get('/reports/sales-summary').catch(() => ({ data: {} })),
-        api.get('/reports/product-performance').catch(() => ({ data: {} })),
-        api.get('/reports/refund-void-analysis').catch(() => ({ data: {} })),
-        api.get('/customer-log').catch(() => ({ data: [] })),
-        api.get('/reports/generation-status').catch(() => ({ data: { generated: false } }))
+        api.get(`/reports/sales-summary${qs}`).catch(() => ({ data: {} })),
+        api.get(`/reports/product-performance${qs}`).catch(() => ({ data: {} })),
+        api.get(`/reports/refund-void-analysis${qs}`).catch(() => ({ data: {} })),
+        api.get(`/customer-log`).catch(() => ({ data: [] })),
+        api.get(`/reports/generation-status`).catch(() => ({ data: { generated: false } }))
     ]).then(([salesRes, perfRes, refundRes, customerRes, statusRes]) => {
         const stats = {
             salesSummary: salesRes.data,

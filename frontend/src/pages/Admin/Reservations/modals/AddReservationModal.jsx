@@ -6,7 +6,7 @@ export default function AddReservationModal({
     pickupDate, setPickupDate, pickupTime, setPickupTime, notes, setNotes,
     paymentType, setPaymentType, paymentMethod, setPaymentMethod,
     cartItems, productSearch, suggestions, addError, addLoading,
-    handleProductSearch, addToCart, removeFromCart, updateQty,
+    handleProductSearch, addToCart, removeFromCart, updateQty, updateCartItemPriceTier,
     subtotal, tax, total, depositAmt, balance, fmt
 }) {
     if (!isOpen) return null;
@@ -126,7 +126,18 @@ export default function AddReservationModal({
                                                         <input type="number" min="1" max={c.stock} value={c.qty} onChange={(e) => updateQty(c.product_id, e.target.value)}
                                                             style={{ width: '56px', textAlign: 'center', padding: '4px 6px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13px', fontWeight: 600 }} />
                                                     </td>
-                                                    <td style={{ padding: '10px 16px', textAlign: 'right', color: 'var(--text-secondary)' }}>{fmt(c.price)}</td>
+                                                    <td style={{ padding: '10px 16px', textAlign: 'right' }}>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                                            <select 
+                                                                value={c.priceTier || 'price2'} 
+                                                                onChange={(e) => updateCartItemPriceTier(c.product_id, c.priceTier || 'price2', e.target.value)}
+                                                                style={{ border: 'none', background: 'transparent', fontSize: '11px', fontWeight: '700', color: (c.priceTier || 'price2') === 'price1' ? '#2563EB' : '#7C3AED', outline: 'none', cursor: 'pointer', padding: 0, direction: 'rtl' }}
+                                                            >
+                                                                <option value="price1">Original ({fmt(c.price1 || 0)})</option>
+                                                                <option value="price2">Retail ({fmt(c.price2 || 0)})</option>
+                                                            </select>
+                                                        </div>
+                                                    </td>
                                                     <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: 'var(--primary)' }}>{fmt(c.price * c.qty)}</td>
                                                     <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                                                         <button type="button" onClick={() => removeFromCart(c.product_id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: '4px' }}>

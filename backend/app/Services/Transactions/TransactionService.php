@@ -44,6 +44,13 @@ class TransactionService
             $query->where('type', $filters['type']);
         }
 
+        // tx_type is the dedicated param sent by the History Log frontend
+        // (avoids collision with the payment_method param that was previously
+        //  mis-keyed as 'type' in the frontend query).
+        if (!empty($filters['tx_type'])) {
+            $query->where('type', $filters['tx_type']);
+        }
+
         if (!empty($filters['payment_method'])) {
             $method = $filters['payment_method'];
             if ($method === 'Cash') {
@@ -213,8 +220,8 @@ class TransactionService
                 }
             }
 
-            // Apply 12% VAT-inclusive amount
-            $vatAmount = round($totalRefundAmount * 1.12, 2);
+            // Set refund transaction amount (totalRefundAmount is already VAT-inclusive)
+            $refundedAmount = round($totalRefundAmount, 2);
 
             // Build OR No
             $orPrefix = $refundType === 'Refund' ? 'OR-RFD' : 'OR-RTN';
@@ -235,7 +242,7 @@ class TransactionService
                 'approver_id' => $approverId,
                 'approval_code'=> $pin,
                 'or_no'       => $orNo,
-                'amount'      => $vatAmount,
+                'amount'      => $refundedAmount,
             ]);
 
             return $transaction->fresh(['customer', 'cashier', 'approver', 'items.product']);

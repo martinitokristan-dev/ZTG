@@ -58,8 +58,11 @@ export default function ProductsTable({
 
         // Variant options label
         let varLabel = '';
-        if (isVariantSubRow && product.variant_options) {
-            varLabel = product.variant_options.map(opt => opt.value).join(', ');
+        if (isVariantSubRow) {
+            const options = product.variant_options || product.variantOptions;
+            if (options && Array.isArray(options)) {
+                varLabel = options.map(opt => opt.value).join(', ');
+            }
         }
 
         // Parent categories

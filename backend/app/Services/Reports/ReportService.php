@@ -206,7 +206,7 @@ class ReportService
         $outOfStockCount = (clone $sellableQuery)->where('stock', 0)->count();
 
         // 2. Query products with filters
-        $query = Product::with(['category', 'variants'])
+        $query = Product::with(['category', 'variants.variantOptions.type'])
             ->whereNull('parent_product_id');
 
         if (!empty($filters['category_id'])) {

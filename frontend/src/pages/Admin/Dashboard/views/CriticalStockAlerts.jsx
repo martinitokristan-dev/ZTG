@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useInventory } from '../../../contexts/InventoryContext';
-import { flattenToSellableSKUs } from '../../../shared/utils/skuHelpers';
+import { useInventory } from '../../../../contexts/InventoryContext';
+import { flattenToSellableSKUs } from '../../../../shared/utils/skuHelpers';
 
 export default function CriticalStockAlerts() {
     const navigate = useNavigate();

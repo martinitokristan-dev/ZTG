@@ -33,41 +33,67 @@ class TestApiFlowCommand extends Command
 
         // 2. Create Category
         $this->info("\n--- STEP 1: Creating Product Category ---");
-        $catRes = $this->post('/categories', ['name' => 'Heavy Equipments ' . time()]);
-        $categoryId = $catRes['category']['id'] ?? $catRes['id'] ?? null;
-        $this->info("   Category Created successfully ID: {$categoryId}");
+        $existingCat = \App\Models\Category::where('name', 'Heavy Equipments')->first();
+        if ($existingCat) {
+            $categoryId = $existingCat->id;
+            $this->info("   Category 'Heavy Equipments' Already Exists (ID: {$categoryId})");
+        } else {
+            $catRes = $this->post('/categories', ['name' => 'Heavy Equipments']);
+            $categoryId = $catRes['category']['id'] ?? $catRes['id'] ?? null;
+            $this->info("   Category 'Heavy Equipments' Created (ID: {$categoryId})");
+        }
 
         // 3. Create Variant Type: Size
         $this->info("\n--- STEP 2: Creating Variant Type (Size) ---");
-        $sizeRes = $this->post('/variants', [
-            'name' => 'Size ' . time(),
-            'options' => ['Small', 'Medium', 'Large']
-        ]);
-        $sizeTypeId = $sizeRes['variant_type']['id'] ?? $sizeRes['id'] ?? null;
-        $sizeOptions = $sizeRes['variant_type']['options'] ?? [];
+        $existingSize = \App\Models\VariantType::where('name', 'Size')->first();
+        if ($existingSize) {
+            $sizeTypeId = $existingSize->id;
+            $sizeOptions = $existingSize->options()->get()->toArray();
+            $this->info("   Variant Type 'Size' Already Exists (ID: {$sizeTypeId})");
+        } else {
+            $sizeRes = $this->post('/variants', [
+                'name' => 'Size',
+                'options' => ['Small', 'Medium', 'Large']
+            ]);
+            $sizeTypeId = $sizeRes['variant_type']['id'] ?? $sizeRes['id'] ?? null;
+            $sizeOptions = $sizeRes['variant_type']['options'] ?? [];
+        }
         $mediumSizeId = null;
+        $smallSizeId = null;
         foreach ($sizeOptions as $opt) {
             if ($opt['value'] === 'Medium') {
                 $mediumSizeId = $opt['id'];
+            } elseif ($opt['value'] === 'Small') {
+                $smallSizeId = $opt['id'];
             }
         }
-        $this->info("   Variant Type 'Size' Created (ID: {$sizeTypeId}), Medium Option ID: {$mediumSizeId}");
+        $this->info("   Variant Type 'Size' ID: {$sizeTypeId}, Medium Option ID: {$mediumSizeId}, Small Option ID: {$smallSizeId}");
 
         // 4. Create Variant Type: Color
         $this->info("\n--- STEP 3: Creating Variant Type (Color) ---");
-        $colorRes = $this->post('/variants', [
-            'name' => 'Color ' . time(),
-            'options' => ['Red', 'Yellow', 'Black']
-        ]);
-        $colorTypeId = $colorRes['variant_type']['id'] ?? $colorRes['id'] ?? null;
-        $colorOptions = $colorRes['variant_type']['options'] ?? [];
+        $existingColor = \App\Models\VariantType::where('name', 'Color')->first();
+        if ($existingColor) {
+            $colorTypeId = $existingColor->id;
+            $colorOptions = $existingColor->options()->get()->toArray();
+            $this->info("   Variant Type 'Color' Already Exists (ID: {$colorTypeId})");
+        } else {
+            $colorRes = $this->post('/variants', [
+                'name' => 'Color',
+                'options' => ['Red', 'Yellow', 'Black']
+            ]);
+            $colorTypeId = $colorRes['variant_type']['id'] ?? $colorRes['id'] ?? null;
+            $colorOptions = $colorRes['variant_type']['options'] ?? [];
+        }
         $yellowColorId = null;
+        $redColorId = null;
         foreach ($colorOptions as $opt) {
             if ($opt['value'] === 'Yellow') {
                 $yellowColorId = $opt['id'];
+            } elseif ($opt['value'] === 'Red') {
+                $redColorId = $opt['id'];
             }
         }
-        $this->info("   Variant Type 'Color' Created (ID: {$colorTypeId}), Yellow Option ID: {$yellowColorId}");
+        $this->info("   Variant Type 'Color' ID: {$colorTypeId}, Yellow Option ID: {$yellowColorId}, Red Option ID: {$redColorId}");
 
         // 5. Create Product with Size/Color Variant
         $this->info("\n--- STEP 4: Creating Product with Size/Color Variants ---");
@@ -88,6 +114,14 @@ class TestApiFlowCommand extends Command
                     'price1' => 1100,
                     'price2' => 1300,
                     'option_ids' => [$mediumSizeId, $yellowColorId]
+                ],
+                [
+                    'name' => 'ZTG Hydraulic Pump - Small Red',
+                    'part_no' => 'HP-PUMP-' . time() . '-SR',
+                    'stock' => 30,
+                    'price1' => 1050,
+                    'price2' => 1250,
+                    'option_ids' => [$smallSizeId, $redColorId]
                 ]
             ]
         ]);

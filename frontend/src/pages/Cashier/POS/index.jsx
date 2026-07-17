@@ -11,7 +11,7 @@ export default function POS() {
         <div className="main-workspace-outer">
 
             <div className="main-workspace">
-                <div className="top-bar" style={{ borderBottom: '1px solid var(--border)', padding: '24px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, background: '#FFFFFF', height: 'auto' }}>
+                <div className="top-bar" style={{ borderBottom: '1px solid var(--border)', padding: '24px 88px 24px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, background: '#FFFFFF', height: 'auto' }}>
                     <div>
                         <h1 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '4px', fontFamily: '"Outfit", sans-serif', color: 'var(--text-primary)' }}>Point of Sale (POS)</h1>
                         <div className="page-description" style={{ marginTop: '0', fontSize: '13px', color: 'var(--text-secondary)' }}>Process cashier sales immediately. Verify inventory and process change calculations.</div>

@@ -99,6 +99,14 @@ export default function HistoryLogs() {
                                 <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" strokeWidth="2.5" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> 
                                 Void
                             </button>
+                            <button
+                                className={`status-tab ${hl.activeTab === 'Reservation' ? 'active' : ''}`}
+                                style={{ padding: '8px 16px', border: '1px solid var(--border)', borderRadius: '20px', background: hl.activeTab === 'Reservation' ? 'var(--primary)' : '#fff', color: hl.activeTab === 'Reservation' ? '#fff' : 'var(--text-secondary)', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px' }}
+                                onClick={() => hl.setActiveTab('Reservation')}
+                            >
+                                <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                Reservation
+                            </button>
 
                         </div>
 

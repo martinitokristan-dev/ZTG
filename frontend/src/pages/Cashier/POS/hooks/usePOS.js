@@ -149,8 +149,8 @@ export default function usePOS() {
         });
         
         // VAT-inclusive logic: The price already includes the 12% tax.
-        const preVatSubtotal = vatInclusiveTotal / 1.12;
-        const tax = vatInclusiveTotal - preVatSubtotal;
+        const preVatSubtotal = Math.round((vatInclusiveTotal / 1.12) * 100) / 100;
+        const tax = Math.round((vatInclusiveTotal - preVatSubtotal) * 100) / 100;
         
         return { 
             subtotal: preVatSubtotal, 

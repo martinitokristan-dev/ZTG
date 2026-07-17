@@ -64,12 +64,15 @@ export default function useSalesLog() {
             price: t.amount,
             variant: ''
         }];
-        
         items.forEach(item => {
+            const resolvedName = item.product?.name || item.name || 'Unknown Product';
+            const resolvedPartNo = item.product?.part_no || item.partNo || 'N/A';
             flattenedItems.push({
                 ...item,
+                name: resolvedName,
+                part_no: resolvedPartNo,
                 _txDate: t.date || t.created_at,
-                _txReceipt: t.receipt_number,
+                _txReceipt: t.si_no || t.receipt_number,
                 _txCustomer: t.customer?.name || 'Guest',
                 _txCashier: t.cashier?.name || 'Unknown',
                 _txPayment: t.payment_method || '—',

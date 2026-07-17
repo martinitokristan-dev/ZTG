@@ -430,19 +430,26 @@ export default function useProductManagement() {
     };
 
     const openEdit = (product) => {
-        setSelectedProduct(product);
-        const parts = (product.address || '').split('-');
+        let targetProduct = product;
+        if (product.parent_product_id) {
+            const parent = products.find(p => p.id === product.parent_product_id);
+            if (parent) {
+                targetProduct = parent;
+            }
+        }
+        setSelectedProduct(targetProduct);
+        const parts = (targetProduct.address || '').split('-');
         setFormData({
-            name: product.name, chinese_name: product.chinese_name || '',
-            part_no: product.part_no, category_id: product.category_id,
-            address: product.address || '',
+            name: targetProduct.name, chinese_name: targetProduct.chinese_name || '',
+            part_no: targetProduct.part_no, category_id: targetProduct.category_id,
+            address: targetProduct.address || '',
             aisle: parts[0] || '', carrier: parts[1] || '', hang: parts[2] || '',
-            stock: product.stock, alert_limit: product.alert_limit || 5,
-            price1: product.price1, price2: product.price2,
-            image: product.image || '', notes: product.notes || '',
-            variants: product.variants ? product.variants.map(v => ({...v, option_ids: v.variant_options ? v.variant_options.map(o => o.id) : []})) : [],
-            status: product.status || 'Active',
-            is_dead_stock: !!product.is_dead_stock, damaged: product.damaged || 0
+            stock: targetProduct.stock, alert_limit: targetProduct.alert_limit || 5,
+            price1: targetProduct.price1, price2: targetProduct.price2,
+            image: targetProduct.image || '', notes: targetProduct.notes || '',
+            variants: targetProduct.variants ? targetProduct.variants.map(v => ({...v, option_ids: v.variant_options ? v.variant_options.map(o => o.id) : []})) : [],
+            status: targetProduct.status || 'Active',
+            is_dead_stock: !!targetProduct.is_dead_stock, damaged: targetProduct.damaged || 0
         });
         setShowEditModal(true);
     };

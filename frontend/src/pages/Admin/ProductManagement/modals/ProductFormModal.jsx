@@ -35,10 +35,28 @@ export default function ProductFormModal({
     const title = isEdit ? `Edit Product: ${selectedProduct?.name}` : 'Add New Product';
     const submitLabel = isEdit ? 'Update Product' : 'Add Product';
 
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (formData.variants && formData.variants.length > 0) {
+            for (let i = 0; i < formData.variants.length; i++) {
+                const v = formData.variants[i];
+                if (!v.name || !v.name.trim()) {
+                    alert(`Variant at position ${i + 1} must have a name.`);
+                    return;
+                }
+                if (v.part_no && v.part_no.endsWith('-')) {
+                    alert(`Variant part number "${v.part_no}" cannot end with a trailing dash. Please provide a suffix.`);
+                    return;
+                }
+            }
+        }
+        onSubmit(e);
+    };
+
     return (
         <div className="modal-overlay">
             <div className="modal-card modal-card-lg" style={{ maxWidth: '700px', width: '90%' }}>
-                <form onSubmit={onSubmit}>
+                <form onSubmit={handleSubmit}>
                     <div className="modal-header">
                         <h3 className="modal-title">{title}</h3>
                         <button type="button" className="modal-close" onClick={onClose}>
@@ -218,23 +236,32 @@ export default function ProductFormModal({
                                                         return <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>No variant types are assigned to this category.</div>;
                                                     }
                                                     
-                                                    const allowedTypes = selectedCatObj.variants; // e.g. ['size', 'quality']
+                                                    const allowedTypes = selectedCatObj.variants ? selectedCatObj.variants.map(t => t.toLowerCase()) : [];
                                                     const filteredOptions = variantOptions?.filter(v => allowedTypes.includes(v.name.toLowerCase()));
                                                     
                                                     return filteredOptions && filteredOptions.map(vType => (
                                                     <div className="form-group" key={vType.id} style={{ marginBottom: 0 }}>
-                                                        <label className="form-label" style={{ color: 'var(--primary)' }}>{vType.name}</label>
-                                                        <select className="form-control" style={{ backgroundColor: '#F8FAFC' }}
-                                                            value={variant.option_ids?.find(id => vType.options.some(opt => opt.id === id)) || ''}
-                                                            onChange={(e) => {
-                                                                const val = parseInt(e.target.value);
-                                                                const nv = [...formData.variants];
-                                                                const oldIds = nv[idx].option_ids || [];
-                                                                const filteredIds = oldIds.filter(id => !vType.options.some(opt => opt.id === id));
-                                                                if (!isNaN(val)) filteredIds.push(val);
-                                                                nv[idx].option_ids = filteredIds;
-                                                                setFormData({ ...formData, variants: nv });
-                                                            }}>
+                                                         <label className="form-label" style={{ color: 'var(--primary)' }}>{vType.name}</label>
+                                                         <select className="form-control" style={{ backgroundColor: '#F8FAFC' }}
+                                                             value={variant.option_ids?.find(id => {
+                                                                 const targetCanonicalId = vType.canonical_type_id || vType.id;
+                                                                 const siblingTypes = variantOptions?.filter(vt => (vt.canonical_type_id || vt.id) === targetCanonicalId);
+                                                                 return siblingTypes?.some(vt => vt.options.some(opt => opt.id === id));
+                                                             }) || ''}
+                                                             onChange={(e) => {
+                                                                 const val = parseInt(e.target.value);
+                                                                 const nv = [...formData.variants];
+                                                                 const oldIds = nv[idx].option_ids || [];
+                                                                 
+                                                                 const targetCanonicalId = vType.canonical_type_id || vType.id;
+                                                                 const siblingTypes = variantOptions?.filter(vt => (vt.canonical_type_id || vt.id) === targetCanonicalId);
+                                                                 const siblingOptionIds = siblingTypes?.flatMap(vt => vt.options.map(opt => opt.id)) || [];
+                                                                 
+                                                                 const filteredIds = oldIds.filter(id => !siblingOptionIds.includes(id));
+                                                                 if (!isNaN(val)) filteredIds.push(val);
+                                                                 nv[idx].option_ids = filteredIds;
+                                                                 setFormData({ ...formData, variants: nv });
+                                                             }}>
                                                             <option value="">-- None --</option>
                                                             {vType.options.map(opt => <option key={opt.id} value={opt.id}>{opt.value}</option>)}
                                                         </select>

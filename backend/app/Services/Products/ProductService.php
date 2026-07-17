@@ -147,31 +147,123 @@ class ProductService
      */
     public function updateProduct(Product $product, array $data): Product
     {
-        $alertLimit = $data['alert_limit'] ?? $product->alert_limit;
+        // 1. Check for duplicates inside the payload itself
+        // Note: This is an intentional redundant safeguard in case this service method is ever called from paths bypassing UpdateProductRequest.
+        if (isset($data['variants']) && is_array($data['variants'])) {
+            $partNos = array_column($data['variants'], 'part_no');
+            if (count($partNos) !== count(array_unique($partNos))) {
+                throw ValidationException::withMessages([
+                    'variants' => ['Duplicate part numbers detected within the variants payload.'],
+                ]);
+            }
+            if (in_array($data['part_no'], $partNos)) {
+                throw ValidationException::withMessages([
+                    'variants' => ["A variant cannot have the same part number as the parent product ('{$data['part_no']}')."],
+                ]);
+            }
+        }
 
-        // Recalculate status unless user explicitly set 'Disabled'
-        $status = $data['status'] === 'Disabled'
-            ? 'Disabled'
-            : $this->calculateStatus($data['stock'], $alertLimit, $data['status']);
+        try {
+            return DB::transaction(function () use ($product, $data) {
+                $alertLimit = $data['alert_limit'] ?? $product->alert_limit;
+                $status = $data['status'] === 'Disabled'
+                    ? 'Disabled'
+                    : $this->calculateStatus($data['stock'], $alertLimit, $data['status']);
 
-        $product->update([
-            'name'         => $data['name'],
-            'chinese_name' => $data['chinese_name'] ?? null,
-            'part_no'      => $data['part_no'],
-            'category_id'  => $data['category_id'],
-            'address'      => $data['address'] ?? null,
-            'stock'        => $data['stock'],
-            'alert_limit'  => $alertLimit,
-            'price1'       => $data['price1'],
-            'price2'       => $data['price2'],
-            'status'       => $status,
-            'notes'        => $data['notes'] ?? null,
-            'image'        => $data['image'] ?? null,
-            'is_dead_stock'=> $data['is_dead_stock'] ?? false,
-            'damaged'      => $data['damaged'] ?? 0,
-        ]);
+                // Update the parent product
+                $product->update([
+                    'name'         => $data['name'],
+                    'chinese_name' => $data['chinese_name'] ?? null,
+                    'part_no'      => $data['part_no'],
+                    'category_id'  => $data['category_id'],
+                    'address'      => $data['address'] ?? null,
+                    'stock'        => $data['stock'],
+                    'alert_limit'  => $alertLimit,
+                    'price1'       => $data['price1'],
+                    'price2'       => $data['price2'],
+                    'status'       => $status,
+                    'notes'        => $data['notes'] ?? null,
+                    'image'        => $data['image'] ?? null,
+                    'is_dead_stock'=> $data['is_dead_stock'] ?? false,
+                    'damaged'      => $data['damaged'] ?? 0,
+                ]);
 
-        return $product->fresh(['category', 'variants.variantOptions.type']);
+                // Update/create variants
+                $payloadVariantIds = [];
+                if (isset($data['variants']) && is_array($data['variants'])) {
+                    foreach ($data['variants'] as $variantData) {
+                        $variantAlertLimit = $variantData['alert_limit'] ?? $alertLimit;
+                        $variantStatus = ($variantData['status'] ?? 'Active') === 'Disabled' 
+                            ? 'Disabled'
+                            : $this->calculateStatus($variantData['stock'], $variantAlertLimit, $variantData['status'] ?? 'Active');
+
+                        // Check for duplicate part_no manually to exclude own ID
+                        $partNoQuery = Product::where('part_no', $variantData['part_no']);
+                        if (!empty($variantData['id'])) {
+                            $partNoQuery->where('id', '!=', $variantData['id']);
+                        }
+                        if ($partNoQuery->exists()) {
+                            throw ValidationException::withMessages([
+                                'variants' => ["The part number '{$variantData['part_no']}' is already in use by another product."],
+                            ]);
+                        }
+
+                        $variant = null;
+                        if (!empty($variantData['id'])) {
+                            $variant = Product::findOrFail($variantData['id']);
+                        }
+
+                        $variantFields = [
+                            'parent_product_id' => $product->id,
+                            'name'              => $variantData['name'],
+                            'chinese_name'      => array_key_exists('chinese_name', $variantData) ? $variantData['chinese_name'] : ($variant ? $variant->chinese_name : null),
+                            'part_no'           => $variantData['part_no'],
+                            'category_id'       => $data['category_id'],
+                            'address'           => $data['address'] ?? null,
+                            'stock'             => $variantData['stock'],
+                            'alert_limit'       => $variantAlertLimit,
+                            'price1'            => $variantData['price1'],
+                            'price2'            => $variantData['price2'],
+                            'status'            => $variantStatus,
+                            'notes'             => array_key_exists('notes', $variantData) ? $variantData['notes'] : ($variant ? $variant->notes : null),
+                            'image'             => $variantData['image'] ?? null,
+                            'is_dead_stock'     => array_key_exists('is_dead_stock', $variantData) ? $variantData['is_dead_stock'] : ($variant ? $variant->is_dead_stock : false),
+                            'damaged'           => array_key_exists('damaged', $variantData) ? $variantData['damaged'] : ($variant ? $variant->damaged : 0),
+                        ];
+
+                        if ($variant) {
+                            $variant->update($variantFields);
+                            $payloadVariantIds[] = $variant->id;
+                        } else {
+                            $variant = Product::create($variantFields);
+                            $payloadVariantIds[] = $variant->id;
+                        }
+
+                        if (isset($variantData['option_ids'])) {
+                            $variant->variantOptions()->sync($variantData['option_ids']);
+                        }
+                    }
+                }
+
+                // Delete variants not in payload
+                $currentVariants = Product::where('parent_product_id', $product->id)->get();
+                foreach ($currentVariants as $currentVariant) {
+                    if (!in_array($currentVariant->id, $payloadVariantIds)) {
+                        $currentVariant->variantOptions()->detach();
+                        $currentVariant->delete();
+                    }
+                }
+
+                return $product->fresh(['category', 'variants.variantOptions.type']);
+            });
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23000' || str_contains($e->getMessage(), 'a foreign key constraint fails')) {
+                throw ValidationException::withMessages([
+                    'variants' => ['Cannot delete or modify variants that have historical sales, transaction records, or pending reservations.'],
+                ]);
+            }
+            throw $e;
+        }
     }
 
     /**

@@ -15,6 +15,7 @@ class VariantType extends Model
 
     protected $fillable = [
         'name',
+        'canonical_type_id',
     ];
 
     public function options(): HasMany

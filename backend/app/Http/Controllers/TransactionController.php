@@ -25,7 +25,7 @@ class TransactionController extends Controller
     public function index(Request $request): JsonResponse
     {
         $transactions = $this->transactionService->getAll($request->only([
-            'status', 'type', 'cashier_id', 'date_from', 'date_to', 'search', 'payment_method',
+            'status', 'type', 'tx_type', 'cashier_id', 'date_from', 'date_to', 'search', 'payment_method',
         ]));
 
         return response()->json($transactions);

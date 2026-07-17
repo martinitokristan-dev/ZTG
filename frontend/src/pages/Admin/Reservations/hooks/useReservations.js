@@ -120,6 +120,7 @@ export default function useReservations() {
                             name: p.name,
                             part_no: p.part_no || p.partNo || 'N/A',
                             stock: p.stock,
+                            price1: p.price1,
                             price2: p.price2 || p.price1,
                         });
                     }
@@ -138,6 +139,7 @@ export default function useReservations() {
                         name: displayName,
                         part_no: p.part_no || p.partNo || 'N/A',
                         stock: p.stock,
+                        price1: p.price1,
                         price2: p.price2 || p.price1,
                     });
                 }
@@ -151,23 +153,58 @@ export default function useReservations() {
         }, 150);
     };
 
-    const addToCart = (product) => {
+    const addToCart = (product, priceTier = 'price2') => {
         setCartItems(prev => {
-            const exists = prev.find(c => c.product_id === product.id);
-            if (exists) return prev.map(c => c.product_id === product.id ? { ...c, qty: c.qty + 1 } : c);
-            return [...prev, { product_id: product.id, name: product.name, part_no: product.part_no, price: parseFloat(product.price2 || 0), qty: 1, stock: product.stock }];
+            const exists = prev.find(c => c.product_id === product.id && (c.priceTier || 'price2') === priceTier);
+            if (exists) return prev.map(c => (c.product_id === product.id && (c.priceTier || 'price2') === priceTier) ? { ...c, qty: c.qty + 1 } : c);
+            
+            const price = priceTier === 'price1' ? parseFloat(product.price1 || 0) : parseFloat(product.price2 || product.price1 || 0);
+            return [...prev, { 
+                product_id: product.id, 
+                name: product.name, 
+                part_no: product.part_no, 
+                price: price, 
+                qty: 1, 
+                stock: product.stock,
+                priceTier: priceTier,
+                price1: product.price1,
+                price2: product.price2
+            }];
         });
         setProductSearch('');
         setSuggestions([]);
+    };
+
+    const updateCartItemPriceTier = (productId, oldTier, newTier) => {
+        setCartItems(prev => {
+            const index = prev.findIndex(item => item.product_id === productId && (item.priceTier || 'price2') === oldTier);
+            if (index === -1) return prev;
+
+            const next = [...prev];
+            const item = next[index];
+            const matchIndex = next.findIndex((c, i) => i !== index && c.product_id === productId && (c.priceTier || 'price2') === newTier);
+
+            const matchingProduct = products.find(p => p.id === productId);
+            const price = newTier === 'price1' ? parseFloat(matchingProduct?.price1 || 0) : parseFloat(matchingProduct?.price2 || matchingProduct?.price1 || 0);
+
+            if (matchIndex !== -1) {
+                const targetItem = next[matchIndex];
+                next[matchIndex] = { ...targetItem, qty: targetItem.qty + item.qty };
+                next.splice(index, 1);
+            } else {
+                next[index] = { ...item, priceTier: newTier, price: price };
+            }
+            return next;
+        });
     };
 
     const removeFromCart = (product_id) => setCartItems(prev => prev.filter(c => c.product_id !== product_id));
     const updateQty = (product_id, qty) => setCartItems(prev => prev.map(c => c.product_id === product_id ? { ...c, qty: Math.max(1, parseInt(qty) || 1) } : c));
 
     /* ── Cart Calculations ── */
-    const vatInclusiveTotal = cartItems.reduce((s, c) => s + c.price * c.qty, 0);
-    const subtotal = vatInclusiveTotal / 1.12;
-    const tax = vatInclusiveTotal - subtotal;
+    const vatInclusiveTotal = Math.round(cartItems.reduce((s, c) => s + c.price * c.qty, 0) * 100) / 100;
+    const subtotal = Math.round((vatInclusiveTotal / 1.12) * 100) / 100;
+    const tax = Math.round((vatInclusiveTotal - subtotal) * 100) / 100;
     const total = vatInclusiveTotal;
     const depositAmt = paymentType === 'full' ? total : total * 0.5;
     const balance = total - depositAmt;
@@ -308,7 +345,7 @@ export default function useReservations() {
         pickupDate, setPickupDate, pickupTime, setPickupTime, notes, setNotes,
         paymentType, setPaymentType, paymentMethod, setPaymentMethod,
         cartItems, productSearch, suggestions, addError, addLoading,
-        handleProductSearch, addToCart, removeFromCart, updateQty,
+        handleProductSearch, addToCart, removeFromCart, updateQty, updateCartItemPriceTier,
         resetAddForm, handleAddReservation,
         subtotal, tax, total, depositAmt, balance,
 

@@ -66,6 +66,7 @@ export default function Reservations() {
                 addToCart={res.addToCart}
                 removeFromCart={res.removeFromCart}
                 updateQty={res.updateQty}
+                updateCartItemPriceTier={res.updateCartItemPriceTier}
                 subtotal={res.subtotal}
                 tax={res.tax}
                 total={res.total}

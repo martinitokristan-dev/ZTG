@@ -32,6 +32,23 @@ class UpdateProductRequest extends FormRequest
             'image'       => 'nullable|string|max:255',
             'is_dead_stock'=> 'nullable|boolean',
             'damaged'     => 'nullable|integer|min:0',
+
+            // Variants validations
+            'variants'                => 'nullable|array',
+            'variants.*.id'           => 'nullable|integer|exists:products,id',
+            'variants.*.name'         => 'required_with:variants|string|max:255',
+            'variants.*.part_no'      => 'required_with:variants|string|max:50|distinct',
+            'variants.*.stock'        => 'required_with:variants|integer|min:0',
+            'variants.*.alert_limit'  => 'nullable|integer|min:0',
+            'variants.*.price1'       => 'required_with:variants|numeric|min:0',
+            'variants.*.price2'       => 'required_with:variants|numeric|min:0',
+            'variants.*.image'        => 'nullable|string|max:255',
+            'variants.*.chinese_name' => 'nullable|string|max:255',
+            'variants.*.notes'        => 'nullable|string',
+            'variants.*.is_dead_stock'=> 'nullable|boolean',
+            'variants.*.damaged'      => 'nullable|integer|min:0',
+            'variants.*.option_ids'   => 'required_with:variants|array',
+            'variants.*.option_ids.*' => 'exists:variant_options,id',
         ];
     }
 }

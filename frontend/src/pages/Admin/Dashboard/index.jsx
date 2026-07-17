@@ -25,7 +25,7 @@ export default function Dashboard() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '0 32px',
+                padding: '0 88px 0 32px',
                 flexShrink: 0,
             }}>
                 <div>

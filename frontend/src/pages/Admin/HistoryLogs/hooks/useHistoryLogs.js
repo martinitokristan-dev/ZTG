@@ -10,9 +10,10 @@ const fmt = (n) => `₱${Number(n || 0).toLocaleString('en-US')}`;
 
 export default function useHistoryLogs() {
     // Filtering
-    const [activeTab, setActiveTab] = useState('All'); // All, Refund, Return, Void
+    const [activeTab, setActiveTab] = useState('All'); // All, Refund, Return, Void, Reservation
     const [searchQuery, setSearchQuery] = useState('');
     const [paymentFilter, setPaymentFilter] = useState('All');
+    const [txTypeFilter, setTxTypeFilter] = useState(''); // '' = all types, 'reservation' = reservations only
     
     // Modal states
     const [showRefundModal, setShowRefundModal] = useState(false);
@@ -25,15 +26,19 @@ export default function useHistoryLogs() {
     const [selectedTxForView, setSelectedTxForView] = useState(null);
 
     // Map UI states to backend API query params
-    const statusParam = activeTab === 'All' ? '' : activeTab;
+    // 'Reservation' tab sets tx_type=reservation and clears status; other tabs filter by status
+    const isReservationTab = activeTab === 'Reservation';
+    const statusParam = (activeTab === 'All' || isReservationTab) ? '' : activeTab;
+    const txTypeParam  = isReservationTab ? 'reservation' : (txTypeFilter || '');
     const paymentParam = paymentFilter === 'All' ? '' : paymentFilter;
-    const searchParam = searchQuery.trim();
+    const searchParam  = searchQuery.trim();
 
     const queryParams = useMemo(() => ({
-        status: statusParam,
-        type: paymentParam,
-        search: searchParam,
-    }), [statusParam, paymentParam, searchParam]);
+        status:         statusParam,
+        tx_type:        txTypeParam,
+        payment_method: paymentParam,   // was incorrectly sent as 'type' — fixed to match backend key
+        search:         searchParam,
+    }), [statusParam, txTypeParam, paymentParam, searchParam]);
 
     const { data: transactions, loading, page, setPage, pagination, refetch } = usePaginatedCache('history', '/transactions', queryParams);
 
@@ -155,6 +160,8 @@ export default function useHistoryLogs() {
         setSearchQuery,
         paymentFilter,
         setPaymentFilter,
+        txTypeFilter,
+        setTxTypeFilter,
         showRefundModal,
         selectedTxForRefund,
         handleOpenRefund,

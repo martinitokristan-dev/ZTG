@@ -24,7 +24,9 @@ return [
         explode(',', env('ALLOWED_ORIGINS', ''))
     ))),
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        '#^https?://.*\.pages\.dev$#',
+    ],
 
     'allowed_headers' => ['*'],
 

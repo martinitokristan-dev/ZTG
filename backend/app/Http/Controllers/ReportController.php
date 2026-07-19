@@ -40,7 +40,8 @@ class ReportController extends Controller
     {
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
-        $data = $this->reportService->getSalesSummary($startDate, $endDate);
+        $timeframe = $request->query('timeframe');
+        $data = $this->reportService->getSalesSummary($startDate, $endDate, $timeframe);
         return response()->json($data);
     }
 
@@ -52,7 +53,49 @@ class ReportController extends Controller
         $deadStockDays = (int) $request->input('dead_stock_days', 30);
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
-        $data = $this->reportService->getProductPerformance($deadStockDays, $startDate, $endDate);
+        $timeframe = $request->query('timeframe');
+
+        $norm = $timeframe ? str_replace([' ', '_'], '', strtolower($timeframe)) : 'thisweek';
+
+        if (!$startDate || !$endDate) {
+            $nowLocal = now('Asia/Manila');
+            switch ($norm) {
+                case 'today':
+                    $startDate = $nowLocal->format('Y-m-d');
+                    $endDate = $nowLocal->format('Y-m-d');
+                    break;
+                case 'thismonth':
+                    $startDate = $nowLocal->startOfMonth()->format('Y-m-d');
+                    $endDate = now('Asia/Manila')->format('Y-m-d');
+                    break;
+                case 'thisyear':
+                    $startDate = $nowLocal->startOfYear()->format('Y-m-d');
+                    $endDate = now('Asia/Manila')->format('Y-m-d');
+                    break;
+                case 'thisweek':
+                default:
+                    $startDate = $nowLocal->startOfWeek(0)->format('Y-m-d'); // 0 is Sunday
+                    $endDate = now('Asia/Manila')->format('Y-m-d');
+                    break;
+            }
+        }
+
+        $startSuffix = ' 00:00:00';
+        $endSuffix = ' 23:59:59';
+        if ($norm === 'today') {
+            $startSuffix = ' 08:00:00';
+            $endSuffix = ' 17:00:00';
+        }
+
+        // Convert local dates to App timezone for database query
+        $utcStart = ($startDate && strpos($startDate, ' ') !== false) 
+            ? $startDate 
+            : ($startDate ? \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $startDate . $startSuffix, 'Asia/Manila')->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s') : null);
+        $utcEnd = ($endDate && strpos($endDate, ' ') !== false) 
+            ? $endDate 
+            : ($endDate ? \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $endDate . $endSuffix, 'Asia/Manila')->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s') : null);
+
+        $data = $this->reportService->getProductPerformance($deadStockDays, $utcStart, $utcEnd, $timeframe);
         return response()->json($data);
     }
 
@@ -63,7 +106,12 @@ class ReportController extends Controller
     {
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
-        $data = $this->reportService->getRefundVoidAnalysis($startDate, $endDate);
+
+        // Convert local dates to App timezone for query
+        $utcStart = $startDate ? \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $startDate . ' 00:00:00', 'Asia/Manila')->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s') : null;
+        $utcEnd = $endDate ? \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $endDate . ' 23:59:59', 'Asia/Manila')->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s') : null;
+
+        $data = $this->reportService->getRefundVoidAnalysis($utcStart, $utcEnd);
         return response()->json($data);
     }
 
@@ -82,7 +130,7 @@ class ReportController extends Controller
     public function inventory(Request $request): JsonResponse
     {
         $data = $this->reportService->getInventorySummary($request->only([
-            'category_id', 'status', 'search'
+            'category_id', 'status', 'search', 'paginate', 'per_page', 'page', 'date_filter'
         ]));
         return response()->json($data);
     }

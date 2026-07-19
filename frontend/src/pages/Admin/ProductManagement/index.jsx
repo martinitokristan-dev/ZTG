@@ -45,7 +45,7 @@ function ProductManagement() {
                                     <svg viewBox="0 0 24 24" style={{ width: '16px', height: '16px', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }}>
                                         <path d="M12 4v16m-8-8h16" />
                                     </svg>
-                                    + Add Product
+                                    Add Product
                                 </button>
                             </>
                         ) : (

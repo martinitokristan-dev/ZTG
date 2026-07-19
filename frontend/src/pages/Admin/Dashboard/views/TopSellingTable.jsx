@@ -36,10 +36,13 @@ export default function TopSellingTable({ topProducts }) {
                                 <td style={{ padding: '14px 16px', fontSize: 13, color: '#0F172A', fontWeight: 600 }}>{p.unitsSold}</td>
                                 <td style={{ padding: '14px 16px', fontSize: 13, color: '#0F172A', fontWeight: 600 }}>₱{p.revenue.toLocaleString()}</td>
                                 <td style={{ padding: '14px 16px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: 160 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, maxWidth: 200 }}>
                                         <div style={{ flex: 1, height: 6, backgroundColor: '#E2E8F0', borderRadius: 4, overflow: 'hidden' }}>
                                             <div style={{ width: `${p.percentage}%`, height: '100%', backgroundColor: '#3B82F6', borderRadius: 4, transition: 'width 0.4s ease' }} />
                                         </div>
+                                        <span style={{ fontSize: 12, fontWeight: 600, color: '#475569', minWidth: '32px', textAlign: 'right' }}>
+                                            {p.percentage}%
+                                        </span>
                                     </div>
                                 </td>
                             </tr>

@@ -6,6 +6,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\VariantController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProfileAvatarController;
 use App\Http\Controllers\AlertRuleController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PosController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\CheckerController;
 use Illuminate\Support\Facades\Route;
 
 // Public authentication routes
@@ -26,6 +28,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Profile self-management routes
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
+    Route::post('/profile/avatar', [ProfileAvatarController::class, 'upload']);
+    Route::delete('/profile/avatar', [ProfileAvatarController::class, 'remove']);
 
     // General read routes (available to all roles)
     Route::get('/settings', [SettingController::class, 'index']);
@@ -60,6 +64,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/employees/{employee}', [EmployeeController::class, 'update']);
         Route::patch('/employees/{employee}/toggle', [EmployeeController::class, 'toggle']);
 
+        // Checker Management
+        Route::post('/checkers', [CheckerController::class, 'store']);
+        Route::put('/checkers/{checker}', [CheckerController::class, 'update']);
+
         // Alert Rules
         Route::get('/alert-rules', [AlertRuleController::class, 'index']);
         Route::post('/alert-rules', [AlertRuleController::class, 'store']);
@@ -78,11 +86,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // POS routes: Admin and Cashier
     Route::middleware('role:Admin,Cashier')->group(function () {
+        Route::get('/checkers', [CheckerController::class, 'index']);
         Route::get('/pos/products', [PosController::class, 'products']);
         Route::post('/pos/checkout', [PosController::class, 'checkout']);
-        Route::get('/pos/pending-orders', [PosController::class, 'listPendingOrders']);
-        Route::post('/pos/pending-orders', [PosController::class, 'parkOrder']);
-        Route::delete('/pos/pending-orders/{pendingOrder}', [PosController::class, 'deletePendingOrder']);
     });
 
     // Transaction / History Log routes
@@ -94,6 +100,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/transactions/{transaction}/refund', [TransactionController::class, 'refund']);
         Route::post('/transactions/{transaction}/return', [TransactionController::class, 'return']);
         Route::post('/transactions/{transaction}/void', [TransactionController::class, 'void']);
+        Route::post('/transactions/{transaction}/pay', [TransactionController::class, 'pay']);
     });
 
     // Reservation routes

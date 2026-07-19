@@ -10,7 +10,11 @@ export default function useSettings() {
     
 
     // Primary Active Tab: 'profile', 'general', 'products', 'alerts', 'employees'
-    const [activeTab, setActiveTab] = useState('profile');
+    const [activeTab, setActiveTab] = useState(() => localStorage.getItem('settingsActiveTab') || 'profile');
+
+    useEffect(() => {
+        localStorage.setItem('settingsActiveTab', activeTab);
+    }, [activeTab]);
 
     // Products Settings Nested Sub-tab: 'info', 'categories', 'sizes', 'quality', 'colors', 'pricing', 'warehouse'
     const [activeSubTab, setActiveSubTab] = useState('info');
@@ -27,8 +31,11 @@ export default function useSettings() {
         email: '',
         username: '',
         pin: '',
-        role: 'Administrator'
+        role: 'Administrator',
+        profile_photo: null
     });
+    const [avatarUploading, setAvatarUploading] = useState(false);
+    const [confirmingRemove, setConfirmingRemove] = useState(false);
     const [initialProfileData, setInitialProfileData] = useState({});
     const [passwordData, setPasswordData] = useState({
         current_password: '',
@@ -142,6 +149,14 @@ export default function useSettings() {
         employee_id: '', role: 'Cashier', status: 'Active' });
     const [selectedEmployee, setSelectedEmployee] = useState(null);
 
+    // ------------------------------------------------------------------------
+    // TAB 6: CHECKERS STATE
+    // ------------------------------------------------------------------------
+    const [checkers, setCheckers] = useState([]);
+    const [showCheckerModal, setShowCheckerModal] = useState(false);
+    const [checkerForm, setCheckerForm] = useState({ name: '', status: 'Active' });
+    const [selectedChecker, setSelectedChecker] = useState(null);
+
     // Load initial context
     const loadSettingsData = async () => {
         try {
@@ -150,13 +165,15 @@ export default function useSettings() {
             // Load user profile
             const userData = await fetchSettingData('user', '/user');
             if (userData) {
+                const u = userData.user || userData;
                 const loadedProfile = {
-                    name: userData.username || '',
-                    real_name: userData.real_name || '',
-                    email: userData.email || '',
-                    username: userData.username || '',
-                    pin: userData.pin || '',
-                    role: userData.role || (localStorage.getItem('auth_user') ? JSON.parse(localStorage.getItem('auth_user')).role : 'Cashier')
+                    name: u.username || '',
+                    real_name: u.real_name || '',
+                    email: u.email || '',
+                    username: u.username || '',
+                    pin: u.pin || '',
+                    role: u.role || (localStorage.getItem('auth_user') ? JSON.parse(localStorage.getItem('auth_user')).role : 'Cashier'),
+                    profile_photo: u.profile_photo || null
                 };
                 setProfileData(loadedProfile);
                 setInitialProfileData(loadedProfile);
@@ -177,6 +194,7 @@ export default function useSettings() {
             loadVariants();
             loadAlertRules();
             loadEmployees();
+            loadCheckers();
         } catch (err) {
             showToast('Failed to load system settings configurations.', 'error');
         } finally {
@@ -219,6 +237,15 @@ export default function useSettings() {
         }
     };
 
+    const loadCheckers = async () => {
+        try {
+            const data = await fetchSettingData('checkers', '/checkers');
+            setCheckers(data || []);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     useEffect(() => {
         loadSettingsData();
     }, []);
@@ -228,9 +255,12 @@ export default function useSettings() {
     // ------------------------------------------------------------------------
     const handleProfileSubmit = async (e) => {
         e.preventDefault();
+        // Validate required fields
+        if (!profileData.real_name?.trim() || !profileData.email?.trim() || !profileData.username?.trim()) {
+            showToast('Please fill in all required profile fields: Full Name, Email, and Username.', 'error');
+            return;
+        }
         try {
-            
-            
             const res = await api.put('/profile', {
                 name: profileData.username,
                 real_name: profileData.real_name,
@@ -238,7 +268,6 @@ export default function useSettings() {
                 username: profileData.username,
                 pin: profileData.pin
             });
-            // Update local storage credentials
             if (res.data) {
                 localStorage.setItem('auth_user', JSON.stringify(res.data.user));
             }
@@ -248,6 +277,65 @@ export default function useSettings() {
         } catch (err) {
             showToast(err.response?.data?.message || 'Error occurred while saving profile.', 'error');
         }
+    };
+
+    const handleAvatarUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setAvatarUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('avatar', file);
+            const res = await api.post('/profile/avatar', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            const newUrl = res.data.profile_photo;
+            setProfileData(prev => ({ ...prev, profile_photo: newUrl }));
+            setInitialProfileData(prev => ({ ...prev, profile_photo: newUrl }));
+            // Update localStorage auth_user so sidebar reflects change immediately
+            const stored = localStorage.getItem('auth_user');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                localStorage.setItem('auth_user', JSON.stringify({ ...parsed, profile_photo: newUrl }));
+            }
+            resetSettingsCache('user');
+            showToast('Profile photo updated successfully!', 'success');
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed to upload photo. Max 2MB, images only.', 'error');
+        } finally {
+            setAvatarUploading(false);
+            // Reset input so the same file can be re-selected
+            e.target.value = '';
+        }
+    };
+
+    const handleAvatarRemove = () => {
+        setConfirmingRemove(true);
+    };
+
+    const handleAvatarRemoveConfirmed = async () => {
+        setConfirmingRemove(false);
+        setAvatarUploading(true);
+        try {
+            await api.delete('/profile/avatar');
+            setProfileData(prev => ({ ...prev, profile_photo: null }));
+            setInitialProfileData(prev => ({ ...prev, profile_photo: null }));
+            const stored = localStorage.getItem('auth_user');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                localStorage.setItem('auth_user', JSON.stringify({ ...parsed, profile_photo: null }));
+            }
+            resetSettingsCache('user');
+            showToast('Profile photo removed.', 'success');
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed to remove photo.', 'error');
+        } finally {
+            setAvatarUploading(false);
+        }
+    };
+
+    const handleAvatarRemoveCancel = () => {
+        setConfirmingRemove(false);
     };
 
     const handlePasswordSubmit = async (e) => {
@@ -269,8 +357,6 @@ export default function useSettings() {
     // ------------------------------------------------------------------------
     const handleSaveBulkSettings = async () => {
         try {
-            
-            
             await api.put('/settings', { settings });
             resetSettingsCache('settings');
             showToast('System settings saved successfully!', 'success');
@@ -284,7 +370,7 @@ export default function useSettings() {
         setSettings(prev => {
             const nextVal = prev[key] === 'true' ? 'false' : 'true';
             const updates = { [key]: nextVal };
-            
+
             // Sync logic flows alternative keys
             if (key === 'track_damaged_separately') updates.track_damaged = nextVal;
             if (key === 'track_damaged') updates.track_damaged_separately = nextVal;
@@ -292,11 +378,21 @@ export default function useSettings() {
             if (key === 'enable_variants') updates.enable_product_variants = nextVal;
             if (key === 'track_warehouse_locations') updates.track_locations = nextVal;
             if (key === 'track_locations') updates.track_warehouse_locations = nextVal;
-            
-            return {
-                ...prev,
-                ...updates
-            };
+
+            const next = { ...prev, ...updates };
+
+            // Auto-save after toggle
+            setTimeout(async () => {
+                try {
+                    await api.put('/settings', { settings: next });
+                    resetSettingsCache('settings');
+                    setInitialSettings(next);
+                } catch (err) {
+                    showToast('Failed to auto-save setting change.', 'error');
+                }
+            }, 0);
+
+            return next;
         });
     };
 
@@ -563,13 +659,51 @@ export default function useSettings() {
         setShowEmployeeModal(true);
     };
 
+    // ------------------------------------------------------------------------
+    // TAB 6 ACTIONS: CHECKERS CRUD
+    // ------------------------------------------------------------------------
+    const handleCheckerSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            if (selectedChecker) {
+                await api.put(`/checkers/${selectedChecker.id}`, checkerForm);
+                showToast('Checker updated successfully.', 'success');
+            } else {
+                await api.post('/checkers', checkerForm);
+                showToast('Checker added successfully.', 'success');
+            }
+            setShowCheckerModal(false);
+            setSelectedChecker(null);
+            setCheckerForm({ name: '', status: 'Active' });
+            resetSettingsCache('checkers');
+            loadCheckers();
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed to save checker profile.', 'error');
+        }
+    };
+
+    const openAddChecker = () => {
+        setSelectedChecker(null);
+        setCheckerForm({ name: '', status: 'Active' });
+        setShowCheckerModal(true);
+    };
+
+    const openEditChecker = (checker) => {
+        setSelectedChecker(checker);
+        setCheckerForm({
+            name: checker.name,
+            status: checker.status
+        });
+        setShowCheckerModal(true);
+    };
+
     const isProfileDirty = JSON.stringify(profileData) !== JSON.stringify(initialProfileData);
     const isSettingsDirty = JSON.stringify(settings) !== JSON.stringify(initialSettings);
 
     return {
         // App State
-        loading, isProfileDirty, isSettingsDirty, 
-        
+        loading, isProfileDirty, isSettingsDirty,
+
         // Tab Navigation
         activeTab, setActiveTab,
         activeSubTab, setActiveSubTab,
@@ -577,6 +711,8 @@ export default function useSettings() {
 
         // Tab 1: Profile
         profileData, setProfileData, handleProfileSubmit,
+        avatarUploading, handleAvatarUpload, handleAvatarRemove,
+        confirmingRemove, handleAvatarRemoveConfirmed, handleAvatarRemoveCancel,
         passwordData, setPasswordData, handlePasswordSubmit,
         showPasswordModal, setShowPasswordModal,
         showPIN, setShowPIN,
@@ -595,7 +731,11 @@ export default function useSettings() {
 
         // Tab 5: Employees
         employees, showEmployeeModal, setShowEmployeeModal, employeeForm, setEmployeeForm,
-        selectedEmployee, setSelectedEmployee, handleEmployeeSubmit, handleToggleEmployee, openEditEmployee, openAddEmployee
+        selectedEmployee, setSelectedEmployee, handleEmployeeSubmit, handleToggleEmployee, openEditEmployee, openAddEmployee,
+
+        // Tab 6: Checkers
+        checkers, showCheckerModal, setShowCheckerModal, checkerForm, setCheckerForm,
+        selectedChecker, setSelectedChecker, handleCheckerSubmit, openEditChecker, openAddChecker
     };
 }
 

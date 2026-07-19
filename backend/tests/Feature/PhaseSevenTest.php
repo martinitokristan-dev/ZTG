@@ -262,18 +262,38 @@ class PhaseSevenTest extends TestCase
             'part_no'     => 'SV-001',
             'category_id' => $this->category->id,
             'stock'       => 20,
-            'sales_count' => 10,
             'price1'      => 100,
             'price2'      => 120,
             'status'      => 'Active',
-            'created_at'  => now()->subDays(40), // Old enough to be dead stock if sales_count = 0
+            'created_at'  => now()->subDays(40),
+        ]);
+
+        $customer = Customer::create(['name' => 'Loyal Customer']);
+        $transaction = Transaction::create([
+            'si_no'          => 'SI-PERF1',
+            'date'           => now(),
+            'customer_id'    => $customer->id,
+            'cashier_id'     => $this->cashier->id,
+            'total_qty'      => 10,
+            'amount'         => 1000.00,
+            'payment_method' => 'Cash',
+            'status'         => TransactionStatus::COMPLETED->value,
+        ]);
+
+        \App\Models\TransactionItem::create([
+            'transaction_id' => $transaction->id,
+            'product_id'     => $product->id,
+            'qty'            => 10,
+            'price'          => 100,
+            'price_tier'     => 'price1',
+            'unit'           => 'pc',
         ]);
 
         $response = $this->actingAs($this->admin)
             ->getJson('/api/reports/product-performance');
 
         $response->assertStatus(200)
-            ->assertJsonStructure(['top_sellers', 'revenue_per_product', 'dead_stock', 'fast_moving'])
+            ->assertJsonStructure(['top_sellers', 'revenue_per_product', 'dead_stock'])
             ->assertJsonFragment(['name' => 'Super Valve', 'sales_count' => 10]);
     }
 

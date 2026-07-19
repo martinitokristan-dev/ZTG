@@ -6,17 +6,21 @@ import GeneralTab from './tabs/GeneralTab';
 import ProductsTab from './tabs/ProductsTab';
 import AlertsTab from './tabs/AlertsTab';
 import EmployeesTab from './tabs/EmployeesTab';
+import CheckersTab from './tabs/CheckersTab';
 
 import CategoryModal from './modals/CategoryModal';
 import EmployeeModal from './modals/EmployeeModal';
 import PasswordModal from './modals/PasswordModal';
 import RuleModal from './modals/RuleModal';
+import CheckerModal from './modals/CheckerModal';
 
 export default function Settings() {
     const {
         loading, isProfileDirty, isSettingsDirty, notificationsCount,
         activeTab, setActiveTab, activeSubTab, setActiveSubTab, activeAlertsSubTab, setActiveAlertsSubTab,
-        profileData, setProfileData, passwordData, setPasswordData, showPasswordModal, setShowPasswordModal, showPIN, setShowPIN,
+        profileData, setProfileData, avatarUploading, handleAvatarUpload, handleAvatarRemove,
+        confirmingRemove, handleAvatarRemoveConfirmed, handleAvatarRemoveCancel,
+        passwordData, setPasswordData, showPasswordModal, setShowPasswordModal, showPIN, setShowPIN,
         settings, handleSettingInputChange, handleToggleSetting, handleSaveBulkSettings,
         categories, showCategoryModal, setShowCategoryModal, selectedCategory, setSelectedCategory, categoryName, setCategoryName,
         categoryVariants, setCategoryVariants,
@@ -25,7 +29,8 @@ export default function Settings() {
         employees, showEmployeeModal, setShowEmployeeModal, employeeForm, setEmployeeForm, selectedEmployee, setSelectedEmployee,
         handleProfileSubmit, handlePasswordSubmit, handleCategorySubmit, handleDeleteCategory, handleAddVariantOption, handleUpdateVariantOption, handleDeleteVariantOption, getOptionsForType,
         handleRuleSubmit, handleToggleRule, handleDeleteRule,
-        handleEmployeeSubmit, openEditEmployee, handleToggleEmployee, openAddEmployee
+        handleEmployeeSubmit, openEditEmployee, handleToggleEmployee, openAddEmployee,
+        checkers, showCheckerModal, setShowCheckerModal, checkerForm, setCheckerForm, selectedChecker, setSelectedChecker, handleCheckerSubmit, openEditChecker, openAddChecker
     } = useSettings();
 
     const isCashier = profileData?.role === 'Cashier';
@@ -38,9 +43,7 @@ export default function Settings() {
     }, [isCashier, activeTab, setActiveTab]);
 
     return (
-        <div className="main-workspace-outer">
-
-            <div className="main-workspace">
+        <>
                 <div className="top-bar">
                     <div>
                         <h1 id="settingsPageTitle" style={{fontSize: '20px', marginBottom: '2px'}}>System Settings</h1>
@@ -51,8 +54,8 @@ export default function Settings() {
                     <div className="top-bar-actions">                    </div>
                 </div>
 
-                <div className="content-body settings-page-body" style={{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
-                    <div className="settings-tabs-wrap">
+                <div className="content-body settings-page-body">
+                    <div className="settings-tabs-wrap" style={{ paddingBottom: '60px' }}>
                         {/* Navigation Tabs Header (Hidden for Cashiers) */}
                         {!isCashier && (
                             <div className="tabs-header">
@@ -61,7 +64,8 @@ export default function Settings() {
                                     { id: 'general', label: 'General' },
                                     { id: 'products', label: 'Products Settings' },
                                     { id: 'alerts', label: 'Alerts & Notifications' },
-                                    { id: 'employees', label: 'Employee\'s role' }
+                                    { id: 'employees', label: 'Employee\'s role' },
+                                    { id: 'checkers', label: 'Checkers' }
                                 ].map(tab => (
                                     <button
                                         key={tab.id}
@@ -77,9 +81,13 @@ export default function Settings() {
                         {/* TAB CONTENTS */}
                         <div className={`tab-content ${activeTab === 'profile' ? 'active' : ''}`}>
                             {activeTab === 'profile' && (
-                                <ProfileTab 
+                                <ProfileTab
                                     profileData={profileData} setProfileData={setProfileData} handleProfileSubmit={handleProfileSubmit}
                                     setShowPasswordModal={setShowPasswordModal} showPIN={showPIN} setShowPIN={setShowPIN} isProfileDirty={isProfileDirty}
+                                    handleAvatarUpload={handleAvatarUpload} handleAvatarRemove={handleAvatarRemove} avatarUploading={avatarUploading}
+                                    confirmingRemove={confirmingRemove}
+                                    handleAvatarRemoveConfirmed={handleAvatarRemoveConfirmed}
+                                    handleAvatarRemoveCancel={handleAvatarRemoveCancel}
                                 />
                             )}
                         </div>
@@ -122,13 +130,27 @@ export default function Settings() {
                                         />
                                     )}
                                 </div>
+
+                                <div className={`tab-content ${activeTab === 'checkers' ? 'active' : ''}`}>
+                                    {activeTab === 'checkers' && (
+                                        <CheckersTab 
+                                            checkers={checkers} openEditChecker={openEditChecker} openAddChecker={openAddChecker}
+                                        />
+                                    )}
+                                </div>
                             </>
                         )}
                     </div>
 
                     {/* Global Action Buttons */}
                     {activeTab !== 'profile' && (
-                        <div className="settings-actions-bar" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+                        <div className="settings-actions-bar" style={{ 
+                                position: 'sticky', bottom: 0, left: 0, right: 0,
+                                display: 'flex', justifyContent: 'flex-end', gap: '12px', 
+                                marginTop: '24px', padding: '16px 28px',
+                                background: 'var(--bg-card)', borderTop: '1px solid var(--border)', 
+                                zIndex: 20
+                            }}>
                             <button type="button" className="btn btn-secondary" disabled>Cancel Changes</button>
                             <button type="button" className="btn btn-primary" onClick={handleSaveBulkSettings} disabled={!isSettingsDirty}>Save Settings</button>
                         </div>
@@ -156,8 +178,12 @@ export default function Settings() {
                     showRuleModal={showRuleModal} setShowRuleModal={setShowRuleModal}
                     ruleForm={ruleForm} setRuleForm={setRuleForm} handleRuleSubmit={handleRuleSubmit}
                 />
-            </div>
-        </div>
+                <CheckerModal 
+                    showCheckerModal={showCheckerModal} setShowCheckerModal={setShowCheckerModal}
+                    selectedChecker={selectedChecker} checkerForm={checkerForm} setCheckerForm={setCheckerForm}
+                    handleCheckerSubmit={handleCheckerSubmit}
+                />
+        </>
     );
 }
 

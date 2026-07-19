@@ -94,8 +94,8 @@ export default function RestockView({
                                         <td className="py-3 px-4">
                                             <input
                                                 type="number" min="0"
-                                                value={restockQuantities[p.id] || 0}
-                                                onChange={(e) => updateRestockQty(p.id, parseInt(e.target.value) || 0)}
+                                                value={restockQuantities[p.id] !== undefined ? restockQuantities[p.id] : ''}
+                                                onChange={(e) => updateRestockQty(p.id, e.target.value === '' ? '' : parseInt(e.target.value, 10))}
                                                 className="w-24 px-3 py-1.5 border border-slate-200 rounded text-xs text-center focus:outline-none focus:border-blue-500"
                                             />
                                         </td>

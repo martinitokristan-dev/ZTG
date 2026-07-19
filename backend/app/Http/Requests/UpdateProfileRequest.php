@@ -20,6 +20,7 @@ class UpdateProfileRequest extends FormRequest
             'real_name' => 'required|string|max:100',
             'email' => 'nullable|email|max:255|unique:users,email,' . $myId,
             'username' => 'required|string|max:50|unique:users,username,' . $myId,
+            'pin' => 'nullable|string|max:10',
         ];
     }
 }

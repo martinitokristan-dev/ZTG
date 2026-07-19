@@ -16,7 +16,7 @@ class StoreProductRequest extends FormRequest
         return [
             // Base product fields
             'name'                       => 'required|string|max:255',
-            'chinese_name'               => 'nullable|string|max:255',
+            'chinese_name'               => 'required|string|max:255',
             'part_no'                    => 'required|string|max:50|unique:products,part_no',
             'category_id'                => 'required|exists:categories,id',
             'address'                    => 'nullable|string|max:50',

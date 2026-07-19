@@ -83,8 +83,8 @@ export function printUnifiedReceipt(options) {
     const itemsRows = items.map(item => `
         <tr style="border-bottom: 1px dashed #E5E7EB;">
             <td style="padding: 5px 4px; font-size: 11px; line-height: 1.4;">
-                ${item.name || '—'}<br>
-                <span style="color: #6B7280; font-size: 10px;">Part #: ${item.partNo || item.part_no || '—'}</span>
+                ${item.name || item.product?.name || '—'}<br>
+                <span style="color: #6B7280; font-size: 10px;">Part #: ${item.product?.part_no || item.partNo || item.part_no || '—'}</span>
             </td>
             <td style="padding: 5px 4px; text-align: center; font-size: 11px; width: 28px;">${item.unit || 'pc'}</td>
             <td style="padding: 5px 4px; text-align: center; font-size: 11px; width: 28px;">${item.qty || item.quantity}</td>

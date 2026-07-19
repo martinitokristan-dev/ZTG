@@ -32,8 +32,11 @@ class TransactionService
      */
     public function getAll(array $filters = []): LengthAwarePaginator
     {
-        $query = Transaction::with(['customer', 'cashier', 'approver', 'items.product'])
-            ->latest('date');
+        $query = Transaction::with(['customer', 'cashier', 'approver', 'checker', 'items.product']);
+
+        $sortBy = $filters['sort_by'] ?? 'date';
+        $sortOrder = $filters['sort_order'] ?? 'desc';
+        $query->orderBy($sortBy, $sortOrder);
 
         if (!empty($filters['status'])) {
             $statuses = array_map('trim', explode(',', $filters['status']));
@@ -96,7 +99,7 @@ class TransactionService
      */
     public function show(int $id): Transaction
     {
-        return Transaction::with(['customer', 'cashier', 'approver', 'items.product'])
+        return Transaction::with(['customer', 'cashier', 'approver', 'checker', 'items.product'])
             ->findOrFail($id);
     }
 
@@ -245,7 +248,7 @@ class TransactionService
                 'amount'      => $refundedAmount,
             ]);
 
-            return $transaction->fresh(['customer', 'cashier', 'approver', 'items.product']);
+            return $transaction->fresh(['customer', 'cashier', 'approver', 'checker', 'items.product']);
         });
 
         // Dispatch real-time events outside the DB transaction block
@@ -323,7 +326,7 @@ class TransactionService
                 'inv_action'    => $invAction,
             ]);
 
-            return $transaction->fresh(['customer', 'cashier', 'approver', 'items.product']);
+            return $transaction->fresh(['customer', 'cashier', 'approver', 'checker', 'items.product']);
         });
 
         // Dispatch real-time events outside the DB transaction block
@@ -334,6 +337,53 @@ class TransactionService
                 }
             }
         }
+        event(new TransactionUpdated($updated));
+
+        return $updated;
+    }
+
+    /**
+     * Pay a pending order transaction.
+     */
+    public function payPending(Transaction $transaction, array $data): Transaction
+    {
+        $adminId       = $data['admin_id'];
+        $adminPin      = $data['admin_pin'];
+        $paymentMethod = $data['payment_method'];
+        $amountTendered= $data['amount_tendered'];
+
+        // 1. Ensure transaction is Pending
+        $currentStatus = is_object($transaction->status) ? $transaction->status->value : $transaction->status;
+        if ($currentStatus !== 'Pending') {
+            throw ValidationException::withMessages([
+                'transaction' => ['Only pending transactions can be paid.'],
+            ]);
+        }
+
+        // 2. Verify admin PIN
+        $contextMsg = "Pay pending order invoice {$transaction->si_no}. Admin ID: {$adminId}";
+        if (!$this->verifyPin($adminId, $adminPin, $contextMsg)) {
+            throw ValidationException::withMessages([
+                'admin_pin' => ['Invalid admin PIN. The failed attempt has been logged.'],
+            ]);
+        }
+
+        $updated = DB::transaction(function () use ($transaction, $adminId, $adminPin, $paymentMethod, $amountTendered) {
+            $approver = User::find($adminId);
+
+            $transaction->update([
+                'status'          => TransactionStatus::COMPLETED->value,
+                'payment_method'  => $paymentMethod,
+                'amount_tendered' => $amountTendered,
+                'approver_id'     => $adminId,
+                'approval_code'   => $adminPin,
+                'action_type'     => "Paid via {$paymentMethod}",
+            ]);
+
+            return $transaction->fresh(['customer', 'cashier', 'approver', 'checker', 'items.product']);
+        });
+
+        // Dispatch real-time events outside the DB transaction block
         event(new TransactionUpdated($updated));
 
         return $updated;

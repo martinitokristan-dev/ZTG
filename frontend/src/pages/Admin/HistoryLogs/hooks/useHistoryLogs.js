@@ -1,5 +1,6 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import api from '../../../../shared/api';
+import { showToast } from '../../../../utils/toast';
 import usePaginatedCache, { invalidateCachePage } from '../../../../shared/hooks/usePaginatedCache';
 import echo from '../../../../lib/echo';
 import { resetDashboardCache } from '../../../../shared/hooks/useDashboardCache';
@@ -24,6 +25,9 @@ export default function useHistoryLogs() {
 
     const [showViewModal, setShowViewModal] = useState(false);
     const [selectedTxForView, setSelectedTxForView] = useState(null);
+
+    const [showPayModal, setShowPayModal] = useState(false);
+    const [selectedTxForPay, setSelectedTxForPay] = useState(null);
 
     // Map UI states to backend API query params
     // 'Reservation' tab sets tx_type=reservation and clears status; other tabs filter by status
@@ -133,6 +137,29 @@ export default function useHistoryLogs() {
         }
     };
 
+    const handleOpenPay = (tx) => {
+        setSelectedTxForPay(tx);
+        setShowPayModal(true);
+    };
+
+    const handleClosePay = () => {
+        setSelectedTxForPay(null);
+        setShowPayModal(false);
+    };
+
+    const handlePaySubmit = async (txId, payload) => {
+        try {
+            await api.post(`/transactions/${txId}/pay`, payload);
+            showToast('Pending Order payment successful!', 'success');
+            handleClosePay();
+            loadHistory();
+        } catch (err) {
+            console.error("Pay failed:", err);
+            showToast("Payment failed: " + (err.response?.data?.message || err.message), 'error');
+            alert("Payment failed: " + (err.response?.data?.message || err.message));
+        }
+    };
+
     const handleSearchTransaction = async (siNo) => {
         if (!siNo) return null;
         // Search locally first
@@ -177,6 +204,11 @@ export default function useHistoryLogs() {
         selectedTxForView,
         handleOpenView,
         handleCloseView,
+        showPayModal,
+        selectedTxForPay,
+        handleOpenPay,
+        handleClosePay,
+        handlePaySubmit,
         fmt,
         fmtDate
     };

@@ -20,6 +20,7 @@ class Transaction extends Model
         'date',
         'customer_id',
         'cashier_id',
+        'checker_id',
         'total_qty',
         'amount',
         'amount_tendered',
@@ -60,6 +61,11 @@ class Transaction extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approver_id');
+    }
+
+    public function checker(): BelongsTo
+    {
+        return $this->belongsTo(Checker::class);
     }
 
     public function items(): HasMany

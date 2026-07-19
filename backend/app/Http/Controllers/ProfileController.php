@@ -17,17 +17,24 @@ class ProfileController extends Controller
     public function update(UpdateProfileRequest $request): JsonResponse
     {
         $user = $request->user();
-        $user->update($request->validated());
+        $data = $request->validated();
+        
+        if (empty($data['pin'])) {
+            unset($data['pin']);
+        }
+
+        $user->update($data);
 
         return response()->json([
             'message' => 'Profile updated successfully.',
             'user' => [
-                'id' => $user->id,
-                'employee_id' => $user->employee_id,
-                'name' => $user->name,
-                'real_name' => $user->real_name,
-                'username' => $user->username,
-                'role' => $user->role->value ?? $user->role,
+                'id'            => $user->id,
+                'employee_id'   => $user->employee_id,
+                'name'          => $user->name,
+                'real_name'     => $user->real_name,
+                'email'         => $user->email,
+                'username'      => $user->username,
+                'role'          => $user->role->value ?? $user->role,
                 'profile_photo' => $user->profile_photo,
             ]
         ]);

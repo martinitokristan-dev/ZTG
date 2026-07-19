@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useProducts } from '../../../../contexts/ProductContext';
 import { invalidateCachePage } from '../../../../shared/hooks/usePaginatedCache';
 import useCustomerCache, { resetCustomerCache } from '../../../../shared/hooks/useCustomerCache';
 import { resetDashboardCache } from '../../../../shared/hooks/useDashboardCache';
 import { resetReportsCache } from '../../../../shared/hooks/useReportsCache';
+import { fetchSettingData } from '../../../../shared/hooks/useSettingsCache';
 import api from '../../../../shared/api';
 
 const fmt = (n) => `₱${Number(n || 0).toLocaleString('en-US')}`;
@@ -27,12 +28,47 @@ export default function usePOS() {
     const [customerAddress, setCustomerAddress] = useState('');
     // Customer data — sourced from shared cache module (no duplicate /customer-log fetch)
     const { customers: customersList } = useCustomerCache();
+    
+    // Checkers
+    const [checkers, setCheckers] = useState([]);
+    const [selectedChecker, setSelectedChecker] = useState('');
+
+    useEffect(() => {
+        const loadCheckers = async () => {
+            try {
+                // Checkers API, we could also use cache or just fetch active_only
+                const res = await api.get('/checkers?active_only=1');
+                setCheckers(res.data);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        loadCheckers();
+    }, []);
 
     // Modals
 
+    // Flat products including variants
+    const flatProducts = useMemo(() => {
+        const flat = [];
+        products.forEach(p => {
+            if (!p.variants || p.variants.length === 0) {
+                flat.push(p);
+            } else {
+                // Push the base product itself
+                flat.push(p);
+                // Push the variants
+                p.variants.forEach(v => {
+                    flat.push({ ...v, category: p.category, parent_product_name: p.name });
+                });
+            }
+        });
+        return flat;
+    }, [products]);
+
     // Filtered Products
     const filteredProducts = useMemo(() => {
-        let list = products.filter(p => 
+        let list = flatProducts.filter(p => 
             !p.parent_product_id ? (!p.variants || p.variants.length === 0 || p.stock > 0) : true
         );
         if (categoryFilter !== 'All') {
@@ -50,9 +86,9 @@ export default function usePOS() {
 
     // Unique categories for pills
     const categories = useMemo(() => {
-        const cats = new Set(products.map(p => p.category?.name || p.category).filter(Boolean));
+        const cats = new Set(flatProducts.map(p => p.category?.name || p.category).filter(Boolean));
         return ['All', ...Array.from(cats)];
-    }, [products]);
+    }, [flatProducts]);
 
     // Cart Actions
     const addToCart = (product, priceTier = 'price1') => {
@@ -176,6 +212,7 @@ export default function usePOS() {
                 customer_phone: customerPhone || '',
                 customer_tin: customerTin || '',
                 customer_address: customerAddress || '',
+                checker_id: selectedChecker || null,
                 doc_type: payload.doc_type,
                 payment_method: payload.payment.method === 'Bank Transfer' ? 'Bank' : payload.payment.method,
                 amount_tendered: payload.payment.amount_tendered || null,
@@ -206,6 +243,7 @@ export default function usePOS() {
                 setCustomerTin('');
                 setCustomerAddress('');
                 setExistingCustomerSearch('');
+                setSelectedChecker('');
                 return { success: true, transaction: res.data.transaction };
             }
         } catch (err) {
@@ -232,6 +270,8 @@ export default function usePOS() {
         customerTin, setCustomerTin,
         customerAddress, setCustomerAddress,
         customersList,
+        
+        checkers, selectedChecker, setSelectedChecker,
         
         showCheckoutModal, setShowCheckoutModal,
         processCheckout,

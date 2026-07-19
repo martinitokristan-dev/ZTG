@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { printUnifiedReceipt } from '../../../../utils/printReceipt';
 
 export default function CheckoutModal({ 
@@ -24,6 +24,21 @@ export default function CheckoutModal({
     // Success State
     const [checkoutSuccess, setCheckoutSuccess] = useState(false);
     const [completedTx, setCompletedTx] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (isOpen && !checkoutSuccess && !isProcessing && e.key === 'Enter') {
+                if (document.activeElement && document.activeElement.tagName === 'TEXTAREA') return;
+                // prevent default form submission if focused on something else to avoid double firing
+                e.preventDefault();
+                const btn = document.getElementById('submitCheckoutBtn');
+                if (btn) btn.click();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, checkoutSuccess, isProcessing]);
 
     if (!isOpen) return null;
 
@@ -64,17 +79,22 @@ export default function CheckoutModal({
             paymentData = { method: paymentMethod };
         }
 
-        const payload = {
-            doc_type: docType,
-            payment: paymentData
-        };
+        setIsProcessing(true);
+        try {
+            const payload = {
+                doc_type: docType,
+                payment: paymentData
+            };
 
-        const res = await processCheckout(payload);
-        if (res.success) {
-            setCompletedTx(res.transaction);
-            setCheckoutSuccess(true);
-        } else {
-            alert("Checkout failed: " + res.error);
+            const res = await processCheckout(payload);
+            if (res.success) {
+                setCompletedTx(res.transaction);
+                setCheckoutSuccess(true);
+            } else {
+                alert("Checkout failed: " + res.error);
+            }
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -168,36 +188,29 @@ export default function CheckoutModal({
                         borderBottom: '1px solid var(--border)',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'space-between'
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                        flexDirection: 'column',
+                        gap: '8px'
                     }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{
-                                width: '24px', height: '24px',
-                                background: '#F0FDF4',
-                                borderRadius: '50%',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                border: '1px solid #22C55E',
-                                flexShrink: 0
-                            }}>
-                                <svg viewBox="0 0 24 24" style={{ width: '14px', height: '14px', fill: 'none', stroke: '#15803D', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: '"Outfit", sans-serif' }}>Transaction Successful</h3>
-                                <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                    Receipt No: <strong style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{completedTx.si_no || completedTx.receipt_number}</strong>
-                                </p>
-                            </div>
-                        </div>
-                        <button type="button" onClick={handleCloseSuccess} style={{
-                            background: 'none', border: 'none',
-                            borderRadius: '50%', width: '28px', height: '28px',
+                        <div style={{
+                            width: '32px', height: '32px',
+                            background: '#F0FDF4',
+                            borderRadius: '50%',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: 'pointer', color: 'var(--text-secondary)', transition: 'background-color 0.2s'
-                        }} onMouseOver={e => e.currentTarget.style.backgroundColor='#E2E8F0'} onMouseOut={e => e.currentTarget.style.backgroundColor='transparent'}>
-                            <svg viewBox="0 0 24 24" style={{ width: '18px', height: '18px', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }}><path d="M18 6L6 18M6 6l12 12"/></svg>
-                        </button>
+                            border: '1px solid #22C55E',
+                            flexShrink: 0
+                        }}>
+                            <svg viewBox="0 0 24 24" style={{ width: '18px', height: '18px', fill: 'none', stroke: '#15803D', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: '"Outfit", sans-serif' }}>Transaction Successful</h3>
+                            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                Receipt No: <strong style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{completedTx.si_no || completedTx.receipt_number}</strong>
+                            </p>
+                        </div>
                     </div>
 
                     {/* Receipt Body */}
@@ -263,7 +276,7 @@ export default function CheckoutModal({
                                 
                                 <div style={{ borderTop: '1px dashed var(--border)', margin: '16px 0' }}></div>
                                 
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '700', fontSize: '16px', color: 'var(--primary)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '700', fontSize: '16px', color: completedTx.payment_method === 'P.O. (Pending)' ? 'var(--danger, #EF4444)' : 'var(--primary)' }}>
                                     <span>Grand Total</span>
                                     <span>₱{totalVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
@@ -357,8 +370,10 @@ export default function CheckoutModal({
                     </button>
                 </div>
                 
-                {/* Body */}
-                <div className="modal-body" style={{ padding: 0, display: 'grid', gridTemplateColumns: '1.2fr 1fr', minHeight: 0, overflow: 'hidden', height: '76vh' }}>
+                {/* Form Wrapper */}
+                <form onSubmit={e => { e.preventDefault(); handleCheckout(); }} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+                    {/* Body */}
+                    <div className="modal-body" style={{ padding: 0, display: 'grid', gridTemplateColumns: '1.2fr 1fr', minHeight: 0, overflow: 'hidden', height: '76vh' }}>
                     {/* Left Pane: Order Review */}
                     <div style={{ padding: '24px', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflowY: 'auto', background: '#F8FAFC' }}>
                         <h4 style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 0, marginBottom: '12px', fontFamily: '"Outfit", sans-serif' }}>Items in Cart</h4>
@@ -395,7 +410,7 @@ export default function CheckoutModal({
                                 <span>Tax (12%)</span>
                                 <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{fmt(cartTotals.tax)}</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '700', color: '#FFFFFF', background: 'var(--primary)', padding: '10px 14px', borderRadius: '8px', marginTop: '4px', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '700', color: '#FFFFFF', background: paymentMethod === 'P.O. (Pending)' ? 'var(--danger, #EF4444)' : 'var(--primary)', padding: '10px 14px', borderRadius: '8px', marginTop: '4px', alignItems: 'center' }}>
                                 <span>Grand Total</span>
                                 <span style={{ color: '#FFFFFF' }}>{fmt(cartTotals.total)}</span>
                             </div>
@@ -426,6 +441,7 @@ export default function CheckoutModal({
                                 <option value="GCash">GCash</option>
                                 <option value="Bank Transfer">Bank Transfer</option>
                                 <option value="Split">Split Payment</option>
+                                <option value="P.O. (Pending)">P.O. (Pending)</option>
                             </select>
                         </div>
 
@@ -471,9 +487,11 @@ export default function CheckoutModal({
                 {/* Footer */}
                 <div className="modal-footer" style={{ padding: '14px 24px', borderTop: '1px solid var(--border)', backgroundColor: '#FAFAFA', display: 'flex', justifyContent: 'flex-end', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
                     <p style={{ fontSize: '10px', color: 'var(--text-muted)', margin: 0, marginRight: 'auto' }}>Drawer: Admin holds physical drawer. Match transaction details with cash.</p>
-                    <button type="button" className="btn btn-secondary" onClick={onClose} style={{ padding: '8px 16px', fontSize: '13px', fontWeight: '600', borderRadius: '8px' }}>Close</button>
-                    <button type="button" className="btn btn-success" onClick={handleCheckout} style={{ padding: '8px 20px', fontSize: '13px', fontWeight: '700', borderRadius: '8px', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', border: 'none', boxShadow: '0 4px 12px rgba(16,185,129,0.2)' }}>Complete Checkout</button>
+                    <button id="submitCheckoutBtn" type="submit" className="btn btn-success" disabled={isProcessing} style={{ padding: '8px 20px', fontSize: '13px', fontWeight: '700', borderRadius: '8px', background: isProcessing ? '#94A3B8' : 'linear-gradient(135deg, #10B981 0%, #059669 100%)', border: 'none', boxShadow: isProcessing ? 'none' : '0 4px 12px rgba(16,185,129,0.2)', cursor: isProcessing ? 'not-allowed' : 'pointer' }}>
+                        {isProcessing ? 'Processing...' : 'Complete Checkout'}
+                    </button>
                 </div>
+                </form>
             </div>
         </div>
     );

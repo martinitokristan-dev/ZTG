@@ -18,6 +18,9 @@ export default function CartSidebar({
     
     customersList,
     
+    checkers,
+    selectedChecker, setSelectedChecker,
+    
     setShowCheckoutModal,
     fmt
 }) {
@@ -146,6 +149,20 @@ export default function CartSidebar({
                             onChange={(e) => setCustomerAddress(e.target.value)}
                         />
                     </div>
+                    <div>
+                        <label style={{ display: 'block', fontSize: '10px', marginBottom: '2px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase' }}>Warehouse Checker <span style={{ color: 'var(--danger)' }}>*</span></label>
+                        <select 
+                            className="form-select form-select-sm"
+                            style={{ width: '100%', padding: '8px 12px', fontSize: '13px', borderRadius: '6px', border: '1px solid var(--border)', outline: 'none' }}
+                            value={selectedChecker || ''}
+                            onChange={(e) => setSelectedChecker(e.target.value)}
+                        >
+                            <option value="" hidden>Select Checker *</option>
+                            {checkers.map(checker => (
+                                <option key={checker.id} value={checker.id}>{checker.name}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -225,6 +242,10 @@ export default function CartSidebar({
                         const hasCustomer = (existingCustomerSearch && existingCustomerSearch.trim() !== '') || (newCustomerName && newCustomerName.trim() !== '');
                         if (!hasCustomer) {
                             setError("Customer name is required. Search for an existing customer or enter a new customer name.");
+                            return;
+                        }
+                        if (!selectedChecker) {
+                            setError("Warehouse Checker is required. Please select a checker.");
                             return;
                         }
                         setShowCheckoutModal(true);

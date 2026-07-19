@@ -130,6 +130,7 @@ class NotificationService
             'Damaged'        => 'Damaged Stock Logged',
             'Deposit'        => 'Reservation Deposit',
             'Paid'           => 'Reservation Paid',
+            'Pending'        => 'Pending Order Created',
             'Security Alert' => 'Security Alert Alert',
             default          => 'Transaction Update',
         };
@@ -146,6 +147,7 @@ class NotificationService
             'Damaged'        => "Damaged inventory logged. SI No: {$transaction->si_no}.",
             'Deposit'        => "Reservation deposit of ₱" . $fmtAmt($transaction->amount) . " logged for Order {$transaction->si_no} by {$customerName}.",
             'Paid'           => "Reservation full payment of ₱" . $fmtAmt($transaction->amount) . " logged for Order {$transaction->si_no} by {$customerName}.",
+            'Pending'        => "Pending Order {$transaction->si_no} for ₱" . $fmtAmt($transaction->amount) . " has been created.",
             'Security Alert' => $transaction->internal_notes ?? "Security Alert: PIN validation failed.",
             default          => "Transaction {$transaction->si_no} has been updated to {$subType}.",
         };

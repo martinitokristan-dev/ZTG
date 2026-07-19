@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\RefundReturnRequest;
 use App\Http\Requests\VerifyPinRequest;
 use App\Http\Requests\VoidRequest;
+use App\Http\Requests\PayTransactionRequest;
 use App\Models\Transaction;
 use App\Services\Transactions\TransactionService;
 use Illuminate\Http\JsonResponse;
@@ -25,7 +26,7 @@ class TransactionController extends Controller
     public function index(Request $request): JsonResponse
     {
         $transactions = $this->transactionService->getAll($request->only([
-            'status', 'type', 'tx_type', 'cashier_id', 'date_from', 'date_to', 'search', 'payment_method',
+            'status', 'type', 'tx_type', 'cashier_id', 'date_from', 'date_to', 'search', 'payment_method', 'sort_by', 'sort_order'
         ]));
 
         return response()->json($transactions);
@@ -110,6 +111,22 @@ class TransactionController extends Controller
 
         return response()->json([
             'message'     => 'Transaction voided successfully.',
+            'transaction' => $updated,
+        ]);
+    }
+
+    /**
+     * Pay a pending order transaction.
+     */
+    public function pay(PayTransactionRequest $request, Transaction $transaction): JsonResponse
+    {
+        $updated = $this->transactionService->payPending(
+            $transaction,
+            $request->validated()
+        );
+
+        return response()->json([
+            'message'     => 'Pending order paid successfully.',
             'transaction' => $updated,
         ]);
     }

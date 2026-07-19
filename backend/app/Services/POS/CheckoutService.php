@@ -77,7 +77,6 @@ class CheckoutService
                 $isDead = (bool)$product->is_dead_stock;
                 $updateData = [
                     'stock'       => $newStock,
-                    'sales_count' => $product->sales_count + $item['qty'],
                     'status'      => $newStatus,
                 ];
 
@@ -104,11 +103,12 @@ class CheckoutService
             // 8. Build payment method string
             $paymentMethodStr = $this->buildPaymentMethodString($data);
 
-            // 9. Determine amount_tendered
+            // 9. Determine Amount Tendered
             $amountTendered = match ($data['payment_method']) {
-                'Cash'  => $data['amount_tendered'],
-                'Split' => $data['split_amount_1'] + $data['split_amount_2'],
-                default => $grandTotal, // GCash/Bank: auto-set to total
+                'Cash'           => $data['amount_tendered'],
+                'Split'          => $data['split_amount_1'] + $data['split_amount_2'],
+                'P.O. (Pending)' => 0,
+                default          => $grandTotal, // GCash/Bank: auto-set to total
             };
 
             // 10. Create Transaction record
@@ -117,12 +117,13 @@ class CheckoutService
                 'date'            => now(),
                 'customer_id'     => $customer->id,
                 'cashier_id'      => $cashierId,
+                'checker_id'      => $data['checker_id'] ?? null,
                 'total_qty'       => array_sum(array_column($cart, 'qty')),
                 'amount'          => $grandTotal,
                 'amount_tendered' => $amountTendered,
                 'payment_method'  => $paymentMethodStr,
                 'doc_type'        => $data['doc_type'],
-                'status'          => TransactionStatus::COMPLETED->value,
+                'status'          => $data['payment_method'] === 'P.O. (Pending)' ? TransactionStatus::PENDING->value : TransactionStatus::COMPLETED->value,
                 'type'            => TransactionType::SALE->value,
             ]);
 
@@ -141,7 +142,7 @@ class CheckoutService
                 ]);
             }
 
-            return $transaction->load('items.product', 'customer', 'cashier');
+            return $transaction->load('items.product', 'customer', 'cashier', 'checker');
         });
 
         // Dispatch real-time events outside the DB lock scope

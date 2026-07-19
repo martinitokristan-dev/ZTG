@@ -41,11 +41,13 @@ class AuthController extends Controller
         return response()->json([
             'token' => $token,
             'user' => [
-                'id' => $user->id,
-                'employee_id' => $user->employee_id,
-                'name' => $user->name,
-                'real_name' => $user->real_name,
-                'role' => $user->role->value ?? $user->role, // handle backed enum serialization
+                'id'            => $user->id,
+                'employee_id'   => $user->employee_id,
+                'name'          => $user->name,
+                'real_name'     => $user->real_name,
+                'email'         => $user->email,
+                'username'      => $user->username,
+                'role'          => $user->role->value ?? $user->role,
                 'profile_photo' => $user->profile_photo,
             ],
         ]);
@@ -71,11 +73,13 @@ class AuthController extends Controller
         $user = $request->user();
         return response()->json([
             'user' => [
-                'id' => $user->id,
-                'employee_id' => $user->employee_id,
-                'name' => $user->name,
-                'real_name' => $user->real_name,
-                'role' => $user->role->value ?? $user->role,
+                'id'            => $user->id,
+                'employee_id'   => $user->employee_id,
+                'name'          => $user->name,
+                'real_name'     => $user->real_name,
+                'email'         => $user->email,
+                'username'      => $user->username,
+                'role'          => $user->role->value ?? $user->role,
                 'profile_photo' => $user->profile_photo,
             ]
         ]);

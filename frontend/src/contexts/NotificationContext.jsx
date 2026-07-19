@@ -8,8 +8,26 @@ export const useNotifications = () => useContext(NotificationContext);
 
 export const NotificationProvider = ({ children }) => {
     const [notifications, setNotifications] = useState([]);
+    const [bubbleNotif, setBubbleNotif] = useState(null); // The one notification shown in the pop-up bubble
     const optimisticTimestamps = useRef({});
     const pollTimer = useRef(null);
+    const seenIds = useRef(new Set()); // IDs already seen on first load — never bubble these
+    const initialLoad = useRef(true);
+    const bubbleTimer = useRef(null);
+
+    const showBubble = useCallback((notif) => {
+        // Only show 1 bubble at a time; clear any existing timer
+        if (bubbleTimer.current) clearTimeout(bubbleTimer.current);
+        setBubbleNotif(notif);
+        bubbleTimer.current = setTimeout(() => {
+            setBubbleNotif(null);
+        }, 3000);
+    }, []);
+
+    const dismissBubble = useCallback(() => {
+        if (bubbleTimer.current) clearTimeout(bubbleTimer.current);
+        setBubbleNotif(null);
+    }, []);
 
     const fetchNotifications = useCallback(async () => {
         // Skip fetch entirely when not authenticated
@@ -19,10 +37,11 @@ export const NotificationProvider = ({ children }) => {
         try {
             const res = await api.get('/notifications');
             const notifs = Array.isArray(res.data) ? res.data : (res.data?.data || []);
-            
+
             const mappedNotifs = notifs.map(n => ({
                 id: n.id,
                 type: n.type || 'system',
+                sub_type: n.sub_type,
                 title: n.title,
                 message: n.message,
                 timestamp: new Date(n.created_at || n.timestamp).getTime(),
@@ -32,7 +51,7 @@ export const NotificationProvider = ({ children }) => {
             setNotifications(prev => {
                 // Merge respecting optimistic timestamps
                 const newMap = new Map(mappedNotifs.map(n => [n.id, n]));
-                
+
                 // Add existing items if they have a newer optimistic timestamp
                 prev.forEach(existing => {
                     const optTime = optimisticTimestamps.current[existing.id];
@@ -41,15 +60,29 @@ export const NotificationProvider = ({ children }) => {
                     }
                 });
 
-                // Convert map back to array and sort by timestamp descending
-                return Array.from(newMap.values()).sort((a, b) => b.timestamp - a.timestamp);
+                const merged = Array.from(newMap.values()).sort((a, b) => b.timestamp - a.timestamp);
+
+                if (initialLoad.current) {
+                    // On first load, mark everything as "already seen" — no bubbles
+                    merged.forEach(n => seenIds.current.add(n.id));
+                    initialLoad.current = false;
+                } else {
+                    // Find new unseen notifications and bubble the newest unread one
+                    const newUnseen = merged.filter(n => !seenIds.current.has(n.id) && !n.read);
+                    newUnseen.forEach(n => seenIds.current.add(n.id));
+                    if (newUnseen.length > 0) {
+                        showBubble(newUnseen[0]); // Show only the first/newest
+                    }
+                }
+
+                return merged;
             });
         } catch (err) {
             console.error("Failed to load notifications:", err);
         }
-    }, []);
+    }, [showBubble]);
 
-    const schedulePoll = useCallback((delay = 300000) => { // 5 minutes fallback
+    const schedulePoll = useCallback((delay = 15000) => { // 15 seconds fallback for responsive UI
         if (pollTimer.current) clearTimeout(pollTimer.current);
         pollTimer.current = setTimeout(() => {
             fetchNotifications().finally(() => schedulePoll());
@@ -57,7 +90,7 @@ export const NotificationProvider = ({ children }) => {
     }, [fetchNotifications]);
 
     useEffect(() => {
-        fetchNotifications().finally(() => schedulePoll(300000));
+        fetchNotifications().finally(() => schedulePoll(15000));
 
         const token = localStorage.getItem('auth_token');
         const userStr = localStorage.getItem('auth_user');
@@ -77,6 +110,13 @@ export const NotificationProvider = ({ children }) => {
                                 ...e.notification,
                                 timestamp: new Date(e.notification.timestamp).getTime()
                             };
+                            // Bubble real-time push notifications immediately
+                            if (!seenIds.current.has(newNotification.id)) {
+                                seenIds.current.add(newNotification.id);
+                                if (!newNotification.read) {
+                                    showBubble(newNotification);
+                                }
+                            }
                             return [newNotification, ...prev].sort((a, b) => b.timestamp - a.timestamp);
                         });
                     });
@@ -85,11 +125,12 @@ export const NotificationProvider = ({ children }) => {
 
         return () => {
             if (pollTimer.current) clearTimeout(pollTimer.current);
+            if (bubbleTimer.current) clearTimeout(bubbleTimer.current);
             if (channel) {
                 echo.leaveChannel('private-notifications');
             }
         };
-    }, [fetchNotifications, schedulePoll]);
+    }, [fetchNotifications, schedulePoll, showBubble]);
 
     const debouncePoll = () => {
         schedulePoll(5000);
@@ -115,7 +156,7 @@ export const NotificationProvider = ({ children }) => {
     const markAllRead = async () => {
         const previousState = [...notifications];
         const now = Date.now();
-        
+
         setNotifications(prev => {
             const next = prev.map(n => {
                 optimisticTimestamps.current[n.id] = now;
@@ -137,12 +178,14 @@ export const NotificationProvider = ({ children }) => {
     const unreadCount = notifications.filter(n => !n.read).length;
 
     return (
-        <NotificationContext.Provider value={{ 
-            notifications, 
-            unreadCount, 
-            markAsRead, 
-            markAllRead, 
-            refetch: fetchNotifications 
+        <NotificationContext.Provider value={{
+            notifications,
+            unreadCount,
+            markAsRead,
+            markAllRead,
+            refetch: fetchNotifications,
+            bubbleNotif,
+            dismissBubble,
         }}>
             {children}
         </NotificationContext.Provider>

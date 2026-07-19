@@ -18,12 +18,12 @@ export default function Inventory() {
         totalItems,
         categoriesCount,
         outOfStockCount,
-        lowStockCount
+        lowStockCount,
+        dateFilter, setDateFilter
     } = useInventory();
 
     return (
-        <div className="main-workspace-outer">
-            <div className="main-workspace">
+        <>
 
                 <div className="top-bar">
                     <div>
@@ -62,6 +62,12 @@ export default function Inventory() {
                                 <option value="No Stock">No Stock</option>
                                 <option value="Dead Stock">Dead Stock</option>
                             </select>
+                            <select className="table-select" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}>
+                                <option value="today">Sold Today</option>
+                                <option value="this_week">Sold This Week</option>
+                                <option value="this_month">Sold This Month</option>
+                                <option value="this_year">Sold This Year</option>
+                            </select>
                         </div>
                     </div>
 
@@ -72,12 +78,11 @@ export default function Inventory() {
                     />
 
                 </div>
-            </div>
 
             <ViewProductModal 
                 showViewModal={showViewModal} setShowViewModal={setShowViewModal}
                 selectedProduct={selectedProduct}
             />
-        </div>
+        </>
     );
 }

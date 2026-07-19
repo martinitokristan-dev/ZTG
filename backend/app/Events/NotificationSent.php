@@ -25,6 +25,7 @@ class NotificationSent implements ShouldBroadcast, ShouldDispatchAfterCommit
         $this->notification = [
             'id'        => $notification->id,
             'type'      => $notification->type ?: 'system',
+            'sub_type'  => $notification->sub_type ?? null,
             'title'     => $notification->title,
             'message'   => $notification->message,
             'timestamp' => ($notification->created_at instanceof \Carbon\Carbon 

@@ -5,6 +5,10 @@ import { resetDashboardCache } from '../../../../shared/hooks/useDashboardCache'
 import { resetReportsCache } from '../../../../shared/hooks/useReportsCache';
 import echo from '../../../../lib/echo';
 
+// Module-level cache — survives component unmount/remount on route changes
+let _cachedProductList = [];
+let _cachedProductPagination = null;
+
 const DEFAULT_PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=80&q=80";
 
 const DEFAULT_FORM = {
@@ -35,10 +39,12 @@ export default function useProductManagement() {
 
     // ── Data ────────────────────────────────────────────────────
     const { products: globalProducts, optimisticUpdateProduct, optimisticDeleteProduct, refetch: refetchProducts } = useProducts();
-    const [products, setProducts] = useState([]);
+    // Seed from module cache so revisits are instant (no loading flash)
+    const [products, setProducts] = useState(_cachedProductList);
     const [categories, setCategories] = useState([]);
     const [variantOptions, setVariantOptions] = useState([]);
-    const [loading, setLoading] = useState(true);
+    // Only show loading spinner on first visit (when module cache is empty)
+    const [loading, setLoading] = useState(false);
 
     // ── View mode: 'list' | 'restock' ──────────────────────────
     const [viewMode, setViewState] = useState('list');
@@ -46,8 +52,12 @@ export default function useProductManagement() {
     // ── List filters ────────────────────────────────────────────
     const [search, setSearch] = useState('');
     const [categoryId, setCategoryId] = useState('');
-    const [statusFilter, setStatusFilter] = useState('');
-    const [sortOption, setSortOption] = useState('Default');
+    const [statusFilter, setStatusFilter] = useState('All');
+    const [sortOption, setSortOption] = useState('name_asc');
+
+    // ── Pagination state ─────────────────────────────────────────
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState(null);
 
     // ── Restock filters ─────────────────────────────────────────
     const [restockSearch, setRestockSearch] = useState('');
@@ -77,20 +87,34 @@ export default function useProductManagement() {
     // ── API Calls ────────────────────────────────────────────────
     const loadProducts = async () => {
         try {
-            setLoading(true);
+            // Only show spinner when module cache is empty (very first load ever)
+            if (_cachedProductList.length === 0) setLoading(true);
             const queryParams = [];
             if (viewMode === 'list') {
                 if (search) queryParams.push(`search=${encodeURIComponent(search)}`);
                 if (categoryId) queryParams.push(`category_id=${categoryId}`);
-                if (statusFilter) queryParams.push(`status=${statusFilter}`);
+                if (statusFilter !== 'All') queryParams.push(`status=${statusFilter}`);
             } else {
                 if (restockSearch) queryParams.push(`search=${encodeURIComponent(restockSearch)}`);
                 if (restockCategory) queryParams.push(`category_id=${restockCategory}`);
             }
-            const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+            const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}&paginate=1&page=${page}` : `?paginate=1&page=${page}`;
             const res = await api.get(`/products${queryString}`);
-            const productsList = res.data || [];
+            const productsList = res.data.data || [];
+            const freshPagination = {
+                current_page: res.data.current_page,
+                last_page: res.data.last_page,
+                total: res.data.total,
+                per_page: res.data.per_page,
+                onPageChange: (newPage) => setPage(newPage)
+            };
+            // Update module cache for next visit
+            if (viewMode === 'list' && !search && !categoryId && statusFilter === 'All') {
+                _cachedProductList = productsList;
+                _cachedProductPagination = freshPagination;
+            }
             setProducts(productsList);
+            setPagination(freshPagination);
 
             if (viewMode === 'restock') {
                 setRestockQuantities(prev => {
@@ -130,9 +154,16 @@ export default function useProductManagement() {
 
     useEffect(() => { loadCategories(); loadVariantOptions(); }, []);
     useEffect(() => {
-        const timer = setTimeout(() => loadProducts(), 300);
-        return () => clearTimeout(timer);
+        setPage(1);
     }, [search, categoryId, statusFilter, viewMode, restockSearch, restockCategory]);
+
+    useEffect(() => {
+        loadCategories();
+    }, []);
+
+    useEffect(() => {
+        loadProducts();
+    }, [search, categoryId, statusFilter, viewMode, restockSearch, restockCategory, page]);
 
     useEffect(() => {
         const token = localStorage.getItem('auth_token');
@@ -143,32 +174,38 @@ export default function useProductManagement() {
         if (token && userStr) {
             const user = JSON.parse(userStr);
             if (['Admin', 'Supervisor'].includes(user.role)) {
-                productChannel = echo.private('products')
+                 productChannel = echo.private('products')
                     .listen('.ProductUpdated', (e) => {
                         console.log('[Echo Debug] ProductManagement ProductUpdated event received:', e);
-                        setProducts(prev => prev.map(p => {
-                            if (p.id === e.productId) {
-                                return {
-                                    ...p,
-                                    ...e.changedFields
-                                };
-                            }
-                            return p;
-                        }));
+                        const updateProductRecursively = (products) => {
+                            return products.map(p => {
+                                if (p.id === e.productId) {
+                                    return { ...p, ...e.changedFields };
+                                }
+                                if (p.variants && p.variants.length > 0) {
+                                    return { ...p, variants: updateProductRecursively(p.variants) };
+                                }
+                                return p;
+                            });
+                        };
+                        setProducts(prev => updateProductRecursively(prev));
                     });
 
-                inventoryChannel = echo.private('inventory')
+                 inventoryChannel = echo.private('inventory')
                     .listen('.InventoryUpdated', (e) => {
                         console.log('[Echo Debug] ProductManagement InventoryUpdated event received:', e);
-                        setProducts(prev => prev.map(p => {
-                            if (p.id === e.productId) {
-                                return {
-                                    ...p,
-                                    stock: e.newQuantity
-                                };
-                            }
-                            return p;
-                        }));
+                        const updateProductRecursively = (products) => {
+                            return products.map(p => {
+                                if (p.id === e.productId) {
+                                    return { ...p, stock: e.newQuantity, sales_count: e.salesCount };
+                                }
+                                if (p.variants && p.variants.length > 0) {
+                                    return { ...p, variants: updateProductRecursively(p.variants) };
+                                }
+                                return p;
+                            });
+                        };
+                        setProducts(prev => updateProductRecursively(prev));
                     });
             }
         }
@@ -244,7 +281,7 @@ export default function useProductManagement() {
     const { itemsCount: restockItemsCount, unitsCount: restockUnitsCount } = getRestockTotals();
 
     const updateRestockQty = (productId, val) => {
-        const value = Math.max(0, val);
+        const value = val === '' ? '' : Math.max(0, val || 0);
         setRestockQuantities(prev => {
             const next = { ...prev, [productId]: value };
             localStorage.setItem('ztg_restock_draft', JSON.stringify(next));
@@ -490,6 +527,9 @@ export default function useProductManagement() {
         restockItemsCount, restockUnitsCount,
         // View mode
         viewMode, switchToRestock, switchToProductsList,
+        categories,
+        page, setPage,
+        pagination,
         // List filters
         search, setSearch, categoryId, setCategoryId,
         statusFilter, setStatusFilter, sortOption, setSortOption,

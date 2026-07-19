@@ -6,48 +6,67 @@ export default function PasswordModal({
 }) {
     if (!showPasswordModal) return null;
     return (
-        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-content-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                    <h3 className="text-xs font-extrabold text-slate-800">Change Account Password</h3>
-                    <button type="button" onClick={() => setShowPasswordModal(false)} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
-                </div>
+        <div className="modal-overlay" style={{ zIndex: 999 }}>
+            <div className="modal-card" style={{ maxWidth: '450px', width: '95%', background: '#FFFFFF', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.12)', border: '1px solid #E2E8F0' }}>
                 <form onSubmit={handlePasswordSubmit}>
-                    <div className="p-6 flex flex-col gap-4">
+                    <div className="modal-header" style={{ background: '#FFFFFF', borderBottom: '1px solid #F1F5F9', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Current Password *</label>
+                            <h3 style={{ color: '#1E293B', fontSize: '18px', fontWeight: '700', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" strokeWidth="2.5" style={{ color: '#3B82F6', flexShrink: 0 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> 
+                                Change Account Password
+                            </h3>
+                            <p style={{ color: '#64748B', fontSize: '11.5px', margin: 0 }}>Update your login credentials securely</p>
+                        </div>
+                        <button type="button" onClick={() => setShowPasswordModal(false)} style={{ color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', transition: 'color 0.2s' }}>
+                            <svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>
+                    
+                    <div className="modal-body" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '75vh', overflowY: 'auto' }}>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>Current Password <span style={{ color: '#EF4444' }}>*</span></label>
                             <input 
                                 type="password" 
                                 required 
                                 value={passwordData.current_password}
                                 onChange={(e) => setPasswordData({...passwordData, current_password: e.target.value})}
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-xs focus:outline-none"
+                                className="form-control"
+                                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '14px' }}
                             />
                         </div>
-                        <div>
-                            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">New Password *</label>
+
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>New Password <span style={{ color: '#EF4444' }}>*</span></label>
                             <input 
                                 type="password" 
                                 required 
                                 value={passwordData.password}
                                 onChange={(e) => setPasswordData({...passwordData, password: e.target.value})}
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-xs focus:outline-none"
+                                className="form-control"
+                                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '14px' }}
                             />
                         </div>
-                        <div>
-                            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Confirm New Password *</label>
+
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>Confirm New Password <span style={{ color: '#EF4444' }}>*</span></label>
                             <input 
                                 type="password" 
                                 required 
                                 value={passwordData.password_confirmation}
                                 onChange={(e) => setPasswordData({...passwordData, password_confirmation: e.target.value})}
-                                className="w-full p-2.5 border border-slate-200 rounded-lg text-xs focus:outline-none"
+                                className="form-control"
+                                style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '14px' }}
                             />
                         </div>
                     </div>
-                    <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-                        <button type="button" onClick={() => setShowPasswordModal(false)} className="px-4 py-2 border border-slate-250 text-slate-500 rounded-lg text-xs font-bold bg-white hover:bg-slate-50">Cancel</button>
-                        <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow">Change Password</button>
+
+                    <div className="modal-footer" style={{ padding: '20px 24px', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                        <button type="button" onClick={() => setShowPasswordModal(false)} className="btn" style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#475569', fontWeight: '600', padding: '10px 20px', borderRadius: '8px' }}>
+                            Cancel
+                        </button>
+                        <button type="submit" className="btn" style={{ background: '#3B82F6', color: '#FFFFFF', border: 'none', fontWeight: '600', padding: '10px 24px', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.2)' }}>
+                            Change Password
+                        </button>
                     </div>
                 </form>
             </div>

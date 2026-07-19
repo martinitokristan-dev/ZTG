@@ -35,7 +35,8 @@ export default function SalesTable({ loading, items, fmt, fmtDate }) {
                     <tbody style={{ fontSize: '13px' }}>
                         {items.map((item, i) => {
                             const isDeduction = (item._txStatus === 'Refund' || item._txStatus === 'Return' || item._txStatus === 'Void');
-                            const amountColor = isDeduction ? 'var(--danger, #DC2626)' : 'var(--success, #16A34A)';
+                            const isPending = item._txStatus === 'Pending';
+                            const amountColor = (isDeduction || isPending) ? 'var(--danger, #DC2626)' : 'var(--success, #16A34A)';
                             const amountPrefix = isDeduction ? '- ' : '';
                             const rowAmount = (item.price !== null && item.price !== undefined) ? item.price * item.qty : 0;
 
@@ -51,7 +52,7 @@ export default function SalesTable({ loading, items, fmt, fmtDate }) {
                                     <td style={{ padding: '16px', fontWeight: '700', color: amountColor }}>{amountPrefix}{fmt(rowAmount)}</td>
                                     <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{item._txCustomer}</td>
                                     <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{item._txPayment}</td>
-                                    <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{(item._txCashier || '-').split(' ')[0]}</td>
+                                    <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{(item._txChecker || '—').split(' ')[0]}</td>
                                     <td style={{ padding: '16px' }}><StatusBadge status={item._txStatus} /></td>
                                 </tr>
                             );

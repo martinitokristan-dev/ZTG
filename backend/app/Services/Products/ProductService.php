@@ -42,15 +42,36 @@ class ProductService
     /**
      * Get all base products (no parent) with optional filters.
      */
-    public function getAll(array $filters = []): Collection
+    public function getAll(array $filters = [])
     {
-        $query = Product::with(['category', 'variantOptions.type', 'variants.variantOptions.type']);
+        $query = Product::with(['category', 'variantOptions.type', 'variants' => function($q) use ($filters) {
+            $q->with('variantOptions.type');
+            if (!empty($filters['search'])) {
+                $q->where(function ($sub) use ($filters) {
+                    $sub->where('name', 'like', '%' . $filters['search'] . '%')
+                      ->orWhere('part_no', 'like', '%' . $filters['search'] . '%')
+                      ->orWhere('chinese_name', 'like', '%' . $filters['search'] . '%');
+                });
+            }
+            if (!empty($filters['status']) && $filters['status'] !== 'All') {
+                if ($filters['status'] === 'Dead Stock') {
+                    $q->where('is_dead_stock', true);
+                } else {
+                    $q->where('status', $filters['status']);
+                }
+            }
+        }])->whereNull('parent_product_id');
 
         if (!empty($filters['search'])) {
             $query->where(function ($q) use ($filters) {
                 $q->where('name', 'like', '%' . $filters['search'] . '%')
                   ->orWhere('part_no', 'like', '%' . $filters['search'] . '%')
-                  ->orWhere('chinese_name', 'like', '%' . $filters['search'] . '%');
+                  ->orWhere('chinese_name', 'like', '%' . $filters['search'] . '%')
+                  ->orWhereHas('variants', function ($sub) use ($filters) {
+                      $sub->where('name', 'like', '%' . $filters['search'] . '%')
+                          ->orWhere('part_no', 'like', '%' . $filters['search'] . '%')
+                          ->orWhere('chinese_name', 'like', '%' . $filters['search'] . '%');
+                  });
             });
         }
 
@@ -59,11 +80,23 @@ class ProductService
         }
 
         if (!empty($filters['status']) && $filters['status'] !== 'All') {
-            if ($filters['status'] === 'Dead Stock') {
-                $query->where('is_dead_stock', true);
-            } else {
-                $query->where('status', $filters['status']);
-            }
+            $query->where(function ($q) use ($filters) {
+                if ($filters['status'] === 'Dead Stock') {
+                    $q->where('is_dead_stock', true)
+                      ->orWhereHas('variants', function ($sub) {
+                          $sub->where('is_dead_stock', true);
+                      });
+                } else {
+                    $q->where('status', $filters['status'])
+                      ->orWhereHas('variants', function ($sub) use ($filters) {
+                          $sub->where('status', $filters['status']);
+                      });
+                }
+            });
+        }
+
+        if (isset($filters['paginate']) && $filters['paginate']) {
+            return $query->orderBy('name')->paginate($filters['per_page'] ?? 20);
         }
 
         return $query->orderBy('name')->get();
@@ -74,7 +107,17 @@ class ProductService
      */
     public function show(int $id): Product
     {
-        return Product::with(['category', 'variants.variantOptions.type'])->findOrFail($id);
+        $salesSubquery = \App\Models\TransactionItem::selectRaw('COALESCE(SUM(qty), 0)')
+            ->join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
+            ->whereColumn('transaction_items.product_id', 'products.id')
+            ->where('transactions.status', 'Completed');
+
+        return Product::with(['category', 'variants' => function($q) use ($salesSubquery) {
+                $q->with('variantOptions.type')->select('products.*')->selectSub(clone $salesSubquery, 'sales_count');
+            }])
+            ->select('products.*')
+            ->selectSub(clone $salesSubquery, 'sales_count')
+            ->findOrFail($id);
     }
 
     /**

@@ -11,13 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('archives', function (Blueprint $table) {
-            $table->id();
-            $table->string('reference_id', 50);
-            $table->string('type', 100);
-            $table->text('details');
-            $table->date('date_archived');
-            $table->timestamp('created_at')->useCurrent();
+        Schema::table('transactions', function (Blueprint $table) {
+            $table->foreignId('checker_id')->nullable()->constrained('checkers')->nullOnDelete();
         });
     }
 
@@ -26,6 +21,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('archives');
+        Schema::table('transactions', function (Blueprint $table) {
+            $table->dropForeign(['checker_id']);
+            $table->dropColumn('checker_id');
+        });
     }
 };

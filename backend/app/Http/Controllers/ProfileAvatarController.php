@@ -1,0 +1,120 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+
+class ProfileAvatarController extends Controller
+{
+    /**
+     * Upload a new profile photo for the authenticated user.
+     *
+     * Security guarantees:
+     *  1. Validation rejects non-image files, enforces allowed MIME types and 2 MB cap.
+     *  2. Stored filename is generated (user-id + cryptographic random), never the original name.
+     *  3. $request->user() scopes the update to the authenticated user — no ID in the request body.
+     *  4. Old-file deletion is wrapped in its own try/catch; failure is logged but never
+     *     blocks the new upload from succeeding.
+     */
+    public function upload(Request $request): JsonResponse
+    {
+        // ── 1. Validation ──────────────────────────────────────────────────────
+        $request->validate([
+            'avatar' => [
+                'required',
+                'image',                              // PHP GD/Exif content sniff — not just extension
+                'mimes:jpeg,jpg,png,gif,webp',        // MIME whitelist (server-side sniff)
+                'max:2048',                           // 2 MB limit
+            ],
+        ]);
+
+        // ── 3. Scope to authenticated user — no request-supplied ID ──────────
+        $user = $request->user();
+
+        // ── 4. Delete old avatar — failure never blocks the new upload ────────
+        if ($user->profile_photo) {
+            try {
+                $oldPath = $this->urlToStoragePath($user->profile_photo);
+                if ($oldPath && Storage::disk('public')->exists($oldPath)) {
+                    Storage::disk('public')->delete($oldPath);
+                }
+            } catch (\Throwable $e) {
+                // Log the failure but continue with the new upload
+                Log::warning('ProfileAvatar: could not delete old avatar.', [
+                    'user_id'   => $user->id,
+                    'old_photo' => $user->profile_photo,
+                    'error'     => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // ── 2. Generated filename — user id + 16-char random hex, ext from MIME ─
+        $file = $request->file('avatar');
+        $ext  = $file->extension();                   // guessed from MIME, NOT getClientOriginalExtension()
+        $filename = 'avatar_' . $user->id . '_' . Str::random(16) . '.' . $ext;
+        $path = $file->storeAs('avatars', $filename, 'public');
+
+        // Build the public URL served through the storage symlink
+        $url = rtrim(config('app.url'), '/') . '/storage/' . $path;
+
+        $user->update(['profile_photo' => $url]);
+
+        return response()->json([
+            'message'       => 'Profile photo uploaded successfully.',
+            'profile_photo' => $url,
+        ]);
+    }
+
+    /**
+     * Remove the authenticated user's profile photo.
+     * Scoped to $request->user() — no request body needed.
+     */
+    public function remove(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->profile_photo) {
+            try {
+                $oldPath = $this->urlToStoragePath($user->profile_photo);
+                if ($oldPath && Storage::disk('public')->exists($oldPath)) {
+                    Storage::disk('public')->delete($oldPath);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('ProfileAvatar: could not delete avatar on remove.', [
+                    'user_id' => $user->id,
+                    'error'   => $e->getMessage(),
+                ]);
+            }
+
+            $user->update(['profile_photo' => null]);
+        }
+
+        return response()->json([
+            'message'       => 'Profile photo removed.',
+            'profile_photo' => null,
+        ]);
+    }
+
+    /**
+     * Convert a stored full URL back to a relative storage/public path.
+     *
+     * e.g. "http://localhost:8000/storage/avatars/avatar_1_abcdefgh.jpg"
+     *       → "avatars/avatar_1_abcdefgh.jpg"
+     *
+     * Returns null when the URL doesn't belong to our own storage,
+     * ensuring we never attempt to delete external URLs.
+     */
+    private function urlToStoragePath(?string $url): ?string
+    {
+        if (!$url) return null;
+        $base = rtrim(config('app.url'), '/') . '/storage/';
+        if (str_starts_with($url, $base)) {
+            return substr($url, strlen($base));
+        }
+        return null;  // external/unknown URL — do not touch
+    }
+}

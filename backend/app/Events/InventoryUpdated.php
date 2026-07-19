@@ -16,6 +16,7 @@ class InventoryUpdated implements ShouldBroadcast, ShouldDispatchAfterCommit
 
     public int $productId;
     public int $newQuantity;
+    public int $salesCount;
 
     /**
      * Create a new event instance.
@@ -24,6 +25,10 @@ class InventoryUpdated implements ShouldBroadcast, ShouldDispatchAfterCommit
     {
         $this->productId = $productId;
         $this->newQuantity = $newQuantity;
+        $this->salesCount = (int) \App\Models\TransactionItem::join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
+            ->where('transaction_items.product_id', $productId)
+            ->where('transactions.status', 'Completed')
+            ->sum('transaction_items.qty');
     }
 
     /**

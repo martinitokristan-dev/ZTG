@@ -54,7 +54,7 @@ export default function MySalesTable({ loading, items, fmt, fmtDate }) {
                                     <td style={{ padding: '16px', fontWeight: '700', color: amountColor }}>{amountPrefix}{fmt(rowAmount)}</td>
                                     <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{item._txCustomer}</td>
                                     <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{item._txPayment}</td>
-                                    <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{(item._txCashier || '-').split(' ')[0]}</td>
+                                    <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{(item._txChecker || '—').split(' ')[0]}</td>
                                     <td style={{ padding: '16px' }}><StatusBadge status={item._txStatus} /></td>
                                 </tr>
                             );

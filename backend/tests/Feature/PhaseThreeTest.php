@@ -135,6 +135,7 @@ class PhaseThreeTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->postJson('/api/products', [
                 'name'        => 'Hydraulic Pump',
+                'chinese_name'=> '液压泵',
                 'part_no'     => 'HP-001',
                 'category_id' => $this->category->id,
                 'stock'       => 30,
@@ -163,6 +164,7 @@ class PhaseThreeTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->postJson('/api/products', [
                 'name'        => 'Hydraulic Pump',
+                'chinese_name'=> '液压泵',
                 'part_no'     => 'HP-001',
                 'category_id' => $this->category->id,
                 'stock'       => 10,
@@ -206,6 +208,7 @@ class PhaseThreeTest extends TestCase
         $response = $this->actingAs($this->cashier)
             ->postJson('/api/products', [
                 'name'        => 'Smuggled Part',
+                'chinese_name'=> '走私零件',
                 'part_no'     => 'SM-001',
                 'category_id' => $this->category->id,
                 'stock'       => 1,
@@ -223,6 +226,7 @@ class PhaseThreeTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->postJson('/api/products', [
                 'name'        => 'Empty Part',
+                'chinese_name'=> '空零件',
                 'part_no'     => 'EP-001',
                 'category_id' => $this->category->id,
                 'stock'       => 0,
@@ -240,6 +244,7 @@ class PhaseThreeTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->postJson('/api/products', [
                 'name'        => 'Scarce Part',
+                'chinese_name'=> '稀缺零件',
                 'part_no'     => 'SC-001',
                 'category_id' => $this->category->id,
                 'stock'       => 3,
@@ -261,6 +266,7 @@ class PhaseThreeTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->putJson("/api/products/{$product->id}", [
                 'name'        => 'New Name',
+                'chinese_name'=> '新名称',
                 'part_no'     => 'OLD-001',
                 'category_id' => $this->category->id,
                 'stock'       => 50,

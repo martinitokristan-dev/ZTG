@@ -28,7 +28,7 @@ class ProductController extends Controller
     public function index(Request $request): JsonResponse
     {
         $products = $this->productService->getAll($request->only([
-            'search', 'category_id', 'status'
+            'search', 'category_id', 'status', 'paginate', 'per_page', 'page'
         ]));
 
         return response()->json($products);

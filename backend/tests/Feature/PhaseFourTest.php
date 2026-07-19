@@ -21,6 +21,7 @@ class PhaseFourTest extends TestCase
     private Category $category;
     private Product $productA;
     private Product $productB;
+    private \App\Models\Checker $checker;
 
     protected function setUp(): void
     {
@@ -73,6 +74,12 @@ class PhaseFourTest extends TestCase
             'price2'      => 950.00,
             'status'      => 'Active',
         ]);
+
+        $this->checker = \App\Models\Checker::create([
+            'name'    => 'Test Checker',
+            'contact' => '123456',
+            'status'  => 'Active',
+        ]);
     }
 
     /* ─── Helper ──────────────────────────────────────────── */
@@ -89,6 +96,7 @@ class PhaseFourTest extends TestCase
             'payment_method'  => 'Cash',
             'doc_type'        => 'S.I.',
             'amount_tendered' => 10000.00, // 2500*2 + 850 = 5850
+            'checker_id'      => $this->checker->id,
         ], $overrides);
     }
 
@@ -227,6 +235,7 @@ class PhaseFourTest extends TestCase
                 'customer_name'  => 'GCash Customer',
                 'payment_method' => 'GCash',
                 'doc_type'       => 'S.I.',
+                'checker_id'     => $this->checker->id,
             ]);
 
         $response->assertStatus(201)
@@ -245,6 +254,7 @@ class PhaseFourTest extends TestCase
                 'customer_name'  => 'Split Fail',
                 'payment_method' => 'Split',
                 'doc_type'       => 'S.I.',
+                'checker_id'     => $this->checker->id,
                 'split_method_1' => 'Cash',
                 'split_amount_1' => 1000.00,
                 'split_method_2' => 'GCash',
@@ -265,6 +275,7 @@ class PhaseFourTest extends TestCase
                 'customer_name'  => 'Split Customer',
                 'payment_method' => 'Split',
                 'doc_type'       => 'S.I.',
+                'checker_id'     => $this->checker->id,
                 'split_method_1' => 'Cash',
                 'split_amount_1' => 1500.00,
                 'split_method_2' => 'GCash',
@@ -290,82 +301,11 @@ class PhaseFourTest extends TestCase
                 'payment_method'  => 'Cash',
                 'doc_type'        => 'S.I.',
                 'amount_tendered' => 20000.00,
+                'checker_id'      => $this->checker->id,
             ]);
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('products', ['id' => $this->productB->id, 'stock' => 3, 'status' => 'Low Stock']);
     }
 
-    /* ─── Pending Orders Tests ────────────────────────────── */
-
-    public function test_cashier_can_park_an_order()
-    {
-        $response = $this->actingAs($this->cashier)
-            ->postJson('/api/pos/pending-orders', [
-                'cart' => [
-                    ['product_id' => $this->productA->id, 'qty' => 2, 'price' => 2500.00],
-                ],
-                'customer_name'  => 'Parked Customer',
-                'customer_phone' => '09170000000',
-                'doc_type'       => 'S.I.',
-            ]);
-
-        $response->assertStatus(201)
-            ->assertJsonFragment(['message' => 'Order parked successfully.']);
-
-        $this->assertDatabaseHas('pending_purchase_orders', ['cashier_id' => $this->cashier->id]);
-        $this->assertDatabaseHas('pending_po_items', ['product_id' => $this->productA->id, 'qty' => 2]);
-    }
-
-    public function test_cashier_can_list_their_pending_orders()
-    {
-        // Cashier parks an order
-        $this->actingAs($this->cashier)->postJson('/api/pos/pending-orders', [
-            'cart' => [['product_id' => $this->productA->id, 'qty' => 1, 'price' => 2500.00]],
-            'customer_name' => 'My Customer',
-            'doc_type'      => 'S.I.',
-        ]);
-
-        $response = $this->actingAs($this->cashier)
-            ->getJson('/api/pos/pending-orders');
-
-        $response->assertStatus(200)
-            ->assertJsonCount(1);
-    }
-
-    public function test_admin_can_see_all_pending_orders()
-    {
-        // Cashier parks an order
-        $this->actingAs($this->cashier)->postJson('/api/pos/pending-orders', [
-            'cart' => [['product_id' => $this->productA->id, 'qty' => 1, 'price' => 2500.00]],
-            'customer_name' => 'Cashier Customer',
-            'doc_type'      => 'S.I.',
-        ]);
-
-        // Admin should see all orders
-        $response = $this->actingAs($this->admin)
-            ->getJson('/api/pos/pending-orders');
-
-        $response->assertStatus(200)
-            ->assertJsonCount(1);
-    }
-
-    public function test_cashier_can_delete_pending_order()
-    {
-        $parkResponse = $this->actingAs($this->cashier)->postJson('/api/pos/pending-orders', [
-            'cart' => [['product_id' => $this->productA->id, 'qty' => 1, 'price' => 2500.00]],
-            'customer_name' => 'Delete Me',
-            'doc_type'      => 'S.I.',
-        ]);
-
-        $orderId = $parkResponse->json('order.id');
-
-        $response = $this->actingAs($this->cashier)
-            ->deleteJson("/api/pos/pending-orders/{$orderId}");
-
-        $response->assertStatus(200)
-            ->assertJsonFragment(['message' => 'Pending order removed successfully.']);
-
-        $this->assertDatabaseMissing('pending_purchase_orders', ['id' => $orderId]);
-    }
 }

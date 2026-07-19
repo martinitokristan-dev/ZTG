@@ -1,28 +1,136 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 
 export default function ProfileTab({
     profileData, setProfileData, handleProfileSubmit,
-    setShowPasswordModal, showPIN, setShowPIN, isProfileDirty
+    setShowPasswordModal, showPIN, setShowPIN, isProfileDirty,
+    handleAvatarUpload, handleAvatarRemove, avatarUploading,
+    confirmingRemove, handleAvatarRemoveConfirmed, handleAvatarRemoveCancel
 }) {
+    const fileInputRef = useRef(null);
+
+    // Compute display avatar — server URL or initials fallback
+    const hasPhoto = !!profileData.profile_photo;
+    const initials = profileData.real_name
+        ? profileData.real_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+        : (profileData.username ? profileData.username.slice(0, 2).toUpperCase() : (profileData.role === 'Cashier' ? 'CA' : 'AD'));
+
+    // Determine which required fields are missing
+    const missing = [];
+    if (!profileData.real_name?.trim()) missing.push('Full Name');
+    if (!profileData.email?.trim()) missing.push('Email Address');
+    if (!profileData.username?.trim()) missing.push('Login Username');
+    const hasIncomplete = missing.length > 0;
+
     return (
         <div className="profile-page-body">
             <div className="profile-page-grid">
-                
+
+                {/* Incomplete profile warning */}
+                {hasIncomplete && (
+                    <div style={{
+                        gridColumn: '1 / -1',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '10px',
+                        background: '#FEF2F2',
+                        border: '1px solid #FECACA',
+                        borderRadius: '10px',
+                        padding: '14px 18px',
+                        marginBottom: '8px',
+                    }}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" style={{ width: '18px', height: '18px', flexShrink: 0, marginTop: '1px' }}>
+                            <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                        </svg>
+                        <div>
+                            <div style={{ fontSize: '13px', fontWeight: '700', color: '#DC2626', marginBottom: '4px' }}>
+                                Profile Incomplete
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#B91C1C', lineHeight: 1.5 }}>
+                                Please fill in the following required fields: <strong>{missing.join(', ')}</strong>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Photo & Profile Section */}
                 <section className="profile-photo-section">
                     <div className="profile-section-card profile-photo-center">
-                        <div className="profile-photo-preview-lg">
-                            <div className="profile-photo-avatar-lg user-avatar-img">
-                                {profileData.real_name ? profileData.real_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase() : (profileData.username ? profileData.username.slice(0,2).toUpperCase() : (profileData.role === 'Cashier' ? 'CA' : 'AD'))}
-                            </div>
+                        {/* Avatar preview */}
+                        <div className="profile-photo-preview-lg" style={{ position: 'relative' }}>
+                            {hasPhoto ? (
+                                <img
+                                    src={profileData.profile_photo}
+                                    alt="Profile"
+                                    style={{ width: '96px', height: '96px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--border)', display: 'block', margin: '0 auto' }}
+                                />
+                            ) : (
+                                <div className="profile-photo-avatar-lg user-avatar-img">
+                                    {initials}
+                                </div>
+                            )}
+                            {avatarUploading && (
+                                <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" style={{ width: '24px', height: '24px', animation: 'spin 1s linear infinite' }}>
+                                        <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83"/>
+                                    </svg>
+                                </div>
+                            )}
                         </div>
+
                         <h2 className="profile-section-title" style={{ marginTop: '16px' }}>Profile Photo</h2>
                         <p className="profile-section-desc" style={{ marginBottom: '20px' }}>
                             This photo will appear in the sidebar and across the system.
                         </p>
                         <div className="profile-photo-actions" style={{ flexDirection: 'column' }}>
-                            <button type="button" className="btn btn-secondary profile-upload-btn" style={{ width: '100%' }}>Upload New Photo</button>
-                            <button type="button" className="btn btn-danger profile-remove-btn" style={{ width: '100%', background: 'transparent', border: 'none', color: '#DC2626' }}>Remove Photo</button>
+                            {/* Hidden real file input */}
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+                                style={{ display: 'none' }}
+                                onChange={handleAvatarUpload}
+                            />
+                            <button
+                                type="button"
+                                className="btn btn-secondary profile-upload-btn"
+                                style={{ width: '100%' }}
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={avatarUploading}
+                            >
+                                {avatarUploading ? 'Uploading...' : 'Upload New Photo'}
+                            </button>
+                            {hasPhoto && !confirmingRemove && (
+                                <button
+                                    type="button"
+                                    className="btn btn-danger profile-remove-btn"
+                                    style={{ width: '100%', background: 'transparent', border: 'none', color: '#DC2626' }}
+                                    onClick={handleAvatarRemove}
+                                    disabled={avatarUploading}
+                                >
+                                    Remove Photo
+                                </button>
+                            )}
+                            {confirmingRemove && (
+                                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                                    <span style={{ fontSize: '12px', color: '#64748B', textAlign: 'center' }}>Remove your profile photo?</span>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <button
+                                            type="button"
+                                            onClick={handleAvatarRemoveConfirmed}
+                                            style={{ flex: 1, padding: '6px 0', background: '#DC2626', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
+                                        >
+                                            Yes, Remove
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleAvatarRemoveCancel}
+                                            style={{ flex: 1, padding: '6px 0', background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: '6px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </section>
@@ -41,51 +149,64 @@ export default function ProfileTab({
                         <form onSubmit={handleProfileSubmit}>
                             <div className="profile-form-grid">
                                 <div className="form-group">
-                                    <label className="form-label" htmlFor="profileName">Full Name</label>
-                                    <input 
-                                        type="text" 
-                                        id="profileName" 
-                                        className="form-control profile-input" 
-                                        value={profileData.real_name} 
-                                        onChange={(e) => setProfileData({...profileData, real_name: e.target.value})} 
+                                    <label className="form-label" htmlFor="profileName">
+                                        Full Name <span style={{ color: '#DC2626' }}>*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="profileName"
+                                        className="form-control profile-input"
+                                        required
+                                        value={profileData.real_name}
+                                        onChange={(e) => setProfileData({...profileData, real_name: e.target.value})}
+                                        style={{ borderColor: !profileData.real_name?.trim() ? '#FCA5A5' : '' }}
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label" htmlFor="profileEmail">Email Address</label>
-                                    <input 
-                                        type="email" 
-                                        id="profileEmail" 
-                                        className="form-control profile-input" 
-                                        value={profileData.email} 
-                                        onChange={(e) => setProfileData({...profileData, email: e.target.value})} 
+                                    <label className="form-label" htmlFor="profileEmail">
+                                        Email Address <span style={{ color: '#DC2626' }}>*</span>
+                                    </label>
+                                    <input
+                                        type="email"
+                                        id="profileEmail"
+                                        className="form-control profile-input"
+                                        required
+                                        value={profileData.email}
+                                        onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                                        style={{ borderColor: !profileData.email?.trim() ? '#FCA5A5' : '' }}
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label" htmlFor="profileUsername">Login Username</label>
-                                    <input 
-                                        type="text" 
-                                        id="profileUsername" 
-                                        className="form-control profile-input" 
-                                        value={profileData.username} 
-                                        onChange={(e) => setProfileData({...profileData, username: e.target.value})} 
+                                    <label className="form-label" htmlFor="profileUsername">
+                                        Login Username <span style={{ color: '#DC2626' }}>*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="profileUsername"
+                                        className="form-control profile-input"
+                                        required
+                                        value={profileData.username}
+                                        onChange={(e) => setProfileData({...profileData, username: e.target.value})}
+                                        style={{ borderColor: !profileData.username?.trim() ? '#FCA5A5' : '' }}
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label" htmlFor="profilePin">Manager PIN</label>
+                                    <label className="form-label">Update Manager PIN <span style={{ color: 'var(--text-muted)', fontSize: '11px', fontWeight: 'normal', marginLeft: '6px' }}>(Leave blank to keep current)</span></label>
                                     <div style={{ position: 'relative', width: '100%' }}>
-                                        <input 
-                                            type={showPIN ? "text" : "password"} 
-                                            id="profilePin" 
+                                        <input
+                                            type={showPIN ? "text" : "password"}
+                                            id="profilePin"
                                             maxLength="4"
-                                            className="form-control profile-input profile-pwd-input" 
-                                            value={profileData.pin} 
-                                            onChange={(e) => setProfileData({...profileData, pin: e.target.value.replace(/\D/g, '')})} 
-                                            style={{ paddingRight: '40px', letterSpacing: '2px', fontWeight: 'bold' }} 
+                                            className="form-control profile-input profile-pwd-input"
+                                            placeholder="••••"
+                                            value={profileData.pin || ''}
+                                            onChange={(e) => setProfileData({...profileData, pin: e.target.value.replace(/\D/g, '')})}
+                                            style={{ paddingRight: '40px', letterSpacing: '2px', fontWeight: 'bold' }}
                                         />
-                                        <button 
-                                            type="button" 
+                                        <button
+                                            type="button"
                                             onClick={() => setShowPIN(!showPIN)}
-                                            style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', padding: '4px', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                                            style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', padding: '4px', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                         >
                                             {showPIN ? (
                                                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
@@ -100,9 +221,9 @@ export default function ProfileTab({
                                     <div className="profile-readonly-field">{profileData.role || 'Cashier'}</div>
                                 </div>
                             </div>
-                            
+
                             <div className="profile-actions-bar" style={{ marginTop: '24px', padding: '16px 0 0 0', background: 'none', borderTop: '1px solid var(--border)', position: 'static', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                                <button type="submit" className="btn btn-primary" disabled={!isProfileDirty}>Save Changes</button>
+                                <button type="submit" className="btn btn-primary" disabled={!isProfileDirty || hasIncomplete}>Save Changes</button>
                             </div>
                         </form>
                     </div>
@@ -122,4 +243,3 @@ export default function ProfileTab({
         </div>
     );
 }
-

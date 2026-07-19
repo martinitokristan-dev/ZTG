@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 export default function AddReservationModal({
     isOpen, onClose, onSubmit,
@@ -10,6 +10,20 @@ export default function AddReservationModal({
     subtotal, tax, total, depositAmt, balance, fmt
 }) {
     if (!isOpen) return null;
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (isOpen && e.key === 'Enter') {
+                if (document.activeElement && document.activeElement.tagName === 'TEXTAREA') return;
+                // prevent default to avoid double firing if focused on the form input
+                e.preventDefault();
+                const btn = document.getElementById('submitReservationBtn');
+                if (btn) btn.click();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen]);
 
     return (
         <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
@@ -206,7 +220,7 @@ export default function AddReservationModal({
 
                     <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                         <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
-                        <button type="submit" className="btn btn-primary" disabled={addLoading}>
+                        <button id="submitReservationBtn" type="submit" className="btn btn-primary" disabled={addLoading}>
                             {addLoading ? 'Creating...' : 'Create Order'}
                         </button>
                     </div>

@@ -103,9 +103,13 @@ export default function usePaginatedCache(storeName, endpoint, params) {
 
                 if (res.data && res.data.data) {
                     pageData = res.data.data;
+                    let lastPage = res.data.last_page;
+                    if (storeName === 'history' || storeName === 'daily-sales') {
+                        lastPage = Math.min(lastPage, 50);
+                    }
                     pageInfo = {
                         current_page: res.data.current_page,
-                        last_page: res.data.last_page,
+                        last_page: lastPage,
                         total: res.data.total
                     };
                 } else if (Array.isArray(res.data)) {

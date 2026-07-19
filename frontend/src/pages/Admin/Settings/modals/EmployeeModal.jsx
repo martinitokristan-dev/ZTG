@@ -41,7 +41,7 @@ export default function EmployeeModal({
                                 type="text" 
                                 className="form-control" 
                                 required 
-                                placeholder="e.g. Ferdinand Marcos Jr"
+                                placeholder="Enter employee's full name"
                                 value={employeeForm.real_name}
                                 onChange={(e) => setEmployeeForm({...employeeForm, real_name: e.target.value})}
                             />
@@ -88,12 +88,11 @@ export default function EmployeeModal({
                                 onChange={(e) => setEmployeeForm({...employeeForm, role: e.target.value})}
                             >
                                 <option value="Cashier">Cashier</option>
-                                <option value="Checker">Checker</option>
                                 <option value="Supervisor">Supervisor</option>
                                 <option value="Admin">Administrator</option>
                             </select>
                         </div>
-                        {employeeForm.role !== 'Cashier' && employeeForm.role !== 'Checker' && (
+                        {employeeForm.role !== 'Cashier' && (
                             <div className="form-group" style={{ marginTop: '10px' }}>
                                 <label className="form-label">Manager PIN</label>
                                 <div style={{ position: 'relative', width: '100%' }}>

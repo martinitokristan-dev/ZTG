@@ -12,6 +12,16 @@ export default function ProductGrid({
     fmt
 }) {
     const [previewImage, setPreviewImage] = useState(null);
+
+    // Build a map of parent product names so variant rows can display "ParentName (VariantOption)"
+    const parentMap = React.useMemo(() => {
+        const map = {};
+        products.forEach(p => {
+            if (!p.parent_product_id) map[p.id] = p.name;
+        });
+        return map;
+    }, [products]);
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', gap: '16px', height: '100%' }}>
             {/* Search Box & Category Filters */}
@@ -95,7 +105,22 @@ export default function ProductGrid({
                                                     onError={(e) => { e.currentTarget.src = DEFAULT_PLACEHOLDER_IMAGE; }}
                                                 />
                                                 <div>
-                                                    <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{p.name}</div>
+                                                    <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
+                                                        {p.parent_product_id ? (
+                                                            <>
+                                                                {p.parent_product_name || p.name}
+                                                                {(() => {
+                                                                    const opts = p.variant_options || p.variantOptions;
+                                                                    const label = Array.isArray(opts) && opts.length > 0
+                                                                        ? opts.map(o => o.value).join(', ')
+                                                                        : null;
+                                                                    return label
+                                                                        ? <span style={{ color: 'var(--primary)', fontWeight: '500' }}> ({label})</span>
+                                                                        : null;
+                                                                })()}
+                                                            </>
+                                                        ) : p.name}
+                                                    </div>
                                                     {p.chinese_name && <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'normal', marginTop: '2px' }}>{p.chinese_name}</div>}
                                                 </div>
                                             </div>

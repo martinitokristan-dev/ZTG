@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const ImageUploadDropzone = ({ image, onUpload }) => (
     <div style={{ border: '2px dashed var(--border)', borderRadius: '8px', padding: '20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '16px', backgroundColor: '#F8FAFC', cursor: 'pointer', position: 'relative' }}>
@@ -34,6 +34,92 @@ export default function ProductFormModal({
     const isEdit = mode === 'edit';
     const title = isEdit ? `Edit Product: ${selectedProduct?.name}` : 'Add New Product';
     const submitLabel = isEdit ? 'Update Product' : 'Add Product';
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (isOpen && e.key === 'Enter') {
+                if (document.activeElement && document.activeElement.tagName === 'TEXTAREA') return;
+                // prevent default to avoid double firing if focused on the form input
+                e.preventDefault();
+                const btn = document.getElementById('submitProductBtn');
+                if (btn) btn.click();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen]);
+
+    const [isTranslating, setIsTranslating] = useState(false);
+    const [lastAutoTranslation, setLastAutoTranslation] = useState('');
+
+    // Debounced real-time automatic translation as the user types
+    useEffect(() => {
+        const nameVal = formData.name?.trim();
+        if (!nameVal) {
+            // Erase Chinese name if English name is cleared
+            setFormData(prev => ({
+                ...prev,
+                chinese_name: ''
+            }));
+            setLastAutoTranslation('');
+            return;
+        }
+
+        // Auto-translate only if Chinese Name is empty or matches the last auto-translation
+        const isChineseEmpty = !formData.chinese_name || formData.chinese_name.trim() === '';
+        const isMatched = formData.chinese_name === lastAutoTranslation;
+
+        if (isChineseEmpty || isMatched) {
+            const timer = setTimeout(async () => {
+                setIsTranslating(true);
+                try {
+                    const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(nameVal)}&langpair=en|zh-CN`);
+                    const data = await res.json();
+                    if (data?.responseData?.translatedText) {
+                        const translated = data.responseData.translatedText;
+                        setFormData(prev => ({
+                            ...prev,
+                            chinese_name: translated
+                        }));
+                        setLastAutoTranslation(translated);
+                    }
+                } catch (err) {
+                    console.error("Auto-translation failed:", err);
+                } finally {
+                    setIsTranslating(false);
+                }
+            }, 600); // 600ms debounce
+
+            return () => clearTimeout(timer);
+        }
+    }, [formData.name]);
+
+    const triggerTranslation = async () => {
+        const nameVal = formData.name?.trim();
+        if (!nameVal) {
+            alert("Please enter an English Name first.");
+            return;
+        }
+        setIsTranslating(true);
+        try {
+            const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(nameVal)}&langpair=en|zh-CN`);
+            const data = await res.json();
+            if (data?.responseData?.translatedText) {
+                const translated = data.responseData.translatedText;
+                setFormData(prev => ({
+                    ...prev,
+                    chinese_name: translated
+                }));
+                setLastAutoTranslation(translated);
+            } else {
+                alert("Translation failed. Please enter it manually.");
+            }
+        } catch (err) {
+            alert("Translation failed. Please enter it manually.");
+        } finally {
+            setIsTranslating(false);
+        }
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -89,10 +175,27 @@ export default function ProductFormModal({
                         <div className="grid-2">
                             <div className="form-group">
                                 <label className="form-label">English Name <span style={{ color: 'red' }}>*</span></label>
-                                <input type="text" className="form-control" required placeholder="e.g. Track Link Assembly" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                                <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    required 
+                                    placeholder="e.g. Track Link Assembly" 
+                                    value={formData.name} 
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
+                                />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Chinese Name <span style={{ color: 'red' }}>*</span></label>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                    <label className="form-label" style={{ margin: 0 }}>Chinese Name <span style={{ color: 'red' }}>*</span></label>
+                                    <button 
+                                        type="button" 
+                                        onClick={triggerTranslation}
+                                        disabled={isTranslating}
+                                        style={{ background: 'none', border: 'none', color: isTranslating ? 'var(--text-secondary, #64748B)' : 'var(--primary, #2563EB)', fontSize: '11px', fontWeight: 600, padding: 0, cursor: isTranslating ? 'not-allowed' : 'pointer', outline: 'none' }}
+                                    >
+                                        {isTranslating ? 'Translating...' : 'Auto-Translate'}
+                                    </button>
+                                </div>
                                 <input type="text" className="form-control" required placeholder="e.g. 履带链节总成" value={formData.chinese_name} onChange={(e) => setFormData({ ...formData, chinese_name: e.target.value })} />
                             </div>
                         </div>
@@ -126,8 +229,18 @@ export default function ProductFormModal({
                                 <input type="number" className="form-control" min="0" step="any" placeholder="₱0.00" value={formData.price2 === 0 ? '' : formData.price2} onChange={(e) => setFormData({ ...formData, price2: e.target.value === '' ? '' : parseFloat(e.target.value) })} />
                             </div>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label">Initial Stock <span style={{ color: 'red' }}>*</span></label>
-                                <input type="number" className="form-control" required min="0" placeholder="0" value={formData.stock === 0 ? '' : formData.stock} onChange={(e) => setFormData({ ...formData, stock: e.target.value === '' ? '' : parseInt(e.target.value) })} />
+                                <label className="form-label">{mode === 'edit' ? 'Current Stock' : 'Initial Stock'} {mode !== 'edit' && <span style={{ color: 'red' }}>*</span>}</label>
+                                <input 
+                                    type="number" 
+                                    className="form-control" 
+                                    required 
+                                    min="0" 
+                                    placeholder="0" 
+                                    value={formData.stock === 0 ? '' : formData.stock} 
+                                    onChange={(e) => setFormData({ ...formData, stock: e.target.value === '' ? '' : parseInt(e.target.value) })} 
+                                    disabled={mode === 'edit'}
+                                    style={mode === 'edit' ? { backgroundColor: '#F1F5F9', cursor: 'not-allowed', color: '#94A3B8' } : {}}
+                                />
                             </div>
                             <div className="form-group" style={{ marginBottom: 0 }}>
                                 <label className="form-label">Alert Level <span style={{ color: 'red' }}>*</span></label>
@@ -213,10 +326,19 @@ export default function ProductFormModal({
                                                     }} />
                                                 </div>
                                                 <div className="form-group" style={{ marginBottom: 0 }}>
-                                                    <label className="form-label">Initial Stock</label>
-                                                    <input type="number" className="form-control" required min="0" value={variant.stock === 0 ? '' : variant.stock} onChange={(e) => {
-                                                        const nv = [...formData.variants]; nv[idx].stock = e.target.value === '' ? '' : parseInt(e.target.value); setFormData({ ...formData, variants: nv });
-                                                    }} />
+                                                    <label className="form-label">{mode === 'edit' ? 'Current Stock' : 'Initial Stock'}</label>
+                                                    <input 
+                                                        type="number" 
+                                                        className="form-control" 
+                                                        required 
+                                                        min="0" 
+                                                        value={variant.stock === 0 ? '' : variant.stock} 
+                                                        onChange={(e) => {
+                                                            const nv = [...formData.variants]; nv[idx].stock = e.target.value === '' ? '' : parseInt(e.target.value); setFormData({ ...formData, variants: nv });
+                                                        }} 
+                                                        disabled={mode === 'edit'}
+                                                        style={mode === 'edit' ? { backgroundColor: '#F1F5F9', cursor: 'not-allowed', color: '#94A3B8' } : {}}
+                                                    />
                                                 </div>
                                                 <div className="form-group" style={{ marginBottom: 0 }}>
                                                     <label className="form-label">Alert Lvl</label>
@@ -262,7 +384,6 @@ export default function ProductFormModal({
                                                                  nv[idx].option_ids = filteredIds;
                                                                  setFormData({ ...formData, variants: nv });
                                                              }}>
-                                                            <option value="">-- None --</option>
                                                             {vType.options.map(opt => <option key={opt.id} value={opt.id}>{opt.value}</option>)}
                                                         </select>
                                                     </div>
@@ -287,9 +408,9 @@ export default function ProductFormModal({
 
                     <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Fields marked with <span style={{ color: 'red' }}>*</span> are required.</div>
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        <div className="modal-footer">
                             <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
-                            <button type="submit" className="btn btn-primary">{submitLabel}</button>
+                            <button id="submitProductBtn" type="submit" className="btn btn-primary">{submitLabel}</button>
                         </div>
                     </div>
                 </form>

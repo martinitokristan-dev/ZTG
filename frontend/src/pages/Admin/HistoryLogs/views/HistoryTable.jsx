@@ -4,7 +4,7 @@ import StatusBadge from '../../../../shared/components/StatusBadge';
 
 export default function HistoryTable({ 
     loading, transactions, fmt, fmtDate, 
-    handleOpenRefund, handleOpenVoid, handleOpenView 
+    handleOpenRefund, handleOpenVoid, handleOpenView, handleOpenPay 
 }) {
     const [openDropdownId, setOpenDropdownId] = useState(null);
 
@@ -39,10 +39,9 @@ export default function HistoryTable({
             buyerAddress: tx.customer?.address || '',
             items: tx.items || [],
             total: tx.total_amount,
-            payment: tx.payment,
             tendered: tx.amount_tendered || 0,
             change: tx.change || 0,
-            servedBy: tx.cashier?.name || 'Cashier',
+            servedBy: tx.checker?.name || tx.cashier?.name || 'Cashier',
             docType: 'S.I.',
             splitDetails: splitDetails,
             reason: tx.notes || '',
@@ -108,7 +107,7 @@ export default function HistoryTable({
                                         {reservationDisplay}
                                     </td>
                                     <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{tx.customer?.name || 'Walk-in'}</td>
-                                    <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{(tx.cashier?.name || 'Unknown').split(' ')[0]}</td>
+                                    <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{tx.checker?.name || tx.cashier?.name || '—'}</td>
                                     <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{tx.payment_method || '—'}</td>
                                     <td style={{ padding: '16px' }}>
                                         <StatusBadge status={tx.status || 'Completed'} />
@@ -149,6 +148,15 @@ export default function HistoryTable({
                                                         background: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px',
                                                         boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)', padding: '6px', minWidth: '160px'
                                                     }}>
+                                                        {tx.status === 'Pending' && (
+                                                            <>
+                                                                <button style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', color: '#10B981', borderRadius: '4px', fontWeight: '600' }} onClick={() => { handleOpenPay(tx); setOpenDropdownId(null); }} onMouseOver={e => e.currentTarget.style.backgroundColor = '#ECFDF5'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                                                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                                                    Pay P.O.
+                                                                </button>
+                                                                <div style={{ margin: '4px 0', borderTop: '1px solid #E2E8F0' }}></div>
+                                                            </>
+                                                        )}
                                                         <button style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', color: '#334155', borderRadius: '4px' }} onClick={() => handleReprint(tx)} onMouseOver={e => e.currentTarget.style.backgroundColor = '#F1F5F9'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
                                                             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                                                             Reprint SI

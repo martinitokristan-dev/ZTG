@@ -81,11 +81,6 @@ class User extends Authenticatable
         return $this->hasMany(Reservation::class, 'fulfilled_by_id');
     }
 
-    public function pendingPurchaseOrders(): HasMany
-    {
-        return $this->hasMany(PendingPurchaseOrder::class, 'cashier_id');
-    }
-
     public function notifications(): HasMany
     {
         return $this->hasMany(Notification::class);

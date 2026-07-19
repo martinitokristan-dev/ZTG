@@ -20,12 +20,13 @@ class CheckoutRequest extends FormRequest
             'cart.*.qty'             => 'required|integer|min:1',
             'cart.*.price_tier'      => 'required|string|in:price1,price2',
 
-            // Customer info
+            // Customer & Checker info
             'customer_name'          => 'required|string|max:100',
             'customer_phone'         => 'nullable|string|max:20',
+            'checker_id'             => 'required|exists:checkers,id',
 
             // Document & payment
-            'payment_method'         => 'required|string|in:Cash,GCash,Bank,Split',
+            'payment_method'         => 'required|string|in:Cash,GCash,Bank,Split,P.O. (Pending)',
             'doc_type'               => 'required|string|in:S.I.,D.R.,C.I.',
 
             // Cash payment

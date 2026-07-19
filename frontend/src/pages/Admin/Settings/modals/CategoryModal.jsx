@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 export default function CategoryModal({
     showCategoryModal, setShowCategoryModal,
@@ -7,6 +7,20 @@ export default function CategoryModal({
     handleCategorySubmit
 }) {
     if (!showCategoryModal) return null;
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (showCategoryModal && e.key === 'Enter') {
+                if (document.activeElement && document.activeElement.tagName === 'TEXTAREA') return;
+                // prevent default to avoid double firing if focused on the form input
+                e.preventDefault();
+                const btn = document.getElementById('submitCategoryBtn');
+                if (btn) btn.click();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showCategoryModal]);
 
     const toggleVariant = (key) => {
         setCategoryVariants(prev => {
@@ -92,7 +106,7 @@ export default function CategoryModal({
                     </div>
                     <div className="modal-footer" style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', background: 'var(--bg-main)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                         <button type="button" onClick={() => setShowCategoryModal(false)} className="btn btn-secondary">Cancel</button>
-                        <button type="submit" className="btn btn-primary">Save Category</button>
+                        <button id="submitCategoryBtn" type="submit" className="btn btn-primary">Save Category</button>
                     </div>
                 </form>
             </div>

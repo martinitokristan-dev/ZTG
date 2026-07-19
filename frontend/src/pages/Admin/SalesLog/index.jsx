@@ -12,12 +12,6 @@ export default function SalesLog() {
                     <h1 style={{ fontSize: '20px', marginBottom: '2px', fontFamily: '"Outfit", sans-serif', color: 'var(--text-primary)' }}>Sales Log</h1>
                     <div className="page-description" style={{ marginTop: '0', fontSize: '12px', color: 'var(--text-secondary)' }}>Master administrative record of all sales, returns, and POS activity.</div>
                 </div>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <button className="btn" style={{ background: '#FFFFFF', border: '1px solid var(--border)', color: 'var(--text-primary)', fontSize: '12px', padding: '8px 16px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                        Export CSV
-                    </button>
-                </div>
             </div>
 
                 <div className="content-body" style={{ padding: '20px 24px', backgroundColor: '#F8FAFC', minHeight: 'calc(100vh - 120px)' }}>
@@ -69,6 +63,9 @@ export default function SalesLog() {
                             <div style={{ width: '150px' }}>
                                 <select className="form-control form-control-sm" value={sl.cashierFilter} onChange={(e) => sl.setCashierFilter(e.target.value)}>
                                     <option value="All">All Cashiers</option>
+                                    {sl.cashiers.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div style={{ width: '150px' }}>
@@ -110,7 +107,12 @@ export default function SalesLog() {
                         </div>
                     </div>
 
-                    <SalesTable items={sl.filteredItems} loading={sl.loading} fmt={sl.fmt} fmtDate={sl.fmtDate} />
+                    <SalesTable 
+                        items={sl.filteredItems} 
+                        loading={sl.loading} 
+                        fmt={sl.fmt} 
+                        fmtDate={sl.fmtDate} 
+                    />
 
                     {/* Pagination Controls */}
                     {sl.pagination.last_page > 1 && (

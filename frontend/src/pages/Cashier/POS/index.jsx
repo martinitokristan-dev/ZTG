@@ -59,6 +59,10 @@ export default function POS() {
                             
                             customersList={pos.customersList}
                             
+                            checkers={pos.checkers}
+                            selectedChecker={pos.selectedChecker}
+                            setSelectedChecker={pos.setSelectedChecker}
+                            
                             setShowCheckoutModal={pos.setShowCheckoutModal}
                             fmt={pos.fmt}
                         />

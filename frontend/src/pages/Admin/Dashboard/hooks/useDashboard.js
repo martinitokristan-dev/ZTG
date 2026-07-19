@@ -31,7 +31,7 @@ export function useDashboard() {
         const loadData = async () => {
             try {
                 setLoading(true);
-                const cachedStats = await fetchDashboardData(products);
+                const cachedStats = await fetchDashboardData(products, currentTimeRange);
 
                 // Calculate total items on hand (sum of all stocks)
                 const sellableSKUs = flattenToSellableSKUs(products);
@@ -47,20 +47,25 @@ export function useDashboard() {
 
                 const topSellers = cachedStats.topSellers;
                 if (topSellers.length > 0) {
+                    const maxSales = topSellers[0].sales_count || 1;
                     const mapped = topSellers.slice(0, 5).map((p, idx) => {
-                        const maxSales = topSellers[0].sales_count || 1;
+                        const calculatedPercentage = p.stock > 0 
+                            ? Math.min(Math.round((p.sales_count / p.stock) * 100), 100)
+                            : (p.sales_count > 0 ? 100 : 0);
                         return {
                             rank: idx + 1,
                             name: p.name,
                             partNo: p.part_no,
-                            category: p.category ? p.category.name : 'Heavy Parts',
+                            category: p.category || 'Heavy Parts',
                             unitsSold: p.sales_count,
                             revenue: p.sales_count * (p.price1 || 1000), // Estimate revenue
-                            percentage: Math.round((p.sales_count / maxSales) * 100),
+                            percentage: calculatedPercentage,
                             image: p.image || ''
                         };
                     });
                     setTopProducts(mapped);
+                } else {
+                    setTopProducts([]);
                 }
             } catch (err) {
                 console.error("Error loading dashboard data: ", err);
@@ -70,7 +75,7 @@ export function useDashboard() {
         };
 
         loadData();
-    }, [products]);
+    }, [products, currentTimeRange]);
 
     return {
         name,

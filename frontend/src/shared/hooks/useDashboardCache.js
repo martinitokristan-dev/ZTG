@@ -9,22 +9,30 @@ let dashboardCache = {
 };
 
 export const resetDashboardCache = () => {
-    dashboardCache = { data: null, fetchedAt: 0, promise: null };
+    dashboardCache = {};
 };
 
-export async function fetchDashboardData(products) {
+export async function fetchDashboardData(products, timeframe = 'Today') {
     const now = Date.now();
-    if (dashboardCache.data && (now - dashboardCache.fetchedAt < TTL_MS)) {
-        return dashboardCache.data;
+    const cacheKey = timeframe;
+
+    if (dashboardCache[cacheKey] && dashboardCache[cacheKey].data && (now - dashboardCache[cacheKey].fetchedAt < TTL_MS)) {
+        return dashboardCache[cacheKey].data;
     }
 
-    if (dashboardCache.promise) {
-        return dashboardCache.promise;
+    if (dashboardCache[cacheKey] && dashboardCache[cacheKey].promise) {
+        return dashboardCache[cacheKey].promise;
     }
 
-    dashboardCache.promise = Promise.all([
-        api.get('/reports/sales-summary').catch(() => ({ data: { total_revenue: 0 } })),
-        api.get('/reports/product-performance').catch(() => ({ data: { top_sellers: [] } })),
+    if (!dashboardCache[cacheKey]) {
+        dashboardCache[cacheKey] = {};
+    }
+
+    const tfParam = timeframe.toLowerCase().replace(' ', '_');
+
+    dashboardCache[cacheKey].promise = Promise.all([
+        api.get(`/reports/sales-summary?timeframe=${tfParam}`).catch(() => ({ data: { total_revenue: 0 } })),
+        api.get(`/reports/product-performance?timeframe=${tfParam}`).catch(() => ({ data: { top_sellers: [] } })),
         api.get('/employees').catch(() => ({ data: [] }))
     ]).then(([summaryRes, performanceRes, employeesRes]) => {
         const topSellers = performanceRes.data.top_sellers || [];
@@ -40,14 +48,14 @@ export async function fetchDashboardData(products) {
             last7Days: summaryRes.data.last_7_days || []
         };
 
-        dashboardCache.data = stats;
-        dashboardCache.fetchedAt = Date.now();
-        dashboardCache.promise = null;
+        dashboardCache[cacheKey].data = stats;
+        dashboardCache[cacheKey].fetchedAt = Date.now();
+        dashboardCache[cacheKey].promise = null;
         return stats;
     }).catch(err => {
-        dashboardCache.promise = null;
+        dashboardCache[cacheKey].promise = null;
         throw err;
     });
 
-    return dashboardCache.promise;
+    return dashboardCache[cacheKey].promise;
 }

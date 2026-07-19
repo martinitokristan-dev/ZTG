@@ -13,7 +13,7 @@ export default function StatusBadge({ status, style = {} }) {
             bg = '#F0FDF4'; color = '#10B981'; text = 'Completed';
             break;
         case 'pending':
-            bg = '#FFFBEB'; color = '#D97706'; text = 'Pending';
+            bg = '#FFFBEB'; color = '#D97706'; text = 'Pending Order';
             break;
         case 'deposit':
             bg = '#EFF6FF'; color = '#2563EB'; text = 'Deposit';

@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function GeneralTab({ settings, handleSettingInputChange, handleToggleSetting, handleSaveBulkSettings }) {
     return (
-        <div className="card" style={{ marginBottom: '16px' }}>
+        <div className="card" style={{ marginBottom: '16px', paddingBottom: '80px' }}>
             <div className="settings-section">
                 <h3 style={{ fontSize: '14px', fontWeight: '700', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '16px', color: 'var(--text-primary)' }}>
                     General Settings
@@ -75,17 +75,7 @@ export default function GeneralTab({ settings, handleSettingInputChange, handleT
                 <h3 style={{ fontSize: '14px', fontWeight: '700', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '16px', color: 'var(--text-primary)' }}>
                     Inventory Configuration
                 </h3>
-                <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                    <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label" htmlFor="lowStockThreshold">Default Low Stock Threshold</label>
-                        <input 
-                            type="number" 
-                            id="lowStockThreshold" 
-                            className="form-control" 
-                            value={settings.low_stock_threshold || ''} 
-                            onChange={(e) => handleSettingInputChange('low_stock_threshold', e.target.value)}
-                        />
-                    </div>
+        <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                     <div className="form-group" style={{ marginBottom: 0 }}>
                         <label className="form-label" htmlFor="deadStockPeriod">Dead Stock Threshold (days with no sales)</label>
                         <select 

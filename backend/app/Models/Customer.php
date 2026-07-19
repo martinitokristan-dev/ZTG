@@ -27,9 +27,4 @@ class Customer extends Model
     {
         return $this->hasMany(Reservation::class);
     }
-
-    public function pendingPurchaseOrders(): HasMany
-    {
-        return $this->hasMany(PendingPurchaseOrder::class);
-    }
 }

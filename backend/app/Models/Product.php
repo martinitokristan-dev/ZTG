@@ -24,7 +24,6 @@ class Product extends Model
         'alert_limit',
         'price1',
         'price2',
-        'sales_count',
         'status',
         'is_dead_stock',
         'damaged',

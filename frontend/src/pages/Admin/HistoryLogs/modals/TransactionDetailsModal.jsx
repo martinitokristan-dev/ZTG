@@ -49,7 +49,7 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction, 
                         </thead>
                         <tbody>
                             {txItems.map((item, index) => {
-                                const partNo = item.product?.part_number || '—';
+                                const partNo = item.product?.part_no || item.part_no || '—';
                                 const name = item.product?.name || item.name || 'Unknown Part';
                                 const qty = item.qty || 0;
                                 const price = item.price || 0;
@@ -124,7 +124,7 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction, 
                                 {auditDetailRow('Customer', tx.customer?.name || 'Walk-in')}
                                 {auditDetailRow('Payment Method', tx.payment_method)}
                                 {auditDetailRow('Amount', fmt(tx.amount || tx.total))}
-                                {auditDetailRow('Served By', tx.cashier?.name || '—')}
+                                {auditDetailRow('Served By', tx.checker?.name || tx.cashier?.name || '—')}
                                 {auditDetailRow('Status', status, { color: statusColor, fontWeight: '700' })}
                             </>
                         )}
@@ -134,10 +134,10 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction, 
                                 {auditDetailRow('Invoice No.', tx.si_no || '—')}
                                 {auditDetailRow('Date & Time', fmtDate(tx.date || tx.created_at))}
                                 {auditDetailRow('Customer', tx.customer?.name || 'Walk-in')}
-                                {auditDetailRow('Contact Phone', tx.phone || '—')}
+                                {auditDetailRow('Contact Phone', tx.customer?.phone || '—')}
                                 {auditDetailRow('Payment Method', tx.payment_method || 'Cash')}
                                 {auditDetailRow('Amount', fmt(tx.amount || tx.total))}
-                                {auditDetailRow('Served By', tx.cashier?.name || '—')}
+                                {auditDetailRow('Served By', tx.checker?.name || tx.cashier?.name || '—')}
                                 {auditDetailRow('Status', status, { color: statusColor, fontWeight: '700' })}
                                 {(status === 'Refund' || status === 'Return') && auditDetailRow('Reason', reason)}
                             </>

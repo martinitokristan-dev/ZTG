@@ -3,7 +3,7 @@ import React from 'react';
 export default function ProductPerformanceTable({ productPerformance, fmt }) {
     if (!productPerformance) return null;
 
-    const { top_sellers = [], revenue_per_product = [], dead_stock = [], fast_moving = [] } = productPerformance;
+    const { top_sellers = [], revenue_per_product = [], dead_stock = [] } = productPerformance;
 
     return (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px', marginBottom: '24px' }}>

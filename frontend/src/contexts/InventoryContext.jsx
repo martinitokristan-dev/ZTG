@@ -75,12 +75,21 @@ export const InventoryProvider = ({ children }) => {
                 inventoryChannel = echo.private('inventory')
                     .listen('.InventoryUpdated', (e) => {
                         console.log('[Echo Debug] InventoryUpdated event received:', e);
-                        setInventoryData(prev => {
-                            const newProducts = prev.products.map(p => 
-                                p.id === e.productId ? { ...p, stock: e.newQuantity } : p
-                            );
-                            return { ...prev, products: newProducts };
-                        });
+                        const updateProductRecursively = (products) => {
+                            return products.map(p => {
+                                if (p.id === e.productId) {
+                                    return { ...p, stock: e.newQuantity, sales_count: e.salesCount };
+                                }
+                                if (p.variants && p.variants.length > 0) {
+                                    return { ...p, variants: updateProductRecursively(p.variants) };
+                                }
+                                return p;
+                            });
+                        };
+                        setInventoryData(prev => ({
+                            ...prev,
+                            products: updateProductRecursively(prev.products || [])
+                        }));
                     });
             }
 
@@ -88,18 +97,21 @@ export const InventoryProvider = ({ children }) => {
                 productChannel = echo.private('products')
                     .listen('.ProductUpdated', (e) => {
                         console.log('[Echo Debug] InventoryContext ProductUpdated event received:', e);
-                        setInventoryData(prev => {
-                            const newProducts = prev.products.map(p => {
+                        const updateProductRecursively = (products) => {
+                            return products.map(p => {
                                 if (p.id === e.productId) {
-                                    return {
-                                        ...p,
-                                        ...e.changedFields
-                                    };
+                                    return { ...p, ...e.changedFields };
+                                }
+                                if (p.variants && p.variants.length > 0) {
+                                    return { ...p, variants: updateProductRecursively(p.variants) };
                                 }
                                 return p;
                             });
-                            return { ...prev, products: newProducts };
-                        });
+                        };
+                        setInventoryData(prev => ({
+                            ...prev,
+                            products: updateProductRecursively(prev.products || [])
+                        }));
                     });
             }
         }

@@ -11,6 +11,7 @@ export default function ProductsTable({
     DEFAULT_PLACEHOLDER_IMAGE,
     onView, onEdit, onDamage, onDelete, onRestock, onToggleStatus,
     successMessage, setSuccessMessage,
+    pagination,
 }) {
     const [openDropdownId, setOpenDropdownId] = useState(null);
 
@@ -118,7 +119,6 @@ export default function ProductsTable({
                 </td>
                 <td style={{ padding: '12px 16px', borderBottom: '1px solid #F1F5F9', color: '#334155', fontWeight: '500', fontSize: '12px' }}>₱{Number(product.price1).toLocaleString('en-US')}</td>
                 <td style={{ padding: '12px 16px', borderBottom: '1px solid #F1F5F9', fontWeight: '500', fontSize: '12px', color: '#2563EB' }}>₱{Number(product.price2).toLocaleString('en-US')}</td>
-                <td style={{ padding: '12px 16px', borderBottom: '1px solid #F1F5F9', color: '#475569', fontSize: '12px', whiteSpace: 'nowrap' }}>{product.sales_count || 0} sold</td>
                 <td style={{ padding: '12px 16px', borderBottom: '1px solid #F1F5F9' }}>
                     <div style={{ display: 'inline-flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                         <span 
@@ -149,12 +149,6 @@ export default function ProductsTable({
                                 Dead Stock
                             </span>
                         )}
-                    </div>
-                </td>
-                <td style={{ padding: '12px 16px', borderBottom: '1px solid #F1F5F9' }}>
-                    <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', lineHeight: '1.2', padding: '4px 8px', borderRadius: '6px', backgroundColor: '#FEF2F2', color: '#EF4444', minWidth: '60px' }}>
-                        <span style={{ fontSize: '13px', fontWeight: '700' }}>{product.damaged || 0}</span>
-                        <span style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Damaged</span>
                     </div>
                 </td>
                 <td style={{ padding: '12px 16px', borderBottom: '1px solid #F1F5F9', textAlign: 'center' }}>
@@ -311,17 +305,15 @@ export default function ProductsTable({
                                 <th style={{ padding: '12px 16px', fontWeight: '600', textAlign: 'left' }}>Stock</th>
                                 <th style={{ padding: '12px 16px', fontWeight: '600', textAlign: 'left' }}>Original Price</th>
                                 <th style={{ padding: '12px 16px', fontWeight: '600', textAlign: 'left' }}>Retail Price</th>
-                                <th style={{ padding: '12px 16px', fontWeight: '600', textAlign: 'left' }}>Sales</th>
                                 <th style={{ padding: '12px 16px', fontWeight: '600', textAlign: 'left' }}>Status</th>
-                                <th style={{ padding: '12px 16px', fontWeight: '600', textAlign: 'left' }}>Damaged</th>
                                 <th style={{ padding: '12px 16px', fontWeight: '600', textAlign: 'center' }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="11" className="py-8 text-center text-xs font-semibold text-slate-400">Loading catalog items...</td></tr>
+                                <tr><td colSpan="9" className="py-8 text-center text-xs font-semibold text-slate-400">Loading catalog items...</td></tr>
                             ) : products.length === 0 ? (
-                                <tr><td colSpan="11" className="py-8 text-center text-xs font-semibold text-slate-400">No products found matching criteria.</td></tr>
+                                <tr><td colSpan="9" className="py-8 text-center text-xs font-semibold text-slate-400">No products found matching criteria.</td></tr>
                             ) : (
                                 products.map((p, parentIndex) => {
                                     const rows = [];
@@ -341,6 +333,32 @@ export default function ProductsTable({
                         </tbody>
                     </table>
                 </div>
+                
+                {pagination && pagination.last_page > 1 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderTop: '1px solid #E2E8F0' }}>
+                        <div style={{ fontSize: '13px', color: '#64748B' }}>
+                            Showing page {pagination.current_page} of {pagination.last_page} ({pagination.total} total items)
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button 
+                                className="btn btn-outline" 
+                                disabled={pagination.current_page === 1}
+                                onClick={() => pagination.onPageChange(pagination.current_page - 1)}
+                                style={{ padding: '6px 12px', fontSize: '13px' }}
+                            >
+                                Previous
+                            </button>
+                            <button 
+                                className="btn btn-outline" 
+                                disabled={pagination.current_page === pagination.last_page}
+                                onClick={() => pagination.onPageChange(pagination.current_page + 1)}
+                                style={{ padding: '6px 12px', fontSize: '13px' }}
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </>
     );

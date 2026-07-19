@@ -28,8 +28,7 @@ export default function useDailySales() {
         '/transactions',
         {
             status: 'Completed,Paid,Refund,Return',
-            date_from: getTodayISO(),
-            per_page: 20
+            date_from: getTodayISO()
         }
     );
 
@@ -84,6 +83,7 @@ export default function useDailySales() {
                     _txReceipt: t.si_no || t.receipt_number,
                     _txCustomer: t.customer?.name || 'Guest',
                     _txCashier: t.cashier?.name || 'Unknown',
+                    _txChecker: t.checker?.name || '—',
                     _txPayment: t.payment_method || '—',
                     _txStatus: t.status,
                     _txId: t.id
@@ -103,6 +103,7 @@ export default function useDailySales() {
                 (item._txReceipt || '').toLowerCase().includes(q) ||
                 (item._txCustomer || '').toLowerCase().includes(q) ||
                 (item._txCashier || '').toLowerCase().includes(q) ||
+                (item._txChecker || '').toLowerCase().includes(q) ||
                 (item.name || '').toLowerCase().includes(q) ||
                 (item.part_no || item.partNo || '').toLowerCase().includes(q)
             );

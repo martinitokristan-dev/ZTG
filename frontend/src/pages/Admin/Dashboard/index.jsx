@@ -67,10 +67,10 @@ export default function Dashboard() {
                     <div style={{ padding: 24, textAlign: 'center', color: '#64748B' }}>Loading dashboard data...</div>
                 ) : (
                     <>
-                        <StatCards stats={stats} />
+                        <StatCards stats={stats} currentTimeRange={currentTimeRange} />
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24, alignItems: 'start' }}>
-                            <SalesTrendChart last7Days={stats.last7Days || []} />
+                            <SalesTrendChart last7Days={stats.last7Days || []} timeRange={currentTimeRange} />
                             <CriticalStockAlerts />
                         </div>
 

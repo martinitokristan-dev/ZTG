@@ -44,7 +44,7 @@ class ReservationService
         if (!empty($filters['search'])) {
             $query->where(function ($q) use ($filters) {
                 $q->where('order_no', 'like', '%' . $filters['search'] . '%')
-                  ->orWhereHas('customer', fn($cq) => $cq->where('name', 'like', '%' . $filters['search'] . '%'));
+                    ->orWhereHas('customer', fn($cq) => $cq->where('name', 'like', '%' . $filters['search'] . '%'));
             });
         }
 
@@ -104,27 +104,27 @@ class ReservationService
 
             // 5. Save reservation
             $reservation = Reservation::create([
-                'order_no'       => $orderNo,
-                'customer_id'    => $customer->id,
-                'email'          => $data['customer_email'] ?? null,
-                'notes'          => $data['notes'] ?? null,
+                'order_no' => $orderNo,
+                'customer_id' => $customer->id,
+                'email' => $data['customer_email'] ?? null,
+                'notes' => $data['notes'] ?? null,
                 'payment_method' => $data['payment_method'],
-                'payment_type'   => $data['payment_type'],
-                'deposit'        => $data['deposit_amount'],
-                'total'          => $total,
-                'date'           => now(),
-                'pickup_date'    => $data['pickup_date'],
-                'pickup_time'    => $data['pickup_time'] ?? null,
+                'payment_type' => $data['payment_type'],
+                'deposit' => $data['deposit_amount'],
+                'total' => $total,
+                'date' => now(),
+                'pickup_date' => $data['pickup_date'],
+                'pickup_time' => $data['pickup_time'] ?? null,
                 'reserved_by_id' => $reservedById,
-                'status'         => ReservationStatus::PENDING->value,
+                'status' => ReservationStatus::PENDING->value,
             ]);
 
             // 6. Save reservation items
             foreach ($data['items'] as $item) {
                 $reservation->items()->create([
                     'product_id' => $item['product_id'],
-                    'qty'        => $item['qty'],
-                    'price'      => $item['price'],
+                    'qty' => $item['qty'],
+                    'price' => $item['price'],
                 ]);
             }
 
@@ -134,17 +134,17 @@ class ReservationService
                 : TransactionStatus::DEPOSIT->value;
 
             Transaction::create([
-                'si_no'          => $orderNo,
-                'date'           => now(),
-                'customer_id'    => $customer->id,
-                'cashier_id'     => $reservedById,
-                'total_qty'      => array_sum(array_column($data['items'], 'qty')),
-                'amount'         => $data['deposit_amount'],
-                'amount_tendered'=> $data['deposit_amount'],
+                'si_no' => $orderNo,
+                'date' => now(),
+                'customer_id' => $customer->id,
+                'cashier_id' => $reservedById,
+                'total_qty' => array_sum(array_column($data['items'], 'qty')),
+                'amount' => $data['deposit_amount'],
+                'amount_tendered' => $data['deposit_amount'],
                 'payment_method' => $data['payment_method'],
-                'status'         => $txStatus,
-                'type'           => TransactionType::RESERVATION->value,
-                'order_ref'      => $orderNo,
+                'status' => $txStatus,
+                'type' => TransactionType::RESERVATION->value,
+                'order_ref' => $orderNo,
                 'internal_notes' => "Reservation deposit for order {$orderNo}",
             ]);
 
@@ -218,11 +218,10 @@ class ReservationService
                     is_object($product->status) ? $product->status->value : $product->status
                 );
 
-                $isDead = (bool)$product->is_dead_stock;
+                $isDead = (bool) $product->is_dead_stock;
                 $updateData = [
-                    'stock'       => $newStock,
-                    'sales_count' => $product->sales_count + $item->qty,
-                    'status'      => $newStatus,
+                    'stock' => $newStock,
+                    'status' => $newStatus,
                 ];
 
                 if ($isDead) {
@@ -238,8 +237,8 @@ class ReservationService
 
             // 4. Generate fulfillment SI No
             $prefix = match ($data['doc_type']) {
-                'D.R.'  => 'DR',
-                'C.I.'  => 'CI',
+                'D.R.' => 'DR',
+                'C.I.' => 'CI',
                 default => 'SI',
             };
             $year = now()->year;
@@ -253,18 +252,18 @@ class ReservationService
 
             // 5. Create fulfillment transaction
             $transaction = Transaction::create([
-                'si_no'          => $siNo,
-                'date'           => now(),
-                'customer_id'    => $reservation->customer_id,
-                'cashier_id'     => $fulfilledById,
-                'total_qty'      => $reservation->items->sum('qty'),
-                'amount'         => $reservation->total,
-                'amount_tendered'=> $data['balance_payment'],
+                'si_no' => $siNo,
+                'date' => now(),
+                'customer_id' => $reservation->customer_id,
+                'cashier_id' => $fulfilledById,
+                'total_qty' => $reservation->items->sum('qty'),
+                'amount' => $reservation->total,
+                'amount_tendered' => $data['balance_payment'],
                 'payment_method' => $paymentMethod,
-                'doc_type'       => $data['doc_type'],
-                'status'         => TransactionStatus::COMPLETED->value,
-                'type'           => TransactionType::RESERVATION->value,
-                'order_ref'      => $reservation->order_no,
+                'doc_type' => $data['doc_type'],
+                'status' => TransactionStatus::COMPLETED->value,
+                'type' => TransactionType::RESERVATION->value,
+                'order_ref' => $reservation->order_no,
                 'internal_notes' => "Fulfillment of reservation {$reservation->order_no}",
             ]);
 
@@ -272,18 +271,18 @@ class ReservationService
             foreach ($reservation->items as $item) {
                 TransactionItem::create([
                     'transaction_id' => $transaction->id,
-                    'product_id'     => $item->product_id,
-                    'qty'            => $item->qty,
-                    'price'          => $item->price,
-                    'price_tier'     => 'price1',
-                    'unit'           => 'pc',
+                    'product_id' => $item->product_id,
+                    'qty' => $item->qty,
+                    'price' => $item->price,
+                    'price_tier' => 'price1',
+                    'unit' => 'pc',
                 ]);
             }
 
             // 7. Mark reservation as Completed
             $reservation->update([
-                'status'         => ReservationStatus::COMPLETED->value,
-                'fulfilled_by_id'=> $fulfilledById,
+                'status' => ReservationStatus::COMPLETED->value,
+                'fulfilled_by_id' => $fulfilledById,
             ]);
 
             return $reservation->fresh(['customer', 'reservedBy', 'fulfilledBy', 'items.product']);
@@ -308,6 +307,7 @@ class ReservationService
     }
 
     /**
+     * 
      * Cancel a reservation.
      * Stock is NOT touched — it was never deducted.
      * Status is set to Cancelled.
@@ -329,7 +329,7 @@ class ReservationService
 
         $cancelled = DB::transaction(function () use ($reservation, $reason) {
             $reservation->update([
-                'status'         => ReservationStatus::CANCELLED->value,
+                'status' => ReservationStatus::CANCELLED->value,
                 'internal_notes' => $reason
                     ? "Cancelled: {$reason}"
                     : 'Cancelled by staff.',
@@ -343,7 +343,7 @@ class ReservationService
                     TransactionStatus::PAID->value,
                 ])
                 ->update([
-                    'status'         => TransactionStatus::VOID->value,
+                    'status' => TransactionStatus::VOID->value,
                     'internal_notes' => 'Auto-voided: Reservation cancelled.',
                 ]);
 

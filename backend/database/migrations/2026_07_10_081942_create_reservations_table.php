@@ -1,0 +1,41 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('reservations', function (Blueprint $table) {
+            $table->id();
+            $table->string('order_no', 50)->unique();
+            $table->foreignId('customer_id')->constrained('customers')->onDelete('restrict');
+            $table->string('email', 255)->nullable();
+            $table->text('notes')->nullable();
+            $table->string('payment_method', 50);
+            $table->string('payment_type', 50); // PHP Enum: deposit50, full
+            $table->decimal('deposit', 12, 2)->default(0);
+            $table->decimal('total', 12, 2)->default(0);
+            $table->date('date');
+            $table->date('pickup_date')->nullable();
+            $table->time('pickup_time')->nullable();
+            $table->foreignId('reserved_by_id')->constrained('users')->onDelete('restrict');
+            $table->foreignId('fulfilled_by_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->string('status', 50)->default('Pending'); // PHP Enum: Pending, Completed, Cancelled
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('reservations');
+    }
+};

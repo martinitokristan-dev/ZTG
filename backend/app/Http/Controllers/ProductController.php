@@ -1,0 +1,157 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\LogDamagedRequest;
+use App\Http\Requests\RestockProductRequest;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
+use App\Models\Product;
+use App\Services\Products\ProductService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use App\Events\ProductUpdated;
+use App\Events\InventoryUpdated;
+
+class ProductController extends Controller
+{
+    protected ProductService $productService;
+
+    public function __construct(ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
+
+    /**
+     * List base products with optional search/category/status filters.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $products = $this->productService->getAll($request->only([
+            'search', 'category_id', 'status', 'paginate', 'per_page', 'page'
+        ]));
+
+        return response()->json($products);
+    }
+
+    /**
+     * Show a product with its variants and option data.
+     */
+    public function show(int $id): JsonResponse
+    {
+        $product = $this->productService->show($id);
+        return response()->json($product);
+    }
+
+    /**
+     * Create a new product (with optional variants).
+     */
+    public function store(StoreProductRequest $request): JsonResponse
+    {
+        $product = $this->productService->createProduct($request->validated());
+
+        return response()->json([
+            'message' => 'Product created successfully.',
+            'product' => $product,
+        ], 201);
+    }
+
+    /**
+     * Update a base product's details.
+     */
+    public function update(UpdateProductRequest $request, Product $product): JsonResponse
+    {
+        $updatedProduct = $this->productService->updateProduct($product, $request->validated());
+
+        // Dispatch real-time events for frontend sync (price changes and stock levels)
+        event(new ProductUpdated($updatedProduct->id, [
+            'name'         => $updatedProduct->name,
+            'chinese_name' => $updatedProduct->chinese_name,
+            'price1'       => (float) $updatedProduct->price1,
+            'price2'       => (float) $updatedProduct->price2,
+            'category_id'  => $updatedProduct->category_id,
+            'status'       => $updatedProduct->status,
+        ]));
+        
+        event(new InventoryUpdated($updatedProduct->id, (int) $updatedProduct->stock));
+
+        return response()->json([
+            'message' => 'Product updated successfully.',
+            'product' => $updatedProduct,
+        ]);
+    }
+
+    /**
+     * Delete a product (cascades variants).
+     */
+    public function destroy(Product $product): JsonResponse
+    {
+        $this->productService->deleteProduct($product);
+
+        return response()->json([
+            'message' => 'Product deleted successfully.',
+        ]);
+    }
+
+    /**
+     * Commit a batch restock and log the inventory transaction.
+     */
+    public function restock(RestockProductRequest $request): JsonResponse
+    {
+        $transaction = $this->productService->restock(
+            $request->validated()['restocks'],
+            $request->user()->id
+        );
+
+        return response()->json([
+            'message'     => 'Restock committed successfully.',
+            'transaction' => $transaction,
+        ]);
+    }
+
+    /**
+     * Log damaged stock for a product.
+     */
+    public function logDamaged(LogDamagedRequest $request, Product $product): JsonResponse
+    {
+        $transaction = $this->productService->logDamaged(
+            $product,
+            $request->validated(),
+            $request->user()->id
+        );
+
+        return response()->json([
+            'message'     => 'Damaged stock logged successfully.',
+            'transaction' => $transaction,
+        ]);
+     }
+
+     /**
+      * Upload product image.
+      */
+     public function uploadImage(Request $request): JsonResponse
+     {
+         $request->validate([
+             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+         ]);
+
+         if ($request->hasFile('image')) {
+             $file = $request->file('image');
+             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+             
+             // Ensure public/uploads directory exists
+             $uploadPath = public_path('uploads');
+             if (!file_exists($uploadPath)) {
+                 mkdir($uploadPath, 0755, true);
+             }
+
+             $file->move($uploadPath, $filename);
+
+             return response()->json([
+                 'url' => asset('uploads/' . $filename)
+             ]);
+         }
+
+         return response()->json(['message' => 'No image file uploaded.'], 400);
+     }
+}

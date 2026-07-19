@@ -1,0 +1,61 @@
+import api from '../api';
+
+const TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+let dashboardCache = {
+    data: null,
+    fetchedAt: 0,
+    promise: null
+};
+
+export const resetDashboardCache = () => {
+    dashboardCache = {};
+};
+
+export async function fetchDashboardData(products, timeframe = 'Today') {
+    const now = Date.now();
+    const cacheKey = timeframe;
+
+    if (dashboardCache[cacheKey] && dashboardCache[cacheKey].data && (now - dashboardCache[cacheKey].fetchedAt < TTL_MS)) {
+        return dashboardCache[cacheKey].data;
+    }
+
+    if (dashboardCache[cacheKey] && dashboardCache[cacheKey].promise) {
+        return dashboardCache[cacheKey].promise;
+    }
+
+    if (!dashboardCache[cacheKey]) {
+        dashboardCache[cacheKey] = {};
+    }
+
+    const tfParam = timeframe.toLowerCase().replace(' ', '_');
+
+    dashboardCache[cacheKey].promise = Promise.all([
+        api.get(`/reports/sales-summary?timeframe=${tfParam}`).catch(() => ({ data: { total_revenue: 0 } })),
+        api.get(`/reports/product-performance?timeframe=${tfParam}`).catch(() => ({ data: { top_sellers: [] } })),
+        api.get('/employees').catch(() => ({ data: [] }))
+    ]).then(([summaryRes, performanceRes, employeesRes]) => {
+        const topSellers = performanceRes.data.top_sellers || [];
+        const topProduct = topSellers.length > 0 
+            ? { name: topSellers[0].name, qty: topSellers[0].sales_count }
+            : { name: '-', qty: 0 };
+
+        const stats = {
+            todayRevenue: summaryRes.data.total_revenue || 0,
+            employeeCount: Array.isArray(employeesRes.data) ? employeesRes.data.length : 0,
+            topProduct,
+            topSellers,
+            last7Days: summaryRes.data.last_7_days || []
+        };
+
+        dashboardCache[cacheKey].data = stats;
+        dashboardCache[cacheKey].fetchedAt = Date.now();
+        dashboardCache[cacheKey].promise = null;
+        return stats;
+    }).catch(err => {
+        dashboardCache[cacheKey].promise = null;
+        throw err;
+    });
+
+    return dashboardCache[cacheKey].promise;
+}

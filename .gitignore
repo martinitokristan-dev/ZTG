@@ -1,7 +1,55 @@
-figma_raw.json
-ztg_use_case_diagram.png
-ztg_data_flow_diagram.png
-ztg_system_diagrams.md
-media__1782372656782.png
-media__1782375103314.png
-media__1782379445667.png
+# ============================================================
+# ZTG Heavy Parts — Laravel + React/Vite monorepo .gitignore
+# ============================================================
+
+# ─── OS / Editor ────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+.nova/
+.zed/
+.fleet/
+*.suo
+*.ntvs*
+
+# ─── Laravel (backend/) ─────────────────────────────────────
+backend/.env
+backend/.env.backup
+backend/.env.testing
+backend/.env.production
+backend/vendor/
+backend/node_modules/
+backend/storage/logs/*.log
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/storage/app/public/*
+backend/bootstrap/cache/*.php
+backend/.phpunit.result.cache
+backend/.phpunit.cache/
+backend/auth.json
+backend/Homestead.json
+backend/Homestead.yaml
+
+# One-off debug scripts — never commit
+backend/tinker_trigger_broadcasts.php
+
+# ─── React / Vite (frontend/) ───────────────────────────────
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# ─── Log / lock artifacts ───────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.pid
+*.seed

@@ -926,7 +926,7 @@ ZTG-main/
 |---|---|---|
 | **Render Cold Start** | Free tier service sleeps after 15 min inactivity | BetterStack pings every 3 minutes to keep server warm |
 | **No Offline Mode** | Requires active internet connection | Future: PWA + service workers |
-| **No Persistent File Storage** | Render ephemeral disk (files reset on deploy) | Future: migrate uploads to Cloudflare R2 or AWS S3 |
+| **No Persistent File Storage** | Render ephemeral disk (files reset on deploy) | **Resolved:** Migrated all user avatars & product uploads to Cloudflare R2 (S3-compatible persistent cloud storage) |
 | **Single Region Database** | TiDB Cloud free tier is single-region (ap-southeast-1) | Future: upgrade to paid multi-region plan |
 | **No Automated Tests** | No unit/integration test suite yet | Future: PHPUnit + Pest for backend, Vitest for frontend |
 | **Token Expiry UX** | Expired tokens show API error, not auto-logout | Future: Axios 401 interceptor to auto-redirect to login |

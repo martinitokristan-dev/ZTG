@@ -63,6 +63,9 @@ export default function POS() {
                             selectedChecker={pos.selectedChecker}
                             setSelectedChecker={pos.setSelectedChecker}
                             
+                            setCartItemQty={pos.setCartItemQty}
+                            posError={pos.posError}
+                            setPosError={pos.setPosError}
                             setShowCheckoutModal={pos.setShowCheckoutModal}
                             fmt={pos.fmt}
                         />

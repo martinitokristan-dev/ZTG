@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Product;
 use App\Services\Notifications\NotificationService;
+use App\Enums\ProductStatus;
 
 class ProductObserver
 {
@@ -15,13 +16,28 @@ class ProductObserver
     }
 
     /**
-     * Handle the Product "saved" event.
+     * Handle the Product "saving" event to continuously recalculate status based on alert_limit.
+     */
+    public function saving(Product $product): void
+    {
+        $statusStr = is_object($product->status) ? $product->status->value : (string) $product->status;
+        if ($statusStr !== 'Disabled' && $statusStr !== ProductStatus::DISABLED->value) {
+            $alertLimit = $product->alert_limit ?? 5;
+            if ($product->stock <= 0) {
+                $product->status = ProductStatus::NO_STOCK->value;
+            } elseif ($product->stock <= $alertLimit) {
+                $product->status = ProductStatus::LOW_STOCK->value;
+            } else {
+                $product->status = ProductStatus::ACTIVE->value;
+            }
+        }
+    }
+
+    /**
+     * Handle the Product "saved" event to check stock alerts.
      */
     public function saved(Product $product): void
     {
-        // Only run low stock check if stock or alert_limit has changed
-        if ($product->isDirty('stock') || $product->isDirty('alert_limit') || !$product->exists) {
-            $this->notificationService->checkStockAlert($product);
-        }
+        $this->notificationService->checkStockAlert($product);
     }
 }

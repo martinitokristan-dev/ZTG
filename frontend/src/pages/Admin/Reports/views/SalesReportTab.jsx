@@ -1,19 +1,113 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import api from '../../../../shared/api';
 import { resetReportsCache } from '../../../../shared/hooks/useReportsCache';
 import StatusBadge from '../../../../shared/components/StatusBadge';
 
-export default function SalesReportTab({ salesSummary, fmt, fmtDate, isReportGenerated, setIsReportGenerated, startDate, setStartDate, endDate, setEndDate }) {
+export default function SalesReportTab({ salesSummary, employees = [], fmt, fmtDate, isReportGenerated, setIsReportGenerated, startDate, setStartDate, endDate, setEndDate }) {
     const [confirming, setConfirming] = useState(false);
     const [hasExported, setHasExported] = useState(false);
+    const [selectedCashier, setSelectedCashier] = useState('All');
+    const [selectedPayment, setSelectedPayment] = useState('All');
 
-    // Calculate flattened items and totals
+    // Extract unique Cashiers (users with Cashier role, excluding Admin role)
+    const cashierOptions = useMemo(() => {
+        const set = new Set();
+        if (employees && employees.length > 0) {
+            employees.forEach(emp => {
+                const role = (emp.role || '').toLowerCase();
+                if (role === 'cashier') {
+                    const name = emp.real_name || emp.name;
+                    if (name) set.add(name.trim());
+                }
+            });
+        }
+        if (salesSummary?.transactions) {
+            salesSummary.transactions.forEach(tx => {
+                if (tx.cashier) {
+                    const role = (tx.cashier.role || '').toLowerCase();
+                    if (role === 'cashier') {
+                        const name = tx.cashier.real_name || tx.cashier.name;
+                        if (name) set.add(name.trim());
+                    }
+                }
+            });
+        }
+        return Array.from(set);
+    }, [employees, salesSummary]);
+
+    // Extract unique Payment methods
+    const paymentOptions = useMemo(() => {
+        const baseOptions = ['Cash', 'GCash', 'Bank Transfer', 'P.O. (Pending)', 'Split'];
+        if (!salesSummary?.transactions) return baseOptions;
+        const set = new Set(baseOptions);
+        salesSummary.transactions.forEach(tx => {
+            if (tx.payment_method) {
+                if (tx.payment_method.startsWith('Split')) {
+                    set.add('Split');
+                } else {
+                    set.add(tx.payment_method);
+                }
+            }
+        });
+        return Array.from(set);
+    }, [salesSummary]);
+
+    // Filter transactions based on selected Cashier and Payment method
+    const filteredTransactions = useMemo(() => {
+        if (!salesSummary?.transactions) return [];
+        return salesSummary.transactions.filter(tx => {
+            if (selectedCashier !== 'All') {
+                const cashierName = tx.cashier?.real_name || tx.cashier?.name || '';
+                if (cashierName !== selectedCashier) return false;
+            }
+            if (selectedPayment !== 'All') {
+                const pm = tx.payment_method || '';
+                if (selectedPayment === 'Split') {
+                    if (!pm.startsWith('Split')) return false;
+                } else if (!pm.includes(selectedPayment)) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }, [salesSummary, selectedCashier, selectedPayment]);
+
+    // Calculate dynamic KPI metrics for filtered data
+    const { kpiTotalRevenue, kpiTotalTransactions, kpiAvgTransaction, kpiTotalItemsSold } = useMemo(() => {
+        let rev = 0;
+        let itemsSold = 0;
+        let validTxCount = 0;
+
+        filteredTransactions.forEach(tx => {
+            if (tx.status === 'Completed' || tx.status === 'Pending') {
+                rev += Number(tx.amount || 0);
+                validTxCount += 1;
+            }
+            if (tx.items && tx.items.length > 0) {
+                tx.items.forEach(it => {
+                    itemsSold += (it.qty || 0);
+                });
+            } else {
+                itemsSold += (tx.total_qty || 1);
+            }
+        });
+
+        const avg = validTxCount > 0 ? rev / validTxCount : 0;
+        return {
+            kpiTotalRevenue: rev,
+            kpiTotalTransactions: validTxCount,
+            kpiAvgTransaction: avg,
+            kpiTotalItemsSold: itemsSold,
+        };
+    }, [filteredTransactions]);
+
+    // Calculate flattened items and totals for filtered data
     const flattenedTransactionsItems = [];
     let totalQty = 0;
     let totalAmount = 0;
 
-    if (salesSummary?.transactions) {
-        salesSummary.transactions.forEach(tx => {
+    if (filteredTransactions.length > 0) {
+        filteredTransactions.forEach(tx => {
             const items = (tx.items && tx.items.length > 0) ? tx.items : [{
                 id: null,
                 name: tx.itemName || 'Transaction',
@@ -62,7 +156,7 @@ export default function SalesReportTab({ salesSummary, fmt, fmtDate, isReportGen
                 item.qty,
                 displayAmount,
                 `"${tx.payment_method}"`,
-                `"${tx.checker?.name || '—'}"`,
+                `"${tx.cashier?.real_name || tx.cashier?.name || tx.checker?.name || '—'}"`,
                 `"${tx.status}"`
             ];
             csvRows.push(row.join(","));
@@ -109,12 +203,28 @@ export default function SalesReportTab({ salesSummary, fmt, fmtDate, isReportGen
                         <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} value={endDate} onChange={e => setEndDate(e.target.value)} />
                     </div>
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '12px' }}>Cashier:</span>
-                    <select className="form-control form-control-sm" style={{ width: '160px' }}>
+                    <select 
+                        className="form-control form-control-sm" 
+                        style={{ width: '160px' }}
+                        value={selectedCashier}
+                        onChange={e => setSelectedCashier(e.target.value)}
+                    >
                         <option value="All">All Cashiers</option>
+                        {cashierOptions.map(name => (
+                            <option key={name} value={name}>{name}</option>
+                        ))}
                     </select>
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '12px' }}>Payment:</span>
-                    <select className="form-control form-control-sm" style={{ width: '160px' }}>
+                    <select 
+                        className="form-control form-control-sm" 
+                        style={{ width: '160px' }}
+                        value={selectedPayment}
+                        onChange={e => setSelectedPayment(e.target.value)}
+                    >
                         <option value="All">All Payments</option>
+                        {paymentOptions.map(pm => (
+                            <option key={pm} value={pm}>{pm}</option>
+                        ))}
                     </select>
                 </div>
 
@@ -165,19 +275,19 @@ export default function SalesReportTab({ salesSummary, fmt, fmtDate, isReportGen
             <div className="kpi-grid">
                 <div className="kpi-card">
                     <div className="kpi-label">Total Sales Revenue</div>
-                    <div className="kpi-value">{salesSummary ? fmt(salesSummary.total_revenue || 0) : '₱0'}</div>
+                    <div className="kpi-value">{salesSummary ? fmt(kpiTotalRevenue) : '₱0'}</div>
                 </div>
                 <div className="kpi-card">
                     <div className="kpi-label">Total Transactions</div>
-                    <div className="kpi-value">{salesSummary ? salesSummary.transaction_count : '0'}</div>
+                    <div className="kpi-value">{salesSummary ? kpiTotalTransactions : '0'}</div>
                 </div>
                 <div className="kpi-card">
                     <div className="kpi-label">Average Transaction</div>
-                    <div className="kpi-value">{salesSummary ? fmt(salesSummary.average_transaction || 0) : '₱0'}</div>
+                    <div className="kpi-value">{salesSummary ? fmt(kpiAvgTransaction) : '₱0'}</div>
                 </div>
                 <div className="kpi-card">
                     <div className="kpi-label">Total Items Sold</div>
-                    <div className="kpi-value">{salesSummary ? salesSummary.total_items_sold : '0'}</div>
+                    <div className="kpi-value">{salesSummary ? kpiTotalItemsSold : '0'}</div>
                 </div>
             </div>
 
@@ -225,7 +335,7 @@ export default function SalesReportTab({ salesSummary, fmt, fmtDate, isReportGen
                                             <td style={{ color: 'var(--text-secondary)' }}>{item.qty}</td>
                                             <td style={{ fontWeight: '700', color: amountColor }}>{amountPrefix}{fmt(rowAmount)}</td>
                                             <td style={{ color: 'var(--text-secondary)' }}>{tx.payment_method}</td>
-                                            <td style={{ color: 'var(--text-secondary)' }}>{((tx.checker?.name || tx.cashier?.name) || '—').split(' ')[0]}</td>
+                                            <td style={{ color: 'var(--text-secondary)' }}>{((tx.cashier?.real_name || tx.cashier?.name || tx.checker?.name) || '—').split(' ')[0]}</td>
                                             <td><StatusBadge status={tx.status} /></td>
                                         </tr>
                                     );

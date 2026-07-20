@@ -9,6 +9,7 @@ let settingsCache = {
     variants: { data: null, ts: 0 },
     alertRules: { data: null, ts: 0 },
     employees: { data: null, ts: 0 },
+    checkers: { data: null, ts: 0 },
 };
 
 export const resetSettingsCache = (key = null) => {
@@ -21,6 +22,7 @@ export const resetSettingsCache = (key = null) => {
             variants: { data: null, ts: 0 },
             alertRules: { data: null, ts: 0 },
             employees: { data: null, ts: 0 },
+            checkers: { data: null, ts: 0 },
         };
     }
 };

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import useReports from './hooks/useReports';
 import SalesReportTab from './views/SalesReportTab';
 import ProductReportTab from './views/ProductReportTab';
@@ -41,12 +42,12 @@ export default function Reports() {
                     </div>
 
                     {rep.loading ? (
-                        <div style={{ padding: '40px', textAlign: 'center', color: '#64748B' }}>Loading reports data...</div>
+                        <LoadingSpinner text="Loading reports data..." minHeight="200px" />
                     ) : (
                         <>
-                            {activeTab === 'sales' && <SalesReportTab salesSummary={rep.salesSummary} fmt={rep.fmt} fmtDate={rep.fmtDate} isReportGenerated={rep.isReportGenerated} setIsReportGenerated={rep.setIsReportGenerated} startDate={rep.startDate} setStartDate={rep.setStartDate} endDate={rep.endDate} setEndDate={rep.setEndDate} />}
+                            {activeTab === 'sales' && <SalesReportTab salesSummary={rep.salesSummary} employees={rep.employees} fmt={rep.fmt} fmtDate={rep.fmtDate} isReportGenerated={rep.isReportGenerated} setIsReportGenerated={rep.setIsReportGenerated} startDate={rep.startDate} setStartDate={rep.setStartDate} endDate={rep.endDate} setEndDate={rep.setEndDate} />}
                             {activeTab === 'products' && <ProductReportTab productPerformance={rep.productPerformance} refundVoidAnalysis={rep.refundVoidAnalysis} startDate={rep.startDate} setStartDate={rep.setStartDate} endDate={rep.endDate} setEndDate={rep.setEndDate} />}
-                            {activeTab === 'payments' && <PaymentMethodsTab salesSummary={rep.salesSummary} fmt={rep.fmt} startDate={rep.startDate} setStartDate={rep.setStartDate} endDate={rep.endDate} setEndDate={rep.setEndDate} />}
+                            {activeTab === 'payments' && <PaymentMethodsTab salesSummary={rep.salesSummary} employees={rep.employees} fmt={rep.fmt} startDate={rep.startDate} setStartDate={rep.setStartDate} endDate={rep.endDate} setEndDate={rep.setEndDate} />}
                         </>
                     )}
                 </div>

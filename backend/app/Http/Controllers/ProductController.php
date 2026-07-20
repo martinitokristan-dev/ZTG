@@ -132,18 +132,18 @@ class ProductController extends Controller
      public function uploadImage(Request $request): JsonResponse
      {
          $request->validate([
-             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:5120',
+             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
          ]);
 
          if ($request->hasFile('image')) {
              $file = $request->file('image');
-             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-             
-             // Upload directly to Cloudflare R2 (s3 disk)
-             $path = \Illuminate\Support\Facades\Storage::disk('s3')->putFileAs('uploads', $file, $filename, 'public');
+             $ext = $file->extension();
+             $filename = 'product_' . time() . '_' . \Illuminate\Support\Str::random(12) . '.' . $ext;
+             $path = $file->storeAs('products', $filename, 's3');
+             $url = \Illuminate\Support\Facades\Storage::disk('s3')->url($path);
 
              return response()->json([
-                 'url' => \Illuminate\Support\Facades\Storage::disk('s3')->url($path)
+                 'url' => $url
              ]);
          }
 

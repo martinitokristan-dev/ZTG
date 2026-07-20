@@ -51,15 +51,21 @@ class NotificationService
      */
     public function checkStockAlert(Product $product): void
     {
-        $enableStockAlerts = \App\Models\Setting::where('key', 'enable_stock_alerts_checkbox')->value('value') === 'true';
+        $enableVal = \App\Models\Setting::where('key', 'enable_stock_alerts_checkbox')->value('value');
+        $enableStockAlerts = ($enableVal === null || $enableVal === 'true' || $enableVal === '1');
         if (!$enableStockAlerts) return;
 
-        $alertLimit = $product->alert_limit ?? 5;
+        $globalThreshold = (int) (\App\Models\Setting::where('key', 'low_stock_threshold')->value('value') ?? 5);
+        $alertLimit = $product->alert_limit ?? $globalThreshold;
+
         $isOos = $product->stock <= 0;
         $isLowStock = $product->stock > 0 && $product->stock <= $alertLimit;
 
-        $sendLowStockAlerts = \App\Models\Setting::where('key', 'send_low_stock_alerts')->value('value') === 'true';
-        $sendOosAlerts = \App\Models\Setting::where('key', 'send_oos_alerts')->value('value') === 'true';
+        $lowVal = \App\Models\Setting::where('key', 'send_low_stock_alerts')->value('value');
+        $sendLowStockAlerts = ($lowVal === null || $lowVal === 'true' || $lowVal === '1');
+
+        $oosVal = \App\Models\Setting::where('key', 'send_oos_alerts')->value('value');
+        $sendOosAlerts = ($oosVal === null || $oosVal === 'true' || $oosVal === '1');
 
         $shouldAlert = false;
         if ($isOos && $sendOosAlerts) $shouldAlert = true;
@@ -73,11 +79,23 @@ class NotificationService
                 ->exists();
 
             if (!$exists) {
+                // Resolve display name for variant products
+                $displayName = $product->name;
+                $options = $product->relationLoaded('variantOptions') ? $product->variantOptions : $product->variantOptions()->get();
+
+                if ($options && $options->count() > 0) {
+                    $optionValues = $options->pluck('value')->join(', ');
+                    $baseName = $product->parent ? $product->parent->name : $product->name;
+                    $displayName = "{$baseName} ({$optionValues})";
+                } elseif ($product->parent) {
+                    $displayName = "{$product->parent->name} ({$product->name})";
+                }
+
                 $statusMsg = $isOos ? 'out of stock' : 'running low on stock';
                 $notification = Notification::create([
                     'type'       => NotificationType::LOW_STOCK->value,
                     'title'      => $isOos ? 'Out of Stock Alert' : 'Low Stock Alert',
-                    'message'    => "Product '{$product->name}' ({$product->part_no}) is {$statusMsg}. Current quantity: {$product->stock}.",
+                    'message'    => "Product '{$displayName}' is {$statusMsg}. Current quantity {$product->stock}.",
                     'product_id' => $product->id,
                     'link'       => "/products/{$product->id}",
                 ]);

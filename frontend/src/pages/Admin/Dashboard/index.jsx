@@ -1,4 +1,5 @@
 import React from 'react';
+import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import { useDashboard } from './hooks/useDashboard';
 
 import StatCards from './views/StatCards';
@@ -64,7 +65,7 @@ export default function Dashboard() {
                 </div>
 
                 {loading ? (
-                    <div style={{ padding: 24, textAlign: 'center', color: '#64748B' }}>Loading dashboard data...</div>
+                    <LoadingSpinner text="Loading dashboard data..." fullPage={true} />
                 ) : (
                     <>
                         <StatCards stats={stats} currentTimeRange={currentTimeRange} />

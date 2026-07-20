@@ -1,27 +1,39 @@
 /**
  * printReceipt.js
- * Generates an HTML receipt string and triggers the browser's print dialog.
- * 
- * @param {Object} options Options for printing
- * @param {string} options.type 'Sales' | 'Refund' | 'Return' | 'Void'
- * @param {string} options.invoiceNo E.g. 'SI-2026-101'
- * @param {string} options.date Date string
- * @param {string} options.customer Customer name
- * @param {string} options.phone Customer phone
- * @param {string} options.buyerTin Customer TIN
- * @param {string} options.buyerAddress Customer Address
- * @param {Array}  options.items Array of item objects
- * @param {number} options.total Total amount
- * @param {string} options.payment Payment method (e.g., 'Cash', 'GCash')
- * @param {number} options.tendered Amount tendered
- * @param {number} options.change Change amount
- * @param {string} options.servedBy Cashier name
- * @param {string} options.docType Document type ('S.I.', 'D.R.', 'C.I.')
- * @param {string} options.originalInvoice Original invoice number (for refund/return)
- * @param {string} options.reason Reason (for refund/return/void)
- * @param {string} options.approver Approver name
- * @param {string} options.approvalCode Approval code
- * @param {string} options.splitDetails HTML string for split payment breakdown
+ * Generates an HTML receipt and triggers the browser print dialog.
+ *
+ * BIR COMPLIANCE:
+ *   businessInfo should be the transaction's frozen business_snapshot for all
+ *   historical/reprint cases. For legacy transactions with no snapshot, pass
+ *   current live settings as the fallback.
+ *
+ *   Business Logo is ALWAYS read live from current settings (never frozen),
+ *   so pass logoUrl separately — not as part of businessInfo.
+ *
+ * @param {Object} options
+ * @param {string} options.type             'Sales' | 'Refund' | 'Return' | 'Void'
+ * @param {string} options.invoiceNo        E.g. 'SI-2026-101'
+ * @param {string} options.date             Date string
+ * @param {string} options.customer         Customer name
+ * @param {string} options.phone            Customer phone
+ * @param {string} options.buyerTin         Customer TIN
+ * @param {string} options.buyerAddress     Customer address
+ * @param {Array}  options.items            Array of item objects
+ * @param {number} options.total            Total amount
+ * @param {string} options.payment          Payment method
+ * @param {number} options.tendered         Amount tendered
+ * @param {number} options.change           Change amount
+ * @param {string} options.servedBy         Cashier/checker name
+ * @param {string} options.docType          Document type ('S.I.', 'D.R.', 'C.I.')
+ * @param {string} options.originalInvoice  Original invoice number (refund/return)
+ * @param {string} options.reason           Reason (refund/return/void)
+ * @param {string} options.approver         Approver name
+ * @param {string} options.approvalCode     Approval code
+ * @param {string} options.splitDetails     HTML string for split payment breakdown
+ * @param {Object} options.businessInfo     Frozen business snapshot or live settings fallback:
+ *                                          { business_name, branch_location, address,
+ *                                            contact_number, email_address, tax_rate, tin }
+ * @param {string} options.logoUrl          ALWAYS current live logo URL (never frozen)
  */
 export function printUnifiedReceipt(options) {
     const {
@@ -43,8 +55,21 @@ export function printUnifiedReceipt(options) {
         reason = '',
         approver = '',
         approvalCode = '',
-        splitDetails = ''
+        splitDetails = '',
+        businessInfo = {},
+        logoUrl = null,
     } = options;
+
+    // Resolve business identity from snapshot (or live-settings fallback).
+    // If businessInfo is empty/null, all fields gracefully fall back to empty strings.
+    const bizName    = businessInfo?.business_name    || '';
+    const bizBranch  = businessInfo?.branch_location  || '';
+    const bizAddress = businessInfo?.address          || '';
+    const bizContact = businessInfo?.contact_number   || '';
+    const bizEmail   = businessInfo?.email_address    || '';
+    const bizTin     = businessInfo?.tin              || '';
+    const taxRate    = parseFloat(businessInfo?.tax_rate || '12') || 12;
+    const taxDivisor = 1 + (taxRate / 100);
 
     // Type-specific styling
     const typeConfig = {
@@ -114,18 +139,25 @@ export function printUnifiedReceipt(options) {
         ${approvalCode ? `<tr><td style="font-size:11px;color:#6B7280;padding:3px 0;">Approval Code:</td><td style="font-size:11px;text-align:right;">${approvalCode}</td></tr>` : ''}
     ` : '';
 
-    // Full receipt HTML
+    // Business logo — ALWAYS current live logo (never frozen), shown only when set
+    const logoHtml = logoUrl
+        ? `<img src="${logoUrl}" alt="${bizName} logo" style="max-width:160px;max-height:60px;object-fit:contain;margin:0 auto 8px auto;display:block;" />`
+        : '';
+
+    // Full receipt HTML — all company info from businessInfo (snapshot or live-settings fallback)
     const receiptHtml = `
         <div style="font-family: 'Courier New', Courier, monospace; width: 320px; margin: 0 auto; padding: 20px; color: #111; font-size: 12px; line-height: 1.5;">
 
-            <!-- Company Header -->
+            <!-- Company Header — values from frozen business_snapshot (or current settings for legacy) -->
             <div style="text-align: center; margin-bottom: 12px;">
-                <div style="font-size: 16px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">ZTG HEAVY PARTS</div>
+                ${logoHtml}
+                <div style="font-size: 16px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">${bizName || '[Business Name Not Set]'}</div>
+                ${bizBranch  ? `<div style="font-size: 10px; color: #374151; margin-top: 2px;">${bizBranch}</div>` : ''}
+                ${bizAddress ? `<div style="font-size: 10px; color: #374151;">${bizAddress}</div>` : ''}
+                ${bizContact ? `<div style="font-size: 10px; color: #374151;">Tel: ${bizContact}</div>` : ''}
+                ${bizEmail   ? `<div style="font-size: 10px; color: #374151;">${bizEmail}</div>` : ''}
+                ${bizTin     ? `<div style="font-size: 10px; color: #374151;">TIN: ${bizTin}</div>` : ''}
                 <div style="font-size: 10px; color: #374151; margin-top: 2px;">VAT Registered</div>
-                <div style="font-size: 10px; color: #374151;">TIN: 000-123-456-000</div>
-                <div style="font-size: 10px; color: #374151;">123 Industrial Ave., Brgy. San Jose</div>
-                <div style="font-size: 10px; color: #374151;">Quezon City, Metro Manila</div>
-                <div style="font-size: 10px; color: #374151;">Tel: (02) 8888-0000</div>
             </div>
 
             <!-- Type Badge -->
@@ -180,11 +212,11 @@ export function printUnifiedReceipt(options) {
                 </table>
             </div>
 
-            <!-- VAT Breakdown + Totals -->
+            <!-- VAT Breakdown + Totals — uses tax_rate from businessInfo snapshot -->
             <div style="margin-bottom: 10px;">
                 <table style="width:100%; border-collapse: collapse;">
-                    <tr><td style="padding:2px 0;font-size:10px;color:#6B7280;">VATable Sales:</td><td style="padding:2px 0;font-size:10px;text-align:right;color:#6B7280;">&#8369;${(Number(total)/1.12).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
-                    <tr><td style="padding:2px 0;font-size:10px;color:#6B7280;">VAT Amount (12%):</td><td style="padding:2px 0;font-size:10px;text-align:right;color:#6B7280;">&#8369;${(Number(total)-Number(total)/1.12).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+                    <tr><td style="padding:2px 0;font-size:10px;color:#6B7280;">VATable Sales:</td><td style="padding:2px 0;font-size:10px;text-align:right;color:#6B7280;">&#8369;${(Number(total)/taxDivisor).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+                    <tr><td style="padding:2px 0;font-size:10px;color:#6B7280;">VAT Amount (${taxRate}%):</td><td style="padding:2px 0;font-size:10px;text-align:right;color:#6B7280;">&#8369;${(Number(total)-Number(total)/taxDivisor).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
                     <tr><td style="padding:2px 0;font-size:10px;color:#6B7280;">VAT-Exempt Sales:</td><td style="padding:2px 0;font-size:10px;text-align:right;color:#6B7280;">&#8369;0.00</td></tr>
                     <tr><td style="padding:2px 0;font-size:10px;color:#6B7280;">Zero-Rated Sales:</td><td style="padding:2px 0;font-size:10px;text-align:right;color:#6B7280;">&#8369;0.00</td></tr>
                     <tr style="border-top: 2px solid #111; border-bottom: 2px solid #111;">
@@ -199,12 +231,8 @@ export function printUnifiedReceipt(options) {
             <!-- Footer -->
             <div style="text-align: center; border-top: 1px dashed #999; padding-top: 10px; margin-top: 10px;">
                 <div style="font-size: 9px; color: #6B7280; line-height: 1.6;">
-                    <div>ATP No.: ZTG-ATP-2024-001</div>
-                    <div>Valid Until: December 31, 2029</div>
-                    <div>Acknowledgement Certificate No.: AC-2024-ZTG-001</div>
-                    <div style="margin-top:3px;">Software Provider: ZTG POS System v2.0</div>
                     <div style="margin-top: 6px; font-size: 11px; font-style: italic; color: #374151;">Thank you for your business!</div>
-                    <div style="margin-top: 2px;">— ZTG Heavy Parts —</div>
+                    ${bizName ? `<div style="margin-top: 2px;">— ${bizName} —</div>` : ''}
                 </div>
             </div>
 
@@ -237,7 +265,7 @@ export function printUnifiedReceipt(options) {
         printDiv.id = 'ztg-print-receipt';
         document.body.appendChild(printDiv);
     }
-    
+
     printDiv.innerHTML = receiptHtml;
 
     // Small delay to ensure styles and DOM updates are applied before printing

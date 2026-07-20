@@ -12,6 +12,7 @@ use App\Models\TransactionItem;
 use App\Services\Products\ProductService;
 use App\Events\InventoryUpdated;
 use App\Events\TransactionCreated;
+use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -111,20 +112,21 @@ class CheckoutService
                 default          => $grandTotal, // GCash/Bank: auto-set to total
             };
 
-            // 10. Create Transaction record
+            // 10. Create Transaction record with frozen business snapshot
             $transaction = Transaction::create([
-                'si_no'           => $siNo,
-                'date'            => now(),
-                'customer_id'     => $customer->id,
-                'cashier_id'      => $cashierId,
-                'checker_id'      => $data['checker_id'] ?? null,
-                'total_qty'       => array_sum(array_column($cart, 'qty')),
-                'amount'          => $grandTotal,
-                'amount_tendered' => $amountTendered,
-                'payment_method'  => $paymentMethodStr,
-                'doc_type'        => $data['doc_type'],
-                'status'          => $data['payment_method'] === 'P.O. (Pending)' ? TransactionStatus::PENDING->value : TransactionStatus::COMPLETED->value,
-                'type'            => TransactionType::SALE->value,
+                'si_no'             => $siNo,
+                'date'              => now(),
+                'customer_id'       => $customer->id,
+                'cashier_id'        => $cashierId,
+                'checker_id'        => $data['checker_id'] ?? null,
+                'total_qty'         => array_sum(array_column($cart, 'qty')),
+                'amount'            => $grandTotal,
+                'amount_tendered'   => $amountTendered,
+                'payment_method'    => $paymentMethodStr,
+                'doc_type'          => $data['doc_type'],
+                'status'            => $data['payment_method'] === 'P.O. (Pending)' ? TransactionStatus::PENDING->value : TransactionStatus::COMPLETED->value,
+                'type'              => TransactionType::SALE->value,
+                'business_snapshot' => Setting::getBusinessSnapshot(), // Write-once BIR compliance snapshot
             ]);
 
             // 11. Create TransactionItem records

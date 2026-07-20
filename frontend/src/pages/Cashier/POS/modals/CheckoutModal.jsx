@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { printUnifiedReceipt } from '../../../../utils/printReceipt';
+import api from '../../../../shared/api';
 
 export default function CheckoutModal({ 
     isOpen, 
@@ -21,10 +22,13 @@ export default function CheckoutModal({
     const [splitMethod2, setSplitMethod2] = useState('Cash');
     const [splitAmount2, setSplitAmount2] = useState('');
 
-    // Success State
+    // Success & Error State
     const [checkoutSuccess, setCheckoutSuccess] = useState(false);
     const [completedTx, setCompletedTx] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [error, setError] = useState(null);
+    // Live logo URL — always reflects current logo (never frozen per spec)
+    const [logoUrl, setLogoUrl] = useState(null);
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -40,6 +44,19 @@ export default function CheckoutModal({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, checkoutSuccess, isProcessing]);
 
+    // Fetch live logo on mount — logo is always current, never frozen per BIR spec
+    useEffect(() => {
+        api.get('/settings')
+            .then(res => {
+                const settingsArr = Array.isArray(res.data) ? res.data : (res.data?.settings || []);
+                const logoSetting = settingsArr.find?.(s => s.key === 'business_logo');
+                if (logoSetting?.value) setLogoUrl(logoSetting.value);
+                else if (res.data?.business_logo) setLogoUrl(res.data.business_logo);
+            })
+            .catch(() => { /* logo silently absent */ });
+    }, []);
+
+
     if (!isOpen) return null;
 
     const tenderedVal = parseFloat(amountTendered || 0);
@@ -49,13 +66,14 @@ export default function CheckoutModal({
     const changeDueBg = isChangeSufficient ? '#ECFDF5' : '#FEF2F2';
 
     const handleCheckout = async () => {
+        setError(null);
         let paymentData = {};
         
         if (paymentMethod === 'Split') {
             const s1 = parseFloat(splitAmount1 || 0);
             const s2 = parseFloat(splitAmount2 || 0);
             if ((s1 + s2) < cartTotals.total) {
-                alert("Split amounts do not cover the total due.");
+                setError("Split amounts do not cover the total due.");
                 return;
             }
             paymentData = {
@@ -67,7 +85,7 @@ export default function CheckoutModal({
             };
         } else if (paymentMethod === 'Cash') {
             if (tenderedVal < cartTotals.total) {
-                alert("Amount tendered is less than the total due.");
+                setError("Amount tendered is less than the total due.");
                 return;
             }
             paymentData = {
@@ -91,7 +109,7 @@ export default function CheckoutModal({
                 setCompletedTx(res.transaction);
                 setCheckoutSuccess(true);
             } else {
-                alert("Checkout failed: " + res.error);
+                setError("Checkout failed: " + res.error);
             }
         } finally {
             setIsProcessing(false);
@@ -144,7 +162,12 @@ export default function CheckoutModal({
             change: Math.max(0, (completedTx.amount_tendered || 0) - completedTx.amount),
             servedBy: completedTx.cashier?.name || cashierName,
             docType: completedTx.doc_type || docType,
-            splitDetails: splitDetails
+            splitDetails: splitDetails,
+            // BIR compliance: use frozen snapshot from this transaction;
+            // fall back to empty object for legacy transactions with no snapshot.
+            businessInfo: completedTx.business_snapshot || {},
+            // Logo is always the current live logo — never frozen per spec.
+            logoUrl: logoUrl,
         });
     };
 
@@ -369,6 +392,28 @@ export default function CheckoutModal({
                         <svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' }}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                 </div>
+                
+                {error && (
+                    <div style={{ 
+                        margin: '12px 24px 0', 
+                        padding: '10px 14px', 
+                        background: '#FEF2F2', 
+                        border: '1px solid #FCA5A5', 
+                        borderRadius: '8px', 
+                        color: '#991B1B', 
+                        fontSize: '13px', 
+                        fontWeight: '600', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between' 
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            <span>{error}</span>
+                        </div>
+                        <button type="button" onClick={() => setError(null)} style={{ background: 'none', border: 'none', color: '#991B1B', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>✕</button>
+                    </div>
+                )}
                 
                 {/* Form Wrapper */}
                 <form onSubmit={e => { e.preventDefault(); handleCheckout(); }} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>

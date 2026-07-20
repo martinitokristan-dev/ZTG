@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import api from '../../../../shared/api';
 import { fetchReportsData } from '../../../../shared/hooks/useReportsCache';
 
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
@@ -13,6 +14,7 @@ export default function useReports() {
     const [refundVoidAnalysis, setRefundVoidAnalysis] = useState(null);
     const [customerLog, setCustomerLog] = useState([]);
     const [isReportGenerated, setIsReportGenerated] = useState(false);
+    const [employees, setEmployees] = useState([]);
 
     // Global Date Range State
     const today = new Date();
@@ -31,6 +33,13 @@ export default function useReports() {
             setRefundVoidAnalysis(cachedStats.refundVoidAnalysis);
             setCustomerLog(cachedStats.customerLog);
             setIsReportGenerated(cachedStats.isReportGenerated);
+
+            try {
+                const empRes = await api.get('/employees');
+                setEmployees(empRes.data || []);
+            } catch (e) {
+                // Ignore fallback
+            }
         } catch (err) {
             console.error("Error loading reports:", err);
         } finally {
@@ -50,6 +59,7 @@ export default function useReports() {
         customerLog,
         isReportGenerated,
         setIsReportGenerated,
+        employees,
         startDate, setStartDate,
         endDate, setEndDate,
         fmt,

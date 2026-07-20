@@ -15,6 +15,7 @@ use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\CheckerController;
+use App\Http\Controllers\SettingLogoController;
 use Illuminate\Support\Facades\Route;
 
 // Public authentication routes
@@ -44,6 +45,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:Admin')->group(function () {
         // General Settings update
         Route::put('/settings', [SettingController::class, 'update']);
+        // Business logo — Admin-only (different from per-user avatar scoping)
+        Route::post('/settings/logo', [SettingLogoController::class, 'upload']);
+        Route::delete('/settings/logo', [SettingLogoController::class, 'remove']);
 
         // Category mutations
         Route::post('/categories', [CategoryController::class, 'store']);

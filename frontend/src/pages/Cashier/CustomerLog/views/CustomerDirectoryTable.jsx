@@ -1,9 +1,8 @@
 import React from 'react';
+import LoadingSpinner from '../../../../shared/components/LoadingSpinner';
 
 export default function CustomerDirectoryTable({ loading, customers, fmtDate }) {
-    if (loading) {
-        return <div style={{ padding: '20px', textAlign: 'center', color: '#64748B' }}>Loading customer directory...</div>;
-    }
+    if (loading) return <LoadingSpinner text="Loading customer directory..." minHeight="200px" />;
 
     if (customers.length === 0) {
         return (

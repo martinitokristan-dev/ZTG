@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import LoadingSpinner from '../../../../shared/components/LoadingSpinner';
+import useDisplayChineseNames from '../../../../shared/hooks/useDisplayChineseNames';
 
 const DEFAULT_PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&q=80";
 
@@ -12,6 +14,7 @@ export default function ProductGrid({
     fmt
 }) {
     const [previewImage, setPreviewImage] = useState(null);
+    const showChineseNames = useDisplayChineseNames();
 
     // Build a map of parent product names so variant rows can display "ParentName (VariantOption)"
     const parentMap = React.useMemo(() => {
@@ -77,7 +80,7 @@ export default function ProductGrid({
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: '#64748B' }}>Loading products...</td></tr>
+                                <tr><td colSpan="7" style={{ padding: '20px' }}><LoadingSpinner text="Loading products..." minHeight="100px" /></td></tr>
                             ) : products.length === 0 ? (
                                 <tr><td colSpan="7" style={{ textAlign: 'center', padding: '40px 20px', color: '#64748B' }}>No products found.</td></tr>
                             ) : products.map(p => {
@@ -121,7 +124,7 @@ export default function ProductGrid({
                                                             </>
                                                         ) : p.name}
                                                     </div>
-                                                    {p.chinese_name && <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'normal', marginTop: '2px' }}>{p.chinese_name}</div>}
+                                                    {showChineseNames && p.chinese_name && <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'normal', marginTop: '2px' }}>{p.chinese_name}</div>}
                                                 </div>
                                             </div>
                                         </td>

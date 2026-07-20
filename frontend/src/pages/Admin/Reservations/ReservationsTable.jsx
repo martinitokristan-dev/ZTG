@@ -1,4 +1,5 @@
 import React from 'react';
+import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import StatusBadge from '../../../shared/components/StatusBadge';
 
 export default function ReservationsTable({
@@ -55,7 +56,7 @@ export default function ReservationsTable({
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="11" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>Loading reservations...</td></tr>
+                                <tr><td colSpan="11" style={{ padding: '32px' }}><LoadingSpinner text="Loading reservations..." minHeight="100px" /></td></tr>
                             ) : reservations.length === 0 ? (
                                 <tr><td colSpan="11" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>No reservations found.</td></tr>
                             ) : reservations.map(r => {

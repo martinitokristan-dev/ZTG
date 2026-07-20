@@ -1,4 +1,5 @@
 import React from 'react';
+import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 
 export default function RestockView({
     products,
@@ -70,7 +71,7 @@ export default function RestockView({
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="6" className="py-8 text-center text-xs font-semibold text-slate-400">Loading catalog items...</td></tr>
+                                <tr><td colSpan="6" style={{ padding: '32px' }}><LoadingSpinner text="Loading catalog items..." minHeight="100px" /></td></tr>
                             ) : products.length === 0 ? (
                                 <tr><td colSpan="6" className="py-8 text-center text-xs font-semibold text-slate-400">No products found.</td></tr>
                             ) : (

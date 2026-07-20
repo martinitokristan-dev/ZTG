@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import LoadingSpinner from '../../../shared/components/LoadingSpinner';
+import useDisplayChineseNames from '../../../shared/hooks/useDisplayChineseNames';
 
 export default function ProductsTable({
     products,
@@ -14,6 +16,7 @@ export default function ProductsTable({
     pagination,
 }) {
     const [openDropdownId, setOpenDropdownId] = useState(null);
+    const showChineseNames = useDisplayChineseNames();
 
     // Close dropdowns on click outside
     useEffect(() => {
@@ -97,12 +100,12 @@ export default function ProductsTable({
                                     <strong style={{ color: '#0F172A', fontSize: '13px', display: 'block' }}>
                                         {parentProduct?.name} <span style={{ color: '#3B82F6', fontWeight: '500' }}>({varLabel})</span>
                                     </strong>
-                                    {product.chinese_name && <span style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px', display: 'block' }}>{product.chinese_name}</span>}
+                                    {showChineseNames && product.chinese_name && <span style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px', display: 'block' }}>{product.chinese_name}</span>}
                                 </>
                             ) : (
                                 <>
                                     <strong style={{ color: '#0F172A', fontSize: '13px', display: 'block' }}>{product.name}</strong>
-                                    {product.chinese_name && <span style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px', display: 'block' }}>{product.chinese_name}</span>}
+                                    {showChineseNames && product.chinese_name && <span style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px', display: 'block' }}>{product.chinese_name}</span>}
                                 </>
                             )}
                         </div>
@@ -311,7 +314,7 @@ export default function ProductsTable({
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="9" className="py-8 text-center text-xs font-semibold text-slate-400">Loading catalog items...</td></tr>
+                                <tr><td colSpan="9" style={{ padding: '32px' }}><LoadingSpinner text="Loading catalog items..." minHeight="100px" /></td></tr>
                             ) : products.length === 0 ? (
                                 <tr><td colSpan="9" className="py-8 text-center text-xs font-semibold text-slate-400">No products found matching criteria.</td></tr>
                             ) : (

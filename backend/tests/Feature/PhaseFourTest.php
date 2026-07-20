@@ -291,7 +291,7 @@ class PhaseFourTest extends TestCase
     public function test_checkout_recalculates_product_status_after_deduction()
     {
         // productB has stock:15, alert_limit:3
-        // After buying 12 units, stock = 3 → Low Stock
+        // After buying 12 units, stock = 3 -> Low Stock
         $response = $this->actingAs($this->cashier)
             ->postJson('/api/pos/checkout', [
                 'cart' => [
@@ -306,6 +306,89 @@ class PhaseFourTest extends TestCase
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('products', ['id' => $this->productB->id, 'stock' => 3, 'status' => 'Low Stock']);
+    }
+
+    public function test_checkout_triggers_low_stock_notification_when_stock_reaches_alert_limit()
+    {
+        // Setup product with 10 stock and 5 alert limit
+        $product = Product::create([
+            'category_id' => $this->category->id,
+            'name'        => 'Clearance Part',
+            'part_no'     => 'CLR-1055',
+            'stock'       => 10,
+            'alert_limit' => 5,
+            'price1'      => 100.00,
+            'status'      => 'Active',
+        ]);
+
+        // Checkout 5 units -> stock becomes 5 (<= alert_limit 5)
+        $response = $this->actingAs($this->cashier)
+            ->postJson('/api/pos/checkout', [
+                'cart' => [
+                    ['product_id' => $product->id, 'qty' => 5, 'price_tier' => 'price1'],
+                ],
+                'customer_name'   => 'Clearance Buyer',
+                'payment_method'  => 'Cash',
+                'doc_type'        => 'S.I.',
+                'amount_tendered' => 500.00,
+                'checker_id'      => $this->checker->id,
+            ]);
+
+        $response->assertStatus(201);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 5, 'status' => 'Low Stock']);
+        $this->assertDatabaseHas('notifications', [
+            'type'       => \App\Enums\NotificationType::LOW_STOCK->value,
+            'product_id' => $product->id,
+            'is_read'    => false,
+        ]);
+    }
+
+    public function test_low_stock_notification_formats_variant_display_name_and_removes_colon()
+    {
+        $parent = Product::create([
+            'category_id' => $this->category->id,
+            'name'        => 'clearance light',
+            'part_no'     => '0001',
+            'stock'       => 0,
+            'alert_limit' => 5,
+            'price1'      => 160.00,
+            'status'      => 'Active',
+        ]);
+
+        $typeSize = \App\Models\VariantType::firstOrCreate(['name' => 'Size']);
+        $typeColor = \App\Models\VariantType::firstOrCreate(['name' => 'Color']);
+
+        $option1 = \App\Models\VariantOption::firstOrCreate([
+            'variant_type_id' => $typeSize->id,
+            'value'           => 'Small',
+        ]);
+
+        $option2 = \App\Models\VariantOption::firstOrCreate([
+            'variant_type_id' => $typeColor->id,
+            'value'           => 'Yellow',
+        ]);
+
+        $variant = Product::create([
+            'parent_product_id' => $parent->id,
+            'category_id'       => $this->category->id,
+            'name'              => 'clearance light',
+            'part_no'           => '0002',
+            'stock'             => 10,
+            'alert_limit'       => 5,
+            'price1'            => 160.00,
+            'status'            => 'Active',
+        ]);
+
+        $variant->variantOptions()->attach([$option1->id, $option2->id]);
+
+        // Trigger stock alert via update to 5
+        $variant->update(['stock' => 5]);
+
+        $this->assertDatabaseHas('notifications', [
+            'type'       => \App\Enums\NotificationType::LOW_STOCK->value,
+            'product_id' => $variant->id,
+            'message'    => "Product 'clearance light (Small, Yellow)' is running low on stock. Current quantity 5.",
+        ]);
     }
 
 }

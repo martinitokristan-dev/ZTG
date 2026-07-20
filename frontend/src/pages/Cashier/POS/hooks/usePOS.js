@@ -90,23 +90,32 @@ export default function usePOS() {
         return ['All', ...Array.from(cats)];
     }, [flatProducts]);
 
+    // Error Banner State
+    const [posError, setPosError] = useState(null);
+
+    const triggerError = (msg) => {
+        setPosError(msg);
+        setTimeout(() => {
+            setPosError(null);
+        }, 4000);
+    };
+
     // Cart Actions
     const addToCart = (product, priceTier = 'price1') => {
         if (product.stock <= 0) {
-            alert("This item is out of stock!");
+            triggerError(`This item ('${product.name}') is out of stock!`);
             return;
         }
 
         setCart(prev => {
             const existing = prev.find(item => item.id == product.id && (item.priceTier || 'price1') === priceTier);
             if (existing) {
-                // Sum total quantities in cart for this product to prevent exceeding stock
                 const totalQtyInCart = prev
                     .filter(item => item.id == product.id)
                     .reduce((sum, item) => sum + item.qty, 0);
 
                 if (totalQtyInCart >= product.stock) {
-                    alert("Cannot exceed available stock.");
+                    triggerError(`Cannot exceed available stock (${product.stock} available).`);
                     return prev;
                 }
                 return prev.map(item => (item.id == product.id && (item.priceTier || 'price1') === priceTier) ? { ...item, qty: item.qty + 1 } : item);
@@ -120,21 +129,49 @@ export default function usePOS() {
         setCart(prev => prev.map(item => {
             if (item.id == productId && (item.priceTier || 'price1') === priceTier) {
                 const newQty = item.qty + delta;
-                if (newQty <= 0) return null; // Will filter out below
+                if (newQty <= 0) return null;
 
-                // Sum total quantities in cart for this product to prevent exceeding stock
                 const totalQtyInCart = prev
                     .filter(i => i.id == productId && (i.priceTier || 'price1') !== priceTier)
                     .reduce((sum, i) => sum + i.qty, 0) + newQty;
 
                 if (totalQtyInCart > item.stock) {
-                    alert("Cannot exceed available stock.");
+                    triggerError(`Cannot exceed available stock (${item.stock} available).`);
                     return item;
                 }
                 return { ...item, qty: newQty };
             }
             return item;
         }).filter(Boolean));
+    };
+
+    const setCartItemQty = (productId, priceTier, targetQty) => {
+        const parsed = parseInt(targetQty, 10);
+        if (isNaN(parsed) || parsed <= 0) {
+            setCart(prev => prev.map(item => {
+                if (item.id == productId && (item.priceTier || 'price1') === priceTier) {
+                    return { ...item, qty: 1 };
+                }
+                return item;
+            }));
+            return;
+        }
+
+        setCart(prev => prev.map(item => {
+            if (item.id == productId && (item.priceTier || 'price1') === priceTier) {
+                const otherItemsQty = prev
+                    .filter(i => i.id == productId && (i.priceTier || 'price1') !== priceTier)
+                    .reduce((sum, i) => sum + i.qty, 0);
+
+                if (otherItemsQty + parsed > item.stock) {
+                    triggerError(`Cannot exceed available stock (${item.stock} available).`);
+                    const maxAllowed = Math.max(1, item.stock - otherItemsQty);
+                    return { ...item, qty: maxAllowed };
+                }
+                return { ...item, qty: parsed };
+            }
+            return item;
+        }));
     };
 
     const removeFromCart = (productId, priceTier) => {
@@ -149,18 +186,16 @@ export default function usePOS() {
             const next = [...prev];
             const item = next[index];
 
-            // Check if there is already an item with the same id and the new price tier
             const matchIndex = next.findIndex((c, i) => i !== index && c.id == productId && (c.priceTier || 'price1') === newTier);
 
             if (matchIndex !== -1) {
-                // Merge quantity
                 const targetItem = next[matchIndex];
                 const totalQtyInCart = next
                     .filter(i => i.id == productId && (i.priceTier || 'price1') !== newTier && (i.priceTier || 'price1') !== oldTier)
                     .reduce((sum, i) => sum + i.qty, 0) + targetItem.qty + item.qty;
 
                 if (totalQtyInCart > item.stock) {
-                    alert("Merging would exceed available stock.");
+                    triggerError(`Merging would exceed available stock (${item.stock} available).`);
                     return prev;
                 }
                 
@@ -260,8 +295,9 @@ export default function usePOS() {
         categoryFilter, setCategoryFilter,
         
         cart,
-        addToCart, updateCartQty, removeFromCart, updateCartItemPriceTier, clearCart,
+        addToCart, updateCartQty, setCartItemQty, removeFromCart, updateCartItemPriceTier, clearCart,
         cartTotals,
+        posError, setPosError,
         
         existingCustomerSearch, setExistingCustomerSearch,
         selectedCustomer, setSelectedCustomer,

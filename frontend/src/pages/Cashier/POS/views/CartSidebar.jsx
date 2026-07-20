@@ -3,10 +3,13 @@ import React, { useState, useMemo } from 'react';
 export default function CartSidebar({ 
     cart, 
     updateCartQty, 
+    setCartItemQty,
     removeFromCart, 
     updateCartItemPriceTier,
     clearCart, 
     cartTotals, 
+    posError,
+    setPosError,
     
     existingCustomerSearch, setExistingCustomerSearch,
     newCustomerName, setNewCustomerName,
@@ -51,6 +54,28 @@ export default function CartSidebar({
                         Clear All
                     </button>
                 </div>
+
+                {posError && (
+                    <div style={{ 
+                        padding: '10px 14px', 
+                        background: '#FEF2F2', 
+                        border: '1px solid #FCA5A5', 
+                        borderRadius: '8px', 
+                        color: '#991B1B', 
+                        fontSize: '12px', 
+                        fontWeight: '600', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between',
+                        marginBottom: '12px'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            <span>{posError}</span>
+                        </div>
+                        <button onClick={() => setPosError && setPosError(null)} style={{ background: 'none', border: 'none', color: '#991B1B', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>✕</button>
+                    </div>
+                )}
 
                 {/* Customer Fields at Top */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
@@ -198,7 +223,25 @@ export default function CartSidebar({
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <div className="qty-input-group" style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: '6px', overflow: 'hidden', background: '#FFFFFF' }}>
                                             <button className="qty-adjust-btn" onClick={() => updateCartQty(item.id, item.priceTier, -1)} style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', border: 'none', borderRight: '1px solid var(--border)', cursor: 'pointer', fontWeight: 'bold' }}>-</button>
-                                            <input type="text" readOnly value={item.qty} style={{ width: '32px', height: '24px', border: 'none', textAlign: 'center', fontSize: '12px', fontWeight: '600', outline: 'none' }} />
+                                            <input 
+                                                type="number" 
+                                                min="1"
+                                                max={item.stock}
+                                                value={item.qty} 
+                                                onChange={(e) => setCartItemQty && setCartItemQty(item.id, item.priceTier, e.target.value)}
+                                                onFocus={(e) => e.target.select()}
+                                                style={{ 
+                                                    width: '44px', 
+                                                    height: '24px', 
+                                                    border: 'none', 
+                                                    textAlign: 'center', 
+                                                    fontSize: '12px', 
+                                                    fontWeight: '600', 
+                                                    outline: 'none',
+                                                    padding: '0 2px',
+                                                    MozAppearance: 'textfield'
+                                                }} 
+                                             />
                                             <button className="qty-adjust-btn" onClick={() => updateCartQty(item.id, item.priceTier, 1)} style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', border: 'none', borderLeft: '1px solid var(--border)', cursor: 'pointer', fontWeight: 'bold' }}>+</button>
                                         </div>
                                         <button 

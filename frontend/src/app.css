@@ -275,6 +275,17 @@ h1 {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+/* Modern read-only / view-mode style — subtle, not heavy gray */
+.form-control:disabled,
+.form-control[disabled] {
+  background-color: var(--bg-secondary, #F8FAFC);
+  color: var(--text-primary);
+  border-color: transparent;
+  opacity: 1;
+  cursor: default;
+  box-shadow: none;
+}
+
 .form-control-sm {
   padding: 8px 12px;
   font-size: 13px;

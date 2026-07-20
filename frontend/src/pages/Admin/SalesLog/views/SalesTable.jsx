@@ -1,10 +1,9 @@
 import React from 'react';
+import LoadingSpinner from '../../../../shared/components/LoadingSpinner';
 import StatusBadge from '../../../../shared/components/StatusBadge';
 
 export default function SalesTable({ loading, items, fmt, fmtDate }) {
-    if (loading) {
-        return <div style={{ padding: '20px', textAlign: 'center', color: '#64748B' }}>Loading sales data...</div>;
-    }
+    if (loading) return <LoadingSpinner text="Loading sales data..." minHeight="200px" />;
 
     if (items.length === 0) {
         return (

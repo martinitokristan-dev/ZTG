@@ -13,4 +13,37 @@ class Setting extends Model
         'key',
         'value',
     ];
+
+    /**
+     * Build a business_snapshot array from the current settings table.
+     *
+     * Called at the moment a transaction is created to permanently freeze
+     * the business identity details in force on that date.
+     *
+     * Logo is intentionally excluded — it always renders live at print time.
+     */
+    public static function getBusinessSnapshot(): array
+    {
+        $keys = [
+            'business_name',
+            'branch_location',
+            'address',
+            'contact_number',
+            'email_address',
+            'tax_rate',
+            'tin',
+        ];
+
+        $rows = self::whereIn('key', $keys)->pluck('value', 'key');
+
+        return [
+            'business_name'   => $rows->get('business_name', ''),
+            'branch_location' => $rows->get('branch_location', ''),
+            'address'         => $rows->get('address', ''),
+            'contact_number'  => $rows->get('contact_number', ''),
+            'email_address'   => $rows->get('email_address', ''),
+            'tax_rate'        => $rows->get('tax_rate', '12'),
+            'tin'             => $rows->get('tin', ''),
+        ];
+    }
 }

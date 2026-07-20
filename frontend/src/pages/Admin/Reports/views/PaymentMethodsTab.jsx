@@ -1,8 +1,92 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 
-export default function PaymentMethodsTab({ salesSummary, fmt, startDate, setStartDate, endDate, setEndDate }) {
-    const methods = salesSummary?.revenue_by_payment || [];
-    const totalRev = salesSummary?.total_revenue || 0;
+export default function PaymentMethodsTab({ salesSummary, employees = [], fmt, startDate, setStartDate, endDate, setEndDate }) {
+    const [selectedCashier, setSelectedCashier] = useState('All');
+
+    // Extract unique Cashiers (users with Cashier role, excluding Admin role)
+    const cashierOptions = useMemo(() => {
+        const set = new Set();
+        if (employees && employees.length > 0) {
+            employees.forEach(emp => {
+                const role = (emp.role || '').toLowerCase();
+                if (role === 'cashier') {
+                    const name = emp.real_name || emp.name;
+                    if (name) set.add(name.trim());
+                }
+            });
+        }
+        if (salesSummary?.transactions) {
+            salesSummary.transactions.forEach(tx => {
+                if (tx.cashier) {
+                    const role = (tx.cashier.role || '').toLowerCase();
+                    if (role === 'cashier') {
+                        const name = tx.cashier.real_name || tx.cashier.name;
+                        if (name) set.add(name.trim());
+                    }
+                }
+            });
+        }
+        return Array.from(set);
+    }, [employees, salesSummary]);
+
+    // Filter transactions by selected Cashier
+    const filteredTransactions = useMemo(() => {
+        if (!salesSummary?.transactions) return [];
+        return salesSummary.transactions.filter(tx => {
+            if (selectedCashier !== 'All') {
+                const cashierName = tx.checker?.name || tx.cashier?.name || '';
+                if (cashierName !== selectedCashier) return false;
+            }
+            return true;
+        });
+    }, [salesSummary, selectedCashier]);
+
+    // Compute payment methods breakdown dynamically based on cashier filter
+    const { methods, totalRev } = useMemo(() => {
+        if (selectedCashier === 'All') {
+            return {
+                methods: salesSummary?.revenue_by_payment || [],
+                totalRev: salesSummary?.total_revenue || 0,
+            };
+        }
+
+        const pmMap = new Map();
+        let total = 0;
+
+        filteredTransactions.forEach(tx => {
+            if (tx.status === 'Completed' || tx.status === 'Pending') {
+                const pm = tx.payment_method ? (tx.payment_method.startsWith('Split') ? 'Split' : tx.payment_method) : 'Other';
+                const current = pmMap.get(pm) || { name: pm, amount: 0, count: 0 };
+                current.amount += Number(tx.amount || 0);
+                current.count += 1;
+                pmMap.set(pm, current);
+                total += Number(tx.amount || 0);
+            }
+        });
+
+        const sortedMethods = Array.from(pmMap.values()).sort((a, b) => b.amount - a.amount);
+        return { methods: sortedMethods, totalRev: total };
+    }, [salesSummary, selectedCashier, filteredTransactions]);
+
+    const handleExportCSV = () => {
+        if (methods.length === 0) return;
+        const headers = ["Payment Method", "Transactions", "Total Amount", "% of Total Sales"];
+        const rows = [headers.join(",")];
+
+        methods.forEach(m => {
+            const percentage = totalRev > 0 ? ((m.amount / totalRev) * 100).toFixed(1) : 0;
+            rows.push([`"${m.name}"`, m.count, m.amount, `"${percentage}%"`].join(","));
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8," + rows.join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Payment_Methods_Report_${startDate}_to_${endDate}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     return (
         <div>
@@ -15,11 +99,24 @@ export default function PaymentMethodsTab({ salesSummary, fmt, startDate, setSta
                         <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} value={endDate} onChange={e => setEndDate(e.target.value)} />
                     </div>
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '12px' }}>Cashier:</span>
-                    <select className="form-control form-control-sm" style={{ width: '160px' }}>
+                    <select 
+                        className="form-control form-control-sm" 
+                        style={{ width: '160px' }}
+                        value={selectedCashier}
+                        onChange={e => setSelectedCashier(e.target.value)}
+                    >
                         <option value="All">All Cashiers</option>
+                        {cashierOptions.map(name => (
+                            <option key={name} value={name}>{name}</option>
+                        ))}
                     </select>
                 </div>
-                <button className="btn btn-success" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
+                <button 
+                    className="btn btn-success" 
+                    onClick={handleExportCSV}
+                    disabled={methods.length === 0}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}
+                >
                     <svg viewBox="0 0 24 24" style={{ width: '15px', height: '15px', fill: 'none', stroke: '#fff', strokeWidth: '2.5' }}><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     Export CSV
                 </button>

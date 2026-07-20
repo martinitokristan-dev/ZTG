@@ -1,12 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import LoadingSpinner from '../../../../shared/components/LoadingSpinner';
 import { printUnifiedReceipt } from '../../../../utils/printReceipt';
 import StatusBadge from '../../../../shared/components/StatusBadge';
+import api from '../../../../shared/api';
 
 export default function HistoryTable({ 
     loading, transactions, fmt, fmtDate, 
     handleOpenRefund, handleOpenVoid, handleOpenView, handleOpenPay 
 }) {
     const [openDropdownId, setOpenDropdownId] = useState(null);
+    // Live logo URL — always current, never frozen per BIR spec
+    const [logoUrl, setLogoUrl] = useState(null);
+
+    useEffect(() => {
+        api.get('/settings')
+            .then(res => {
+                const settingsArr = Array.isArray(res.data) ? res.data : (res.data?.settings || []);
+                const logoSetting = settingsArr.find?.(s => s.key === 'business_logo');
+                if (logoSetting?.value) setLogoUrl(logoSetting.value);
+                else if (res.data?.business_logo) setLogoUrl(res.data.business_logo);
+            })
+            .catch(() => { /* logo silently absent */ });
+    }, []);
 
     const toggleDropdown = (id, e) => {
         e.stopPropagation();
@@ -46,14 +61,16 @@ export default function HistoryTable({
             splitDetails: splitDetails,
             reason: tx.notes || '',
             originalInvoice: tx.original_receipt_number || '',
-            approver: tx.voided_by || tx.refunded_by || ''
+            approver: tx.voided_by || tx.refunded_by || '',
+            // BIR compliance: use frozen snapshot; null for legacy (falls back to empty object)
+            businessInfo: tx.business_snapshot || {},
+            // Logo is always the current live logo — never frozen per spec
+            logoUrl: logoUrl,
         });
         setOpenDropdownId(null);
     };
 
-    if (loading) {
-        return <div style={{ padding: '20px', textAlign: 'center', color: '#64748B' }}>Loading history...</div>;
-    }
+    if (loading) return <LoadingSpinner text="Loading history..." minHeight="200px" />;
 
     if (transactions.length === 0) {
         return (

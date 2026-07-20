@@ -36,15 +36,17 @@ class Transaction extends Model
         'approval_code',
         'order_ref',
         'internal_notes',
+        'business_snapshot',
     ];
 
     protected function casts(): array
     {
         return [
-            'doc_type' => DocType::class,
-            'status' => TransactionStatus::class,
-            'type' => TransactionType::class,
-            'date' => 'datetime',
+            'doc_type'          => DocType::class,
+            'status'            => TransactionStatus::class,
+            'type'              => TransactionType::class,
+            'date'              => 'datetime',
+            'business_snapshot' => 'array',   // Write-once JSON; never modify after creation
         ];
     }
 

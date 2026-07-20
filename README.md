@@ -106,3 +106,38 @@ After migrating and seeding the database, you can log into the system using the 
 * **UI/UX Source of Truth:** All design implementations strictly follow the visual reference files stored in the `ZTG-main` directory.
 * **Layouts:** The frontend utilizes explicit CSS calculations (`calc(100vh / 0.9)`) on outer wrappers to perfectly fit the viewport and compensate for the `zoom: 0.9` body scaling. 
 * **Routing:** Protected routes use role-based access control (Admin, Cashier, Supervisor, Checker).
+
+---
+
+## 🧾 Business Details & Receipt Compliance (Business Owner's Guide)
+
+This guide explains how your business information and printed receipts work in simple terms.
+
+### 1. Automatic Receipt Snapshot
+Whenever a sale is completed, the system takes an invisible "snapshot" of your current business details—your business name, address, phone number, email, BIR TIN number, and tax rate. This information is permanently attached to that specific transaction. Cashiers and administrators do not need to press anything extra; it happens automatically behind the scenes.
+
+### 2. How Reservations Work
+For customer reservations, two separate snapshots are taken:
+- **First Snapshot:** Captured when the customer pays their initial deposit.
+- **Second Snapshot:** Captured later when the customer pays the remaining balance and picks up their order.
+
+Because deposit and pickup can happen weeks or months apart, each receipt keeps the exact business information that was active on the day that specific transaction took place.
+
+### 3. Updating Business Details & Confirmation Security
+Changing your business name, address, phone number, TIN, or tax rate in **General Settings** affects official customer documents. To prevent accidental changes:
+- Updating any business detail requires typing the word **CONFIRM** before the system will save the changes.
+- Everyday settings—like changing inventory alert limits—save instantly with a single click and do not require typing a confirmation word.
+
+### 4. What Happens to Old Receipts When Business Details Change?
+Updating your business details in settings **only applies to new sales going forward**. Old receipts from past months or years never change retroactively. Even if your store changes its location or business name multiple times over the next decade, reprinting an old receipt will always show the exact business name, address, and TIN that were active on the original date of sale.
+
+### 5. Company Logo Behavior
+The company logo works differently from text details:
+- **Text Details (Address, Name, TIN):** Always stay locked to the original date of sale.
+- **Company Logo:** Always displays your newest, currently active logo across all receipts, past and present. If you upload a new logo today, reprinting a receipt from last year will display your modern logo alongside the original historical address.
+
+### 6. Real-World Example
+1. **Today:** You process a sale while located at *123 Main Street*. The printed receipt displays *123 Main Street*.
+2. **Next Year:** Your business moves to *456 Industrial Parkway*. You update the address in General Settings and type **CONFIRM** to save. You also upload a fresh new company logo.
+3. **Reprinting the Old Sale:** A customer asks to reprint their receipt from last year. The reprinted receipt will still show the original address (*123 Main Street*) to maintain accurate historical records. However, it will display your newly uploaded company logo at the top.
+

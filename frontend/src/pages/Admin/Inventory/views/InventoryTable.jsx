@@ -1,6 +1,9 @@
 import React from 'react';
+import LoadingSpinner from '../../../../shared/components/LoadingSpinner';
+import useDisplayChineseNames from '../../../../shared/hooks/useDisplayChineseNames';
 
 export default function InventoryTable({ products, loading, handleViewProduct, pagination }) {
+    const showChineseNames = useDisplayChineseNames();
     const renderRow = (item, isVariant, baseIndex, parentProduct) => {
         const alertLevel = item.alert_limit || 5;
         const isOutOfStock = item.stock === 0;
@@ -54,12 +57,12 @@ export default function InventoryTable({ products, loading, handleViewProduct, p
                             <strong style={{ display: 'block' }}>
                                 {parentProduct.name} <span style={{ color: 'var(--primary)', fontWeight: 500 }}>({variantOptionText})</span>
                             </strong>
-                            <span className="chinese-subtitle">{item.chinese_name || ''}</span>
+                            {showChineseNames && <span className="chinese-subtitle">{item.chinese_name || ''}</span>}
                         </>
                     ) : (
                         <>
                             <strong style={{ display: 'block' }}>{item.name}</strong>
-                            <span className="chinese-subtitle">{item.chinese_name || ''}</span>
+                            {showChineseNames && <span className="chinese-subtitle">{item.chinese_name || ''}</span>}
                         </>
                     )}
                 </td>
@@ -129,8 +132,8 @@ export default function InventoryTable({ products, loading, handleViewProduct, p
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan="11" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '32px' }}>
-                                    Loading product inventory dataset...
+                                <td colSpan="11" style={{ padding: '32px' }}>
+                                    <LoadingSpinner text="Loading product inventory dataset..." minHeight="100px" />
                                 </td>
                             </tr>
                         ) : products.length === 0 ? (

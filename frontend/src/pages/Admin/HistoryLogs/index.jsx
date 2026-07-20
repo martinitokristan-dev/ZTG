@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import useHistoryLogs from './hooks/useHistoryLogs';
 import HistoryTable from './views/HistoryTable';
 import RefundModal from './modals/RefundModal';
@@ -121,9 +122,7 @@ export default function HistoryLogs() {
                     </div>
 
                     {hl.loading && hl.transactions.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                            Loading history logs...
-                        </div>
+                        <LoadingSpinner text="Loading history logs..." minHeight="400px" />
                     ) : hl.transactions.length > 0 ? (
                         <>
                             <HistoryTable 

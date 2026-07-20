@@ -16,6 +16,7 @@ use App\Events\InventoryUpdated;
 use App\Events\TransactionCreated;
 use App\Events\TransactionUpdated;
 use App\Events\ReservationUpdated;
+use App\Models\Setting;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -146,6 +147,7 @@ class ReservationService
                 'type' => TransactionType::RESERVATION->value,
                 'order_ref' => $orderNo,
                 'internal_notes' => "Reservation deposit for order {$orderNo}",
+                'business_snapshot' => Setting::getBusinessSnapshot(), // Frozen at deposit time
             ]);
 
             return $reservation->load(['customer', 'reservedBy', 'items.product']);
@@ -250,21 +252,22 @@ class ReservationService
             $balanceAmount = max(0, $reservation->total - $reservation->deposit);
             $paymentMethod = $balanceAmount > 0 ? $data['payment_method'] : 'Pre-paid';
 
-            // 5. Create fulfillment transaction
+            // 5. Create fulfillment transaction with frozen business snapshot at fulfillment time
             $transaction = Transaction::create([
-                'si_no' => $siNo,
-                'date' => now(),
-                'customer_id' => $reservation->customer_id,
-                'cashier_id' => $fulfilledById,
-                'total_qty' => $reservation->items->sum('qty'),
-                'amount' => $reservation->total,
-                'amount_tendered' => $data['balance_payment'],
-                'payment_method' => $paymentMethod,
-                'doc_type' => $data['doc_type'],
-                'status' => TransactionStatus::COMPLETED->value,
-                'type' => TransactionType::RESERVATION->value,
-                'order_ref' => $reservation->order_no,
-                'internal_notes' => "Fulfillment of reservation {$reservation->order_no}",
+                'si_no'             => $siNo,
+                'date'              => now(),
+                'customer_id'       => $reservation->customer_id,
+                'cashier_id'        => $fulfilledById,
+                'total_qty'         => $reservation->items->sum('qty'),
+                'amount'            => $reservation->total,
+                'amount_tendered'   => $data['balance_payment'],
+                'payment_method'    => $paymentMethod,
+                'doc_type'          => $data['doc_type'],
+                'status'            => TransactionStatus::COMPLETED->value,
+                'type'              => TransactionType::RESERVATION->value,
+                'order_ref'         => $reservation->order_no,
+                'internal_notes'    => "Fulfillment of reservation {$reservation->order_no}",
+                'business_snapshot' => Setting::getBusinessSnapshot(), // Frozen at fulfillment time
             ]);
 
             // 6. Create transaction items

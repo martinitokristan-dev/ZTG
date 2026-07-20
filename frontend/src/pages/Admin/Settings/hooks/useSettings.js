@@ -1,29 +1,34 @@
-import { showToast } from '../../../../utils/toast';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../../../../shared/api';
-import { useProducts } from '../../../../contexts/ProductContext';
 import { fetchSettingData, resetSettingsCache } from '../../../../shared/hooks/useSettingsCache';
-import { resetDashboardCache } from '../../../../shared/hooks/useDashboardCache';
+import { useProducts } from '../../../../contexts/ProductContext';
+import { useNotifications } from '../../../../contexts/NotificationContext';
+import { showToast } from '../../../../utils/toast';
 
 export default function useSettings() {
-    const [loading, setLoading] = useState(false);
-    
+    const { count: notificationsCount } = useNotifications();
 
     // Primary Active Tab: 'profile', 'general', 'products', 'alerts', 'employees'
     const [activeTab, setActiveTab] = useState(() => localStorage.getItem('settingsActiveTab') || 'profile');
 
+    // Tab edit mode state: null | 'profile' | 'general'
+    const [editingTab, setEditingTab] = useState(null);
+
     useEffect(() => {
         localStorage.setItem('settingsActiveTab', activeTab);
+        setEditingTab(null);
     }, [activeTab]);
 
     // Products Settings Nested Sub-tab: 'info', 'categories', 'sizes', 'quality', 'colors', 'pricing', 'warehouse'
     const [activeSubTab, setActiveSubTab] = useState('info');
 
-    // Alerts Settings Nested Sub-tab: 'inventory', 'transaction', 'reservation', 'email', 'rules'
+    // Alerts Rules Nested Sub-tab: 'inventory', 'transaction', 'reservation', 'email', 'rules'
     const [activeAlertsSubTab, setActiveAlertsSubTab] = useState('inventory');
 
+    const [loading, setLoading] = useState(true);
+
     // ------------------------------------------------------------------------
-    // TAB 1: MY PROFILE STATE
+    // TAB 1: PROFILE DATA STATE
     // ------------------------------------------------------------------------
     const [profileData, setProfileData] = useState({
         name: '',
@@ -31,48 +36,54 @@ export default function useSettings() {
         email: '',
         username: '',
         pin: '',
-        role: 'Administrator',
+        role: '',
         profile_photo: null
     });
-    const [avatarUploading, setAvatarUploading] = useState(false);
-    const [confirmingRemove, setConfirmingRemove] = useState(false);
     const [initialProfileData, setInitialProfileData] = useState({});
-    const [passwordData, setPasswordData] = useState({
-        current_password: '',
-        password: '',
-        password_confirmation: ''
-    });
+
+    // Profile Modals & Photo Actions
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [showPIN, setShowPIN] = useState(false);
+    const [passwordData, setPasswordData] = useState({ current_password: '', password: '', password_confirmation: '' });
+    const [avatarUploading, setAvatarUploading] = useState(false);
+    const [confirmingRemove, setConfirmingRemove] = useState(false);
+
+    // Check if profile tab has unsaved changes
+    const isProfileDirty = useMemo(() => {
+        return JSON.stringify(profileData) !== JSON.stringify(initialProfileData);
+    }, [profileData, initialProfileData]);
 
     // ------------------------------------------------------------------------
-    // TAB 2: GENERAL SETTINGS STATE & BULK SETTINGS
+    // TAB 2: GENERAL SYSTEM SETTINGS DATA STATE
     // ------------------------------------------------------------------------
     const [settings, setSettings] = useState({
-        business_name: 'ZTG Heavy Parts',
+        // Business details (TIN & Full Address)
+        business_name: 'ZTG HEAVY PARTS',
         branch_location: 'Butuan City',
-        contact_number: '09XX-XXX-XXXX',
+        address: '123 Industrial Ave., Brgy. San Jose, Butuan City',
+        contact_number: '0917-000-1111',
         email_address: 'info@ztgheavyparts.com',
+        tin: '000-123-456-000',
         tax_rate: '12',
         currency: 'PHP',
-        low_stock_threshold: '5',
-        dead_stock_period: '90',
+        // Inventory Configuration
+        dead_stock_period: '30',
         auto_deduct_stock: 'true',
         track_damaged_separately: 'true',
-        track_damaged: 'true', // Synced
+        track_damaged: 'true',
         // Product Info toggles
         display_chinese_names: 'true',
         enable_product_variants: 'true',
-        enable_variants: 'true', // Synced
+        enable_variants: 'true',
         enable_dual_pricing: 'true',
         track_warehouse_locations: 'true',
-        track_locations: 'true', // Synced
+        track_locations: 'true',
         // Pricing Configuration
         price1_label: 'Original Price',
         price2_label: 'Retail Price',
         auto_calc_price2: 'true',
         price2_markup_percent: '10',
-        price2_markup: '10', // Synced
+        price2_markup: '10',
         // Warehouse & Display
         location_format: 'Aisle-Center-Hang (A-12-3)',
         number_of_aisles: '15',
@@ -107,6 +118,15 @@ export default function useSettings() {
     });
     const [initialSettings, setInitialSettings] = useState({});
 
+    // Business logo — loaded from settings, admin-only upload/remove
+    const [logoUrl, setLogoUrl] = useState(null);
+    const [logoUploading, setLogoUploading] = useState(false);
+
+    // Check if general settings tab has unsaved changes
+    const isSettingsDirty = useMemo(() => {
+        return JSON.stringify(settings) !== JSON.stringify(initialSettings);
+    }, [settings, initialSettings]);
+
     // ------------------------------------------------------------------------
     // TAB 3: PRODUCTS SETTINGS DATA (Categories & Variants)
     // ------------------------------------------------------------------------
@@ -130,42 +150,47 @@ export default function useSettings() {
         name: '',
         event_type: 'low_stock',
         threshold: 5,
+        recipient_email: 'admin@heavypartspro.com',
         is_active: true
     });
 
     // ------------------------------------------------------------------------
     // TAB 5: EMPLOYEES STATE
     // ------------------------------------------------------------------------
-    const [employeeRoles, setEmployeeRoles] = useState([]);
     const [employees, setEmployees] = useState([]);
     const [showEmployeeModal, setShowEmployeeModal] = useState(false);
+    const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [employeeForm, setEmployeeForm] = useState({
         name: '',
-        real_name: '',
         email: '',
         username: '',
-        password: '',
+        role: 'Cashier',
         pin: '',
-        employee_id: '', role: 'Cashier', status: 'Active' });
-    const [selectedEmployee, setSelectedEmployee] = useState(null);
+        status: 'Active'
+    });
 
     // ------------------------------------------------------------------------
     // TAB 6: CHECKERS STATE
     // ------------------------------------------------------------------------
     const [checkers, setCheckers] = useState([]);
     const [showCheckerModal, setShowCheckerModal] = useState(false);
-    const [checkerForm, setCheckerForm] = useState({ name: '', status: 'Active' });
     const [selectedChecker, setSelectedChecker] = useState(null);
+    const [checkerForm, setCheckerForm] = useState({
+        checker_name: '',
+        contact_number: '',
+        assignment_area: 'Warehouse'
+    });
 
-    // Load initial context
+    // ------------------------------------------------------------------------
+    // INITIAL LOAD & CACHING HELPERS
+    // ------------------------------------------------------------------------
     const loadSettingsData = async () => {
+        setLoading(true);
         try {
-            setLoading(true);
-            
             // Load user profile
-            const userData = await fetchSettingData('user', '/user');
-            if (userData) {
-                const u = userData.user || userData;
+            const profileDataResponse = await fetchSettingData('user', '/user');
+            if (profileDataResponse?.user) {
+                const u = profileDataResponse.user;
                 const loadedProfile = {
                     name: u.username || '',
                     real_name: u.real_name || '',
@@ -182,8 +207,10 @@ export default function useSettings() {
             // Load bulk system settings
             const settingsData = await fetchSettingData('settings', '/settings');
             if (settingsData) {
+                const logo = settingsData.business_logo || settingsData.logo_url || null;
+                setLogoUrl(logo);
                 setSettings(prev => {
-                    const next = { ...prev, ...settingsData };
+                    const next = { ...prev, ...settingsData, business_logo: logo };
                     setInitialSettings(next);
                     return next;
                 });
@@ -251,61 +278,92 @@ export default function useSettings() {
     }, []);
 
     // ------------------------------------------------------------------------
-    // TAB 1 ACTIONS: PROFILE UPDATES
+    // TAB 1 ACTIONS: PROFILE UPDATES & AVATAR
     // ------------------------------------------------------------------------
     const handleProfileSubmit = async (e) => {
         e.preventDefault();
-        // Validate required fields
         if (!profileData.real_name?.trim() || !profileData.email?.trim() || !profileData.username?.trim()) {
             showToast('Please fill in all required profile fields: Full Name, Email, and Username.', 'error');
             return;
         }
+
         try {
-            const res = await api.put('/profile', {
-                name: profileData.username,
-                real_name: profileData.real_name,
-                email: profileData.email,
-                username: profileData.username,
-                pin: profileData.pin
-            });
-            if (res.data) {
-                localStorage.setItem('auth_user', JSON.stringify(res.data.user));
-                window.dispatchEvent(new Event('auth_user_updated'));
+            const res = await api.put('/profile', profileData);
+            const updatedUser = res.data?.user;
+            if (updatedUser) {
+                const stored = localStorage.getItem('auth_user');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    localStorage.setItem('auth_user', JSON.stringify({
+                        ...parsed,
+                        username: updatedUser.username,
+                        real_name: updatedUser.real_name,
+                        email: updatedUser.email,
+                        profile_photo: updatedUser.profile_photo ?? parsed.profile_photo
+                    }));
+                }
             }
+
+            const updated = {
+                name: updatedUser?.username || profileData.username,
+                real_name: updatedUser?.real_name || profileData.real_name,
+                email: updatedUser?.email || profileData.email,
+                username: updatedUser?.username || profileData.username,
+                pin: profileData.pin,
+                role: updatedUser?.role || profileData.role,
+                profile_photo: updatedUser?.profile_photo ?? profileData.profile_photo
+            };
+            setProfileData(updated);
+            setInitialProfileData(updated);
+            setShowPasswordModal(false);
+            setEditingTab(null);
             resetSettingsCache('user');
-            showToast('Profile information updated successfully!', 'success');
-            setInitialProfileData(profileData);
+            showToast('Profile updated successfully!', 'success');
         } catch (err) {
-            showToast(err.response?.data?.message || 'Error occurred while saving profile.', 'error');
+            showToast(err.response?.data?.message || 'Failed to update profile.', 'error');
         }
     };
 
     const handleAvatarUpload = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            showToast('Invalid file type. Please upload a JPG, PNG, GIF, or WebP image.', 'error');
+            e.target.value = '';
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('File size exceeds 5MB limit.', 'error');
+            e.target.value = '';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+
         setAvatarUploading(true);
         try {
-            const formData = new FormData();
-            formData.append('avatar', file);
             const res = await api.post('/profile/avatar', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            const newUrl = res.data.profile_photo;
-            setProfileData(prev => ({ ...prev, profile_photo: newUrl }));
-            setInitialProfileData(prev => ({ ...prev, profile_photo: newUrl }));
+            const newPhotoUrl = res.data?.profile_photo;
+            setProfileData(prev => ({ ...prev, profile_photo: newPhotoUrl }));
+            setInitialProfileData(prev => ({ ...prev, profile_photo: newPhotoUrl }));
+
             const stored = localStorage.getItem('auth_user');
             if (stored) {
                 const parsed = JSON.parse(stored);
-                localStorage.setItem('auth_user', JSON.stringify({ ...parsed, profile_photo: newUrl }));
-                window.dispatchEvent(new Event('auth_user_updated'));
+                localStorage.setItem('auth_user', JSON.stringify({ ...parsed, profile_photo: newPhotoUrl }));
             }
             resetSettingsCache('user');
             showToast('Profile photo updated successfully!', 'success');
         } catch (err) {
-            showToast(err.response?.data?.message || 'Failed to upload photo. Max 2MB, images only.', 'error');
+            showToast(err.response?.data?.message || 'Failed to upload photo.', 'error');
         } finally {
             setAvatarUploading(false);
-            // Reset input so the same file can be re-selected
             e.target.value = '';
         }
     };
@@ -321,11 +379,11 @@ export default function useSettings() {
             await api.delete('/profile/avatar');
             setProfileData(prev => ({ ...prev, profile_photo: null }));
             setInitialProfileData(prev => ({ ...prev, profile_photo: null }));
+
             const stored = localStorage.getItem('auth_user');
             if (stored) {
                 const parsed = JSON.parse(stored);
                 localStorage.setItem('auth_user', JSON.stringify({ ...parsed, profile_photo: null }));
-                window.dispatchEvent(new Event('auth_user_updated'));
             }
             resetSettingsCache('user');
             showToast('Profile photo removed.', 'success');
@@ -343,8 +401,6 @@ export default function useSettings() {
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
         try {
-            
-            
             await api.put('/profile/password', passwordData);
             showToast('Password changed successfully!', 'success');
             setShowPasswordModal(false);
@@ -355,16 +411,113 @@ export default function useSettings() {
     };
 
     // ------------------------------------------------------------------------
-    // TAB 2 ACTIONS: SYSTEM BULK SETTINGS
+    // BUSINESS LOGO ACTIONS (Admin only, R2 bucket storage)
     // ------------------------------------------------------------------------
-    const handleSaveBulkSettings = async () => {
+    const handleLogoUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            showToast('Invalid logo image type. Upload JPG, PNG, or WebP.', 'error');
+            e.target.value = '';
+            return;
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+            showToast('Logo file size exceeds 2MB limit.', 'error');
+            e.target.value = '';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('logo', file);
+
+        setLogoUploading(true);
         try {
-            await api.put('/settings', { settings });
+            const res = await api.post('/settings/logo', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            const newUrl = res.data?.logo_url || null;
+            setLogoUrl(newUrl);
+            setSettings(prev => ({ ...prev, business_logo: newUrl }));
+            setInitialSettings(prev => ({ ...prev, business_logo: newUrl }));
+            resetSettingsCache('settings');
+            showToast('Business logo updated successfully!', 'success');
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed to upload logo. Max 2MB, images only.', 'error');
+        } finally {
+            setLogoUploading(false);
+            e.target.value = '';
+        }
+    };
+
+    const handleLogoRemove = async () => {
+        setLogoUploading(true);
+        try {
+            await api.delete('/settings/logo');
+            setLogoUrl(null);
+            setSettings(prev => ({ ...prev, business_logo: null }));
+            setInitialSettings(prev => ({ ...prev, business_logo: null }));
+            resetSettingsCache('settings');
+            showToast('Business logo removed.', 'success');
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed to remove logo.', 'error');
+        } finally {
+            setLogoUploading(false);
+        }
+    };
+
+    // ------------------------------------------------------------------------
+    // TAB 2 ACTIONS: SYSTEM BULK SETTINGS & CONFIRMATION GATE
+    // ------------------------------------------------------------------------
+    const COMPLIANCE_KEYS = [
+        'business_name', 'branch_location', 'address',
+        'contact_number', 'email_address', 'tax_rate', 'tin'
+    ];
+
+    const [showConfirmSaveModal, setShowConfirmSaveModal] = useState(false);
+
+    const handleConfirmSaveBulkSettings = async () => {
+        setShowConfirmSaveModal(false);
+        try {
+            const payload = { ...settings, business_logo: logoUrl };
+            await api.put('/settings', { settings: payload });
             resetSettingsCache('settings');
             showToast('System settings saved successfully!', 'success');
-            setInitialSettings(settings);
+            setSettings(payload);
+            setInitialSettings(payload);
+            setEditingTab(null);
         } catch (err) {
             showToast(err.response?.data?.message || 'Failed to update system settings.', 'error');
+        }
+    };
+
+    const handleCancelSaveBulkSettings = () => {
+        setShowConfirmSaveModal(false);
+    };
+
+    const handleStartEditTab = (tabName) => {
+        setEditingTab(tabName);
+    };
+
+    const handleCancelEditTab = (tabName) => {
+        if (tabName === 'profile') {
+            setProfileData(initialProfileData);
+        } else {
+            setSettings(initialSettings);
+        }
+        setEditingTab(null);
+    };
+
+    const handleSaveBulkSettings = () => {
+        const hasComplianceChange = COMPLIANCE_KEYS.some(
+            key => (settings[key] ?? '') !== (initialSettings[key] ?? '')
+        );
+        if (hasComplianceChange) {
+            setShowConfirmSaveModal(true);
+        } else {
+            handleConfirmSaveBulkSettings();
         }
     };
 
@@ -373,7 +526,6 @@ export default function useSettings() {
             const nextVal = prev[key] === 'true' ? 'false' : 'true';
             const updates = { [key]: nextVal };
 
-            // Sync logic flows alternative keys
             if (key === 'track_damaged_separately') updates.track_damaged = nextVal;
             if (key === 'track_damaged') updates.track_damaged_separately = nextVal;
             if (key === 'enable_product_variants') updates.enable_variants = nextVal;
@@ -383,7 +535,6 @@ export default function useSettings() {
 
             const next = { ...prev, ...updates };
 
-            // Auto-save after toggle
             setTimeout(async () => {
                 try {
                     await api.put('/settings', { settings: next });
@@ -401,15 +552,9 @@ export default function useSettings() {
     const handleSettingInputChange = (key, val) => {
         setSettings(prev => {
             const updates = { [key]: val };
-            
-            // Sync logic flows alternative keys
             if (key === 'price2_markup_percent') updates.price2_markup = val;
             if (key === 'price2_markup') updates.price2_markup_percent = val;
-            
-            return {
-                ...prev,
-                ...updates
-            };
+            return { ...prev, ...updates };
         });
     };
 
@@ -418,13 +563,11 @@ export default function useSettings() {
     // ------------------------------------------------------------------------
     const handleCategorySubmit = async (e) => {
         e.preventDefault();
-        
         let commitFn, rollbackFn;
         if (selectedCategory) {
             const { commit, rollback } = optimisticUpdateCategory(selectedCategory.id, { name: categoryName, variants: categoryVariants });
             commitFn = commit; rollbackFn = rollback;
         } else {
-            // New category gets a temp ID
             const { commit, rollback } = optimisticUpdateCategory(Date.now(), { name: categoryName, variants: categoryVariants });
             commitFn = commit; rollbackFn = rollback;
         }
@@ -441,7 +584,7 @@ export default function useSettings() {
             setShowCategoryModal(false);
             setCategoryName('');
             setSelectedCategory(null);
-            refetchCategories(); // Silent background refetch
+            refetchCategories();
         } catch (err) {
             rollbackFn();
             showToast(err.response?.data?.message || 'Failed to save product category.', 'error');
@@ -458,292 +601,259 @@ export default function useSettings() {
             refetchCategories();
         } catch (err) {
             rollback();
-            showToast(err.response?.data?.message || 'Category cannot be deleted if associated with products.', 'error');
+            showToast(err.response?.data?.message || 'Failed to delete category.', 'error');
         }
     };
 
-    const getOrAddVariantOption = async (typeName) => {
-        let vType = variantTypes.find(t => t.name.toLowerCase() === typeName.toLowerCase());
-        if (!vType) {
-            try {
-                const newTypeRes = await api.post('/variants', { name: typeName });
-                vType = newTypeRes.data.variant_type;
-                resetSettingsCache('variants');
-                await loadVariants();
-            } catch (err) {
-                console.error('Failed to auto-create variant type: ', err);
-                return null;
-            }
-        }
-        return vType;
+    const getOptionsForType = (typeName) => {
+        const found = variantTypes.find(v => v.name?.toLowerCase() === typeName?.toLowerCase());
+        return found ? found.options || [] : [];
     };
 
     const handleAddVariantOption = async (typeName) => {
         if (!newOptionValue.trim()) return;
+
         try {
-            
-            
-            const vType = await getOrAddVariantOption(typeName);
-            if (!vType) {
-                showToast('Failed to resolve variant type database node.', 'error');
-                return;
+            let typeObj = variantTypes.find(v => v.name?.toLowerCase() === typeName?.toLowerCase());
+            let typeId = typeObj ? typeObj.id : null;
+
+            if (!typeId) {
+                const createTypeRes = await api.post('/variants', { name: typeName });
+                typeObj = createTypeRes.data;
+                typeId = typeObj.id;
             }
 
-            await api.post(`/variants/${vType.id}/options`, { value: newOptionValue.trim() });
-            showToast(`Option "${newOptionValue}" added to ${typeName} settings.`, 'success');
+            const optRes = await api.post(`/variants/${typeId}/options`, { value: newOptionValue.trim() });
+            const newOption = optRes.data;
+
+            setVariantTypes(prev => prev.map(vt => {
+                if (vt.id === typeId) {
+                    return { ...vt, options: [...(vt.options || []), newOption] };
+                }
+                return vt;
+            }));
+
             setNewOptionValue('');
             resetSettingsCache('variants');
-            loadVariants();
+            showToast(`Option "${newOptionValue}" added to ${typeName}.`, 'success');
         } catch (err) {
-            showToast(err.response?.data?.message || 'Failed to add option.', 'error');
+            showToast(err.response?.data?.message || 'Failed to add variant option.', 'error');
         }
     };
 
-    const handleUpdateVariantOption = async (optId, newValue) => {
-        if (!newValue.trim()) return;
+    const handleUpdateVariantOption = async (optionId, newValue, typeName) => {
         try {
-            await api.put(`/variant-options/${optId}`, { value: newValue.trim() });
-            showToast('Option updated successfully.', 'success');
+            const res = await api.put(`/variant-options/${optionId}`, { value: newValue });
+            const updatedOption = res.data;
+
+            setVariantTypes(prev => prev.map(vt => {
+                if (vt.name?.toLowerCase() === typeName?.toLowerCase()) {
+                    return {
+                        ...vt,
+                        options: vt.options.map(opt => opt.id === optionId ? updatedOption : opt)
+                    };
+                }
+                return vt;
+            }));
+
             resetSettingsCache('variants');
-            loadVariants();
+            showToast('Variant option updated successfully.', 'success');
         } catch (err) {
             showToast(err.response?.data?.message || 'Failed to update variant option.', 'error');
         }
     };
 
-    const handleDeleteVariantOption = async (optId) => {
-        if (!window.confirm('Are you sure you want to remove this variant option value?')) return;
+    const handleDeleteVariantOption = async (optionId, typeName) => {
+        if (!window.confirm('Delete this variant option?')) return;
         try {
-            
-            
-            await api.delete(`/variant-options/${optId}`);
-            showToast('Option value deleted successfully.', 'success');
+            await api.delete(`/variant-options/${optionId}`);
+            setVariantTypes(prev => prev.map(vt => {
+                if (vt.name?.toLowerCase() === typeName?.toLowerCase()) {
+                    return {
+                        ...vt,
+                        options: vt.options.filter(opt => opt.id !== optionId)
+                    };
+                }
+                return vt;
+            }));
             resetSettingsCache('variants');
-            loadVariants();
+            showToast('Variant option removed.', 'success');
         } catch (err) {
-            showToast(err.response?.data?.message || 'Failed to delete variant option value.', 'error');
+            showToast(err.response?.data?.message || 'Failed to delete variant option.', 'error');
         }
     };
 
-    const getOptionsForType = (typeName) => {
-        const type = variantTypes.find(t => t.name.toLowerCase() === typeName.toLowerCase());
-        return type ? type.options || [] : [];
-    };
-
     // ------------------------------------------------------------------------
-    // TAB 4 ACTIONS: LOW STOCK ALERTS RULES CRUD
+    // TAB 4 ACTIONS: ALERT RULES CRUD
     // ------------------------------------------------------------------------
     const handleRuleSubmit = async (e) => {
         e.preventDefault();
         try {
-            
-            
-            await api.post('/alert-rules', ruleForm);
-            showToast('Alert rule created successfully.', 'success');
+            const res = await api.post('/alert-rules', ruleForm);
+            setAlertRules(prev => [res.data, ...prev]);
             setShowRuleModal(false);
-            setRuleForm({ name: '', event_type: 'low_stock', threshold: 5, is_active: true });
+            setRuleForm({ name: '', event_type: 'low_stock', threshold: 5, recipient_email: 'admin@heavypartspro.com', is_active: true });
             resetSettingsCache('alertRules');
-            loadAlertRules();
+            showToast('Alert rule added successfully!', 'success');
         } catch (err) {
-            showToast(err.response?.data?.message || 'Failed to save alert rule.', 'error');
+            showToast(err.response?.data?.message || 'Failed to add alert rule.', 'error');
         }
     };
 
     const handleToggleRule = async (rule) => {
         try {
-            await api.patch(`/alert-rules/${rule.id}/toggle`);
+            const res = await api.put(`/alert-rules/${rule.id}`, { is_active: !rule.is_active });
+            setAlertRules(prev => prev.map(r => r.id === rule.id ? res.data : r));
             resetSettingsCache('alertRules');
-            loadAlertRules();
+            showToast(`Alert rule ${res.data.is_active ? 'enabled' : 'disabled'}.`, 'success');
         } catch (err) {
-            console.error(err);
+            showToast('Failed to update alert rule status.', 'error');
         }
     };
 
     const handleDeleteRule = async (rule) => {
-        if (!window.confirm(`Delete alert rule ${rule.name}?`)) return;
+        if (!window.confirm('Delete this alert rule?')) return;
         try {
             await api.delete(`/alert-rules/${rule.id}`);
+            setAlertRules(prev => prev.filter(r => r.id !== rule.id));
             resetSettingsCache('alertRules');
-            loadAlertRules();
+            showToast('Alert rule deleted.', 'success');
         } catch (err) {
-            console.error(err);
+            showToast('Failed to delete alert rule.', 'error');
         }
     };
 
     // ------------------------------------------------------------------------
     // TAB 5 ACTIONS: EMPLOYEES CRUD
     // ------------------------------------------------------------------------
-    const handleEmployeeSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const role = employeeForm.role;
-            let pin = employeeForm.pin;
-            
-            if (role === 'Cashier' || role === 'Checker') {
-                pin = '';
-            } else if ((role === 'Admin' || role === 'Supervisor') && (!pin || pin.length !== 4)) {
-                showToast('Admin and Supervisor roles require a 4-digit PIN for approvals.', 'error');
-                return;
-            }
-
-            const submitData = { 
-                ...employeeForm, 
-                name: employeeForm.real_name,
-                username: employeeForm.employee_id, // Map Access ID to username
-                pin: pin
-            };
-            if (selectedEmployee) {
-                await api.put(`/employees/${selectedEmployee.id}`, submitData);
-                showToast('Employee updated successfully.', 'success');
-            } else {
-                await api.post('/employees', submitData);
-                showToast('Employee added successfully.', 'success');
-            }
-            setShowEmployeeModal(false);
-            setSelectedEmployee(null);
-            setEmployeeForm({ name: '', real_name: '', email: '', username: '', password: '', pin: '', employee_id: '', role: 'Cashier', status: 'Active' });
-            resetSettingsCache('employees');
-            resetDashboardCache();
-            loadEmployees();
-        } catch (err) {
-            showToast(err.response?.data?.message || 'Failed to save employee profile.', 'error');
-        }
-    };
-
-    const handleToggleEmployee = async (emp) => {
-        if (emp.employee_id === 'EMP-000') {
-            showToast('Cannot deactivate the default administrator.', 'error');
-            return;
-        }
-        try {
-            await api.patch(`/employees/${emp.id}/toggle`);
-            resetSettingsCache('employees');
-            resetDashboardCache();
-            loadEmployees();
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
     const openAddEmployee = () => {
         setSelectedEmployee(null);
-        let nextIdNumber = 1;
-        if (employees.length > 0) {
-            const ids = employees
-                .filter(emp => emp.employee_id && emp.employee_id.startsWith('EMP-'))
-                .map(emp => parseInt(emp.employee_id.replace('EMP-', '')))
-                .filter(num => !isNaN(num));
-            if (ids.length > 0) {
-                nextIdNumber = Math.max(...ids) + 1;
-            }
-        }
-        const nextId = `EMP-${nextIdNumber.toString().padStart(3, '0')}`;
-        
-        setEmployeeForm({
-            employee_id: nextId,
-            name: '', real_name: '', email: '', username: '', password: '', pin: '', employee_id: '', role: 'Cashier', status: 'Active' });
+        setEmployeeForm({ name: '', email: '', username: '', role: 'Cashier', pin: '', status: 'Active' });
         setShowEmployeeModal(true);
     };
 
     const openEditEmployee = (emp) => {
         setSelectedEmployee(emp);
         setEmployeeForm({
-            employee_id: emp.employee_id,
-            name: emp.username,
-            real_name: emp.real_name || '',
-            email: emp.email,
-            username: emp.username,
-            password: '', // blank on edit
+            name: emp.real_name || emp.name,
+            email: emp.email || '',
+            username: emp.username || '',
+            role: emp.role || 'Cashier',
             pin: emp.pin || '',
-            role: emp.role,
-            status: emp.status
+            status: emp.status || 'Active'
         });
         setShowEmployeeModal(true);
+    };
+
+    const handleEmployeeSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            if (selectedEmployee) {
+                const res = await api.put(`/employees/${selectedEmployee.id}`, employeeForm);
+                setEmployees(prev => prev.map(emp => emp.id === selectedEmployee.id ? res.data : emp));
+                showToast('Employee updated successfully!', 'success');
+            } else {
+                const res = await api.post('/employees', employeeForm);
+                setEmployees(prev => [res.data, ...prev]);
+                showToast('New employee added successfully!', 'success');
+            }
+            setShowEmployeeModal(false);
+            resetSettingsCache('employees');
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed to save employee.', 'error');
+        }
+    };
+
+    const handleToggleEmployee = async (emp) => {
+        const nextStatus = emp.status === 'Active' ? 'Inactive' : 'Active';
+        try {
+            const res = await api.put(`/employees/${emp.id}`, { status: nextStatus });
+            setEmployees(prev => prev.map(e => e.id === emp.id ? res.data : e));
+            resetSettingsCache('employees');
+            showToast(`Employee account set to ${nextStatus}.`, 'success');
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed to toggle employee status.', 'error');
+        }
     };
 
     // ------------------------------------------------------------------------
     // TAB 6 ACTIONS: CHECKERS CRUD
     // ------------------------------------------------------------------------
-    const handleCheckerSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            if (selectedChecker) {
-                await api.put(`/checkers/${selectedChecker.id}`, checkerForm);
-                showToast('Checker updated successfully.', 'success');
-            } else {
-                await api.post('/checkers', checkerForm);
-                showToast('Checker added successfully.', 'success');
-            }
-            setShowCheckerModal(false);
-            setSelectedChecker(null);
-            setCheckerForm({ name: '', status: 'Active' });
-            resetSettingsCache('checkers');
-            loadCheckers();
-        } catch (err) {
-            showToast(err.response?.data?.message || 'Failed to save checker profile.', 'error');
-        }
-    };
-
     const openAddChecker = () => {
         setSelectedChecker(null);
-        setCheckerForm({ name: '', status: 'Active' });
+        setCheckerForm({ checker_name: '', contact_number: '', assignment_area: 'Warehouse' });
         setShowCheckerModal(true);
     };
 
-    const openEditChecker = (checker) => {
-        setSelectedChecker(checker);
+    const openEditChecker = (chk) => {
+        setSelectedChecker(chk);
         setCheckerForm({
-            name: checker.name,
-            status: checker.status
+            checker_name: chk.checker_name,
+            contact_number: chk.contact_number || '',
+            assignment_area: chk.assignment_area || 'Warehouse'
         });
         setShowCheckerModal(true);
     };
 
-    const isProfileDirty = JSON.stringify(profileData) !== JSON.stringify(initialProfileData);
-    const isSettingsDirty = JSON.stringify(settings) !== JSON.stringify(initialSettings);
+    const handleCheckerSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            if (selectedChecker) {
+                const res = await api.put(`/checkers/${selectedChecker.id}`, checkerForm);
+                setCheckers(prev => prev.map(c => c.id === selectedChecker.id ? res.data : c));
+                showToast('Product checker updated successfully!', 'success');
+            } else {
+                const res = await api.post('/checkers', checkerForm);
+                setCheckers(prev => [res.data, ...prev]);
+                showToast('New product checker registered!', 'success');
+            }
+            setShowCheckerModal(false);
+            resetSettingsCache('checkers');
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed to save product checker.', 'error');
+        }
+    };
 
     return {
-        // App State
+        notificationsCount,
         loading, isProfileDirty, isSettingsDirty,
 
         // Tab Navigation
         activeTab, setActiveTab,
+        editingTab, handleStartEditTab, handleCancelEditTab,
         activeSubTab, setActiveSubTab,
         activeAlertsSubTab, setActiveAlertsSubTab,
 
         // Tab 1: Profile
-        profileData, setProfileData, handleProfileSubmit,
-        avatarUploading, handleAvatarUpload, handleAvatarRemove,
-        confirmingRemove, handleAvatarRemoveConfirmed, handleAvatarRemoveCancel,
-        passwordData, setPasswordData, handlePasswordSubmit,
+        profileData, setProfileData,
         showPasswordModal, setShowPasswordModal,
         showPIN, setShowPIN,
+        passwordData, setPasswordData,
+        avatarUploading, handleAvatarUpload, handleAvatarRemove,
+        confirmingRemove, handleAvatarRemoveConfirmed, handleAvatarRemoveCancel,
+        handleProfileSubmit, handlePasswordSubmit,
 
-        // Tab 2: General Settings
+        // Tab 2: General System Settings & Logo
         settings, handleSettingInputChange, handleToggleSetting, handleSaveBulkSettings,
+        showConfirmSaveModal, handleConfirmSaveBulkSettings, handleCancelSaveBulkSettings,
+        logoUrl, logoUploading, handleLogoUpload, handleLogoRemove,
 
-        // Tab 3: Products
-        categories, showCategoryModal, setShowCategoryModal, selectedCategory, setSelectedCategory, categoryName, setCategoryName,
-        categoryVariants, setCategoryVariants, handleCategorySubmit, handleDeleteCategory,
-        newOptionValue, setNewOptionValue, handleAddVariantOption, handleUpdateVariantOption, handleDeleteVariantOption, getOptionsForType,
+        // Tab 3: Products Settings
+        categories, showCategoryModal, setShowCategoryModal, selectedCategory, setSelectedCategory,
+        categoryName, setCategoryName, categoryVariants, setCategoryVariants,
+        newOptionValue, setNewOptionValue,
+        handleCategorySubmit, handleDeleteCategory, handleAddVariantOption, handleUpdateVariantOption, handleDeleteVariantOption, getOptionsForType,
 
-        // Tab 4: Alerts
+        // Tab 4: Alert Rules
         alertRules, showRuleModal, setShowRuleModal, ruleForm, setRuleForm,
         handleRuleSubmit, handleToggleRule, handleDeleteRule,
 
         // Tab 5: Employees
-        employees, showEmployeeModal, setShowEmployeeModal, employeeForm, setEmployeeForm,
-        selectedEmployee, setSelectedEmployee, handleEmployeeSubmit, handleToggleEmployee, openEditEmployee, openAddEmployee,
+        employees, showEmployeeModal, setShowEmployeeModal, employeeForm, setEmployeeForm, selectedEmployee, setSelectedEmployee,
+        handleEmployeeSubmit, openEditEmployee, handleToggleEmployee, openAddEmployee,
 
         // Tab 6: Checkers
-        checkers, showCheckerModal, setShowCheckerModal, checkerForm, setCheckerForm,
-        selectedChecker, setSelectedChecker, handleCheckerSubmit, openEditChecker, openAddChecker
+        checkers, showCheckerModal, setShowCheckerModal, checkerForm, setCheckerForm, selectedChecker, setSelectedChecker,
+        handleCheckerSubmit, openEditChecker, openAddChecker
     };
 }
-
-
-
-
-
-
-

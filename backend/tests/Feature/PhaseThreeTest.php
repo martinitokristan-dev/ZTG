@@ -128,6 +128,36 @@ class PhaseThreeTest extends TestCase
             ->assertJsonFragment(['name' => 'Visible Pump']);
     }
 
+    public function test_product_status_updates_to_low_stock_when_alert_limit_matches_stock()
+    {
+        // Product created with stock 10 and alert_limit 3 (status: Active)
+        $product = $this->makeProduct(['part_no' => 'ALT-100', 'stock' => 10, 'alert_limit' => 3]);
+        $this->assertEquals('Active', $product->fresh()->status->value ?? $product->fresh()->status);
+
+        // Update product setting alert_limit to 10
+        $response = $this->actingAs($this->admin)
+            ->putJson("/api/products/{$product->id}", [
+                'name'         => $product->name,
+                'chinese_name' => '零件',
+                'part_no'      => $product->part_no,
+                'category_id' => $product->category_id,
+                'stock'       => 10,
+                'alert_limit' => 10,
+                'price1'      => 100.00,
+                'price2'      => 110.00,
+                'status'      => 'Active', // Even if submitted as Active, observer recalculates based on alert level
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['status' => 'Low Stock']);
+
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 10, 'alert_limit' => 10, 'status' => 'Low Stock']);
+        $this->assertDatabaseHas('notifications', [
+            'type'       => \App\Enums\NotificationType::LOW_STOCK->value,
+            'product_id' => $product->id,
+        ]);
+    }
+
     /* ─── Product Create Tests ────────────────────────────── */
 
     public function test_admin_can_create_simple_product()

@@ -1,11 +1,66 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 
 export default function ProductReportTab({ productPerformance, refundVoidAnalysis, startDate, setStartDate, endDate, setEndDate }) {
     const { top_sellers = [], dead_stock = [], totals = {} } = productPerformance || {};
-    
+    const [selectedCategory, setSelectedCategory] = useState('All');
+
+    // Extract unique categories from top sellers and dead stock
+    const categoryOptions = useMemo(() => {
+        const set = new Set();
+        top_sellers.forEach(p => {
+            if (p.category) set.add(p.category);
+        });
+        dead_stock.forEach(p => {
+            if (p.category) set.add(p.category);
+        });
+        return Array.from(set);
+    }, [top_sellers, dead_stock]);
+
+    // Filter top sellers and dead stock by selected Category
+    const filteredTopSellers = useMemo(() => {
+        if (selectedCategory === 'All') return top_sellers;
+        return top_sellers.filter(p => (p.category || 'Uncategorized') === selectedCategory);
+    }, [top_sellers, selectedCategory]);
+
+    const filteredDeadStock = useMemo(() => {
+        if (selectedCategory === 'All') return dead_stock;
+        return dead_stock.filter(p => (p.category || 'Uncategorized') === selectedCategory);
+    }, [dead_stock, selectedCategory]);
+
     const returnsCount = totals.returns_qty || 0;
     const refundsCount = totals.refunds_qty || 0;
     const damagedCount = totals.damaged_qty || 0;
+
+    const handleExportCSV = () => {
+        if (filteredTopSellers.length === 0 && filteredDeadStock.length === 0) return;
+
+        const headers = ["Part No.", "Product Name", "Category", "Qty Sold", "Returns", "Refunds", "Damaged", "Current Stock", "Status"];
+        const rows = [headers.join(",")];
+
+        filteredTopSellers.forEach(p => {
+            const status = p.stock > 0 ? "In Stock" : "Out of Stock";
+            rows.push([
+                `"${p.part_no || 'N/A'}"`,
+                `"${(p.name || '').replace(/"/g, '""')}"`,
+                `"${p.category || 'Uncategorized'}"`,
+                p.sales_count || 0,
+                p.returns_count || 0,
+                p.refunds_count || 0,
+                p.damaged_count || 0,
+                p.stock || 0,
+                `"${status}"`
+            ].join(","));
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8," + rows.join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Product_Performance_Report_${startDate}_to_${endDate}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     return (
         <div>
@@ -18,11 +73,24 @@ export default function ProductReportTab({ productPerformance, refundVoidAnalysi
                         <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} value={endDate} onChange={e => setEndDate(e.target.value)} />
                     </div>
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '12px' }}>Category:</span>
-                    <select className="form-control form-control-sm" style={{ width: '180px' }}>
+                    <select 
+                        className="form-control form-control-sm" 
+                        style={{ width: '180px' }}
+                        value={selectedCategory}
+                        onChange={e => setSelectedCategory(e.target.value)}
+                    >
                         <option value="All">All Categories</option>
+                        {categoryOptions.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
                     </select>
                 </div>
-                <button className="btn btn-success" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}>
+                <button 
+                    className="btn btn-success" 
+                    onClick={handleExportCSV}
+                    disabled={filteredTopSellers.length === 0 && filteredDeadStock.length === 0}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}
+                >
                     <svg viewBox="0 0 24 24" style={{ width: '15px', height: '15px', fill: 'none', stroke: '#fff', strokeWidth: '2.5' }}><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     Export CSV
                 </button>
@@ -43,7 +111,7 @@ export default function ProductReportTab({ productPerformance, refundVoidAnalysi
                 </div>
                 <div className="kpi-card">
                     <div className="kpi-label">Dead Stock Count</div>
-                    <div className="kpi-value">{dead_stock.length}</div>
+                    <div className="kpi-value">{filteredDeadStock.length}</div>
                 </div>
             </div>
 
@@ -65,9 +133,9 @@ export default function ProductReportTab({ productPerformance, refundVoidAnalysi
                             </tr>
                         </thead>
                         <tbody>
-                            {top_sellers.length === 0 ? (
+                            {filteredTopSellers.length === 0 ? (
                                 <tr><td colSpan="9" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No product movement for the selected date range.</td></tr>
-                            ) : top_sellers.slice(0, 10).map((p, i) => (
+                            ) : filteredTopSellers.map((p, i) => (
                                 <tr key={i}>
                                     <td>{p.part_no || 'N/A'}</td>
                                     <td>{p.name}</td>
@@ -85,7 +153,7 @@ export default function ProductReportTab({ productPerformance, refundVoidAnalysi
                 </div>
             </div>
 
-            {dead_stock.length > 0 && (
+            {filteredDeadStock.length > 0 && (
                 <div className="section-card">
                     <div className="section-card-header" style={{ color: '#DC2626' }}>Dead Stock (No Sales)</div>
                     <div style={{ overflowX: 'auto' }}>
@@ -100,7 +168,7 @@ export default function ProductReportTab({ productPerformance, refundVoidAnalysi
                                 </tr>
                             </thead>
                             <tbody>
-                                {dead_stock.map((p, i) => (
+                                {filteredDeadStock.map((p, i) => (
                                     <tr key={i}>
                                         <td>{p.part_no || 'N/A'}</td>
                                         <td>{p.name}</td>

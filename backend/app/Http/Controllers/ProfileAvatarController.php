@@ -28,7 +28,7 @@ class ProfileAvatarController extends Controller
                 'required',
                 'image',                              // PHP GD/Exif content sniff — not just extension
                 'mimes:jpeg,jpg,png,gif,webp',        // MIME whitelist (server-side sniff)
-                'max:2048',                           // 2 MB limit
+                'max:5120',                           // 5 MB limit
             ],
         ]);
 

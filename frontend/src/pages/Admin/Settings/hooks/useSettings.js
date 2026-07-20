@@ -270,6 +270,7 @@ export default function useSettings() {
             });
             if (res.data) {
                 localStorage.setItem('auth_user', JSON.stringify(res.data.user));
+                window.dispatchEvent(new Event('auth_user_updated'));
             }
             resetSettingsCache('user');
             showToast('Profile information updated successfully!', 'success');
@@ -292,11 +293,11 @@ export default function useSettings() {
             const newUrl = res.data.profile_photo;
             setProfileData(prev => ({ ...prev, profile_photo: newUrl }));
             setInitialProfileData(prev => ({ ...prev, profile_photo: newUrl }));
-            // Update localStorage auth_user so sidebar reflects change immediately
             const stored = localStorage.getItem('auth_user');
             if (stored) {
                 const parsed = JSON.parse(stored);
                 localStorage.setItem('auth_user', JSON.stringify({ ...parsed, profile_photo: newUrl }));
+                window.dispatchEvent(new Event('auth_user_updated'));
             }
             resetSettingsCache('user');
             showToast('Profile photo updated successfully!', 'success');
@@ -324,6 +325,7 @@ export default function useSettings() {
             if (stored) {
                 const parsed = JSON.parse(stored);
                 localStorage.setItem('auth_user', JSON.stringify({ ...parsed, profile_photo: null }));
+                window.dispatchEvent(new Event('auth_user_updated'));
             }
             resetSettingsCache('user');
             showToast('Profile photo removed.', 'success');

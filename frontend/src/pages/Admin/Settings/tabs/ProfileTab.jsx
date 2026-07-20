@@ -95,10 +95,15 @@ export default function ProfileTab({
                                 className="btn btn-secondary profile-upload-btn"
                                 style={{ width: '100%' }}
                                 onClick={() => fileInputRef.current?.click()}
-                                disabled={avatarUploading}
+                                disabled={avatarUploading || hasPhoto}
                             >
                                 {avatarUploading ? 'Uploading...' : 'Upload New Photo'}
                             </button>
+                            {hasPhoto && !avatarUploading && (
+                                <span style={{ fontSize: '11px', color: '#64748B', marginTop: '6px', marginBottom: '4px', textAlign: 'center' }}>
+                                    Please remove your current photo first.
+                                </span>
+                            )}
                             {hasPhoto && !confirmingRemove && (
                                 <button
                                     type="button"

@@ -5,8 +5,22 @@ import { clearEntireCache } from './hooks/usePaginatedCache';
 
 function Sidebar() {
     const navigate = useRouterNavigate();
-    const userStr = localStorage.getItem('auth_user');
-    const user = userStr ? JSON.parse(userStr) : null;
+    const [user, setUser] = React.useState(() => {
+        const userStr = localStorage.getItem('auth_user');
+        return userStr ? JSON.parse(userStr) : null;
+    });
+
+    React.useEffect(() => {
+        const handleUpdate = () => {
+            const userStr = localStorage.getItem('auth_user');
+            setUser(userStr ? JSON.parse(userStr) : null);
+        };
+        window.addEventListener('auth_user_updated', handleUpdate);
+        return () => {
+            window.removeEventListener('auth_user_updated', handleUpdate);
+        };
+    }, []);
+
     const role = user ? user.role : 'Guest';
     const name = user ? user.real_name || user.name : 'User';
 
@@ -238,7 +252,7 @@ function Sidebar() {
                         width: 38,
                         height: 38,
                         borderRadius: '50%',
-                        backgroundColor: '#3B82F6',
+                        backgroundColor: user?.profile_photo ? 'transparent' : '#3B82F6',
                         color: '#FFFFFF',
                         fontWeight: 700,
                         display: 'flex',
@@ -246,8 +260,23 @@ function Sidebar() {
                         justifyContent: 'center',
                         fontSize: 13,
                         flexShrink: 0,
+                        overflow: 'hidden',
+                        border: user?.profile_photo ? '1px solid rgba(255,255,255,0.1)' : 'none',
                     }}>
-                        {getInitials(name)}
+                        {user?.profile_photo ? (
+                            <img
+                                src={user.profile_photo}
+                                alt="User Profile"
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    display: 'block'
+                                }}
+                            />
+                        ) : (
+                            getInitials(name)
+                        )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ color: '#FFFFFF', fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>

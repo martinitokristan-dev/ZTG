@@ -31,6 +31,14 @@ class TestApiFlowCommand extends Command
         $this->token = $user->createToken('test-token')->plainTextToken;
         $this->info("   Generated Sanctum token for Admin: {$user->name}");
 
+        // Get or create a Checker
+        $checker = \App\Models\Checker::first();
+        if (!$checker) {
+            $checker = \App\Models\Checker::create(['name' => 'John Tester', 'status' => 'Active']);
+        }
+        $checkerId = $checker->id;
+        $this->info("   Selected Checker: {$checker->name} (ID: {$checkerId})");
+
         // 2. Create Category
         $this->info("\n--- STEP 1: Creating Product Category ---");
         $existingCat = \App\Models\Category::where('name', 'Heavy Equipments')->first();
@@ -99,6 +107,7 @@ class TestApiFlowCommand extends Command
         $this->info("\n--- STEP 4: Creating Product with Size/Color Variants ---");
         $prodRes = $this->post('/products', [
             'name' => 'ZTG Hydraulic Pump',
+            'chinese_name' => '中液压泵',
             'part_no' => 'HP-PUMP-' . time(),
             'category_id' => $categoryId,
             'stock' => 100,
@@ -109,6 +118,7 @@ class TestApiFlowCommand extends Command
             'variants' => [
                 [
                     'name' => 'ZTG Hydraulic Pump - Medium Yellow',
+                    'chinese_name' => '中液压泵 - 中黄',
                     'part_no' => 'HP-PUMP-' . time() . '-MY',
                     'stock' => 50,
                     'price1' => 1100,
@@ -117,6 +127,7 @@ class TestApiFlowCommand extends Command
                 ],
                 [
                     'name' => 'ZTG Hydraulic Pump - Small Red',
+                    'chinese_name' => '中液压泵 - 小红',
                     'part_no' => 'HP-PUMP-' . time() . '-SR',
                     'stock' => 30,
                     'price1' => 1050,
@@ -139,6 +150,7 @@ class TestApiFlowCommand extends Command
             'payment_method' => 'Cash',
             'amount_tendered' => 1500,
             'doc_type' => 'S.I.',
+            'checker_id' => $checkerId,
             'cart' => [['product_id' => $variantProductId, 'qty' => 1, 'price_tier' => 'price1']]
         ]);
         $transactionId = $saleRes['transaction']['id'] ?? null;
@@ -164,6 +176,7 @@ class TestApiFlowCommand extends Command
             'payment_method' => 'Cash',
             'amount_tendered' => 1500,
             'doc_type' => 'S.I.',
+            'checker_id' => $checkerId,
             'cart' => [['product_id' => $variantProductId, 'qty' => 1, 'price_tier' => 'price1']]
         ]);
         $transactionId2 = $saleRes2['transaction']['id'] ?? null;
@@ -189,6 +202,7 @@ class TestApiFlowCommand extends Command
             'payment_method' => 'Cash',
             'amount_tendered' => 1500,
             'doc_type' => 'S.I.',
+            'checker_id' => $checkerId,
             'cart' => [['product_id' => $variantProductId, 'qty' => 1, 'price_tier' => 'price1']]
         ]);
         $transactionId3 = $saleRes3['transaction']['id'] ?? null;

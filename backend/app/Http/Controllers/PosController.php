@@ -28,7 +28,7 @@ class PosController extends Controller
             'category',
             'variantOptions.type',
             'variants' => function ($q) {
-                $q->where('status', '!=', 'Disabled');
+                $q->with('variantOptions.type')->where('status', '!=', 'Disabled');
             }
         ])
             ->where('status', '!=', 'Disabled');

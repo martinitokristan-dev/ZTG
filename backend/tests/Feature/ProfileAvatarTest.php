@@ -41,7 +41,7 @@ class ProfileAvatarTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Storage::fake('public');
+        Storage::fake('s3');
 
         $this->user = User::create([
             'employee_id' => 'EMP-001',
@@ -71,7 +71,18 @@ class ProfileAvatarTest extends TestCase
     /** Extract relative storage path from a full avatar URL. */
     private function pathFromUrl(string $url): string
     {
-        return str_replace(rtrim(config('app.url'), '/') . '/storage/', '', $url);
+        $r2Url = rtrim(config('filesystems.disks.s3.url'), '/');
+        if ($r2Url && str_starts_with($url, $r2Url)) {
+            return ltrim(str_replace($r2Url, '', $url), '/');
+        }
+
+        $url = str_replace(rtrim(config('app.url'), '/') . '/storage/', '', $url);
+
+        if (str_starts_with($url, '/storage/')) {
+            $url = substr($url, 9);
+        }
+
+        return ltrim($url, '/');
     }
 
     /**
@@ -96,7 +107,7 @@ class ProfileAvatarTest extends TestCase
 
         $url = $this->user->fresh()->profile_photo;
         $this->assertNotNull($url);
-        Storage::disk('public')->assertExists($this->pathFromUrl($url));
+        Storage::disk('s3')->assertExists($this->pathFromUrl($url));
     }
 
     /* ── 1b. Validation: missing file ───────────────────────────────────── */
@@ -125,8 +136,8 @@ class ProfileAvatarTest extends TestCase
 
     public function test_upload_rejects_oversized_file(): void
     {
-        // 3 000 KB (3 MB) — exceeds the 2 048 KB cap
-        $file = UploadedFile::fake()->create('huge.jpg', 3000, 'image/jpeg');
+        // 6 000 KB (6 MB) — exceeds the 5 120 KB cap
+        $file = UploadedFile::fake()->create('huge.jpg', 6000, 'image/jpeg');
 
         $this->actingAs($this->user)
             ->postJson('/api/profile/avatar', ['avatar' => $file])
@@ -191,7 +202,7 @@ class ProfileAvatarTest extends TestCase
         $response->assertStatus(200);
         $newUrl = $this->user->fresh()->profile_photo;
         $this->assertStringNotContainsString('cdn.example.com', $newUrl);
-        Storage::disk('public')->assertExists($this->pathFromUrl($newUrl));
+        Storage::disk('s3')->assertExists($this->pathFromUrl($newUrl));
     }
 
     /* ── 5 + 6. Second upload replaces old file on disk ─────────────────── */
@@ -203,7 +214,7 @@ class ProfileAvatarTest extends TestCase
 
         $firstUrl  = $this->user->fresh()->profile_photo;
         $firstPath = $this->pathFromUrl($firstUrl);
-        Storage::disk('public')->assertExists($firstPath);
+        Storage::disk('s3')->assertExists($firstPath);
 
         $this->actingAs($this->user)
             ->postJson('/api/profile/avatar', ['avatar' => $this->fakeJpeg('second.jpg')]);
@@ -211,8 +222,8 @@ class ProfileAvatarTest extends TestCase
         $secondUrl  = $this->user->fresh()->profile_photo;
         $secondPath = $this->pathFromUrl($secondUrl);
 
-        Storage::disk('public')->assertMissing($firstPath);   // old gone
-        Storage::disk('public')->assertExists($secondPath);   // new present
+        Storage::disk('s3')->assertMissing($firstPath);   // old gone
+        Storage::disk('s3')->assertExists($secondPath);   // new present
         $this->assertNotEquals($firstUrl, $secondUrl);
     }
 
@@ -225,7 +236,7 @@ class ProfileAvatarTest extends TestCase
 
         $storedUrl  = $this->user->fresh()->profile_photo;
         $storedPath = $this->pathFromUrl($storedUrl);
-        Storage::disk('public')->assertExists($storedPath);
+        Storage::disk('s3')->assertExists($storedPath);
 
         $this->actingAs($this->user)
             ->deleteJson('/api/profile/avatar')
@@ -233,7 +244,7 @@ class ProfileAvatarTest extends TestCase
             ->assertJsonFragment(['profile_photo' => null]);
 
         $this->assertNull($this->user->fresh()->profile_photo);
-        Storage::disk('public')->assertMissing($storedPath);
+        Storage::disk('s3')->assertMissing($storedPath);
     }
 
     /* ── 8. Remove with no photo is graceful ────────────────────────────── */

@@ -111,6 +111,11 @@ class ProfileAvatarController extends Controller
     private function urlToStoragePath(?string $url): ?string
     {
         if (!$url) return null;
+
+        // Try relative storage path (for testing and local environment compatibility)
+        if (str_starts_with($url, '/storage/')) {
+            return substr($url, 9);
+        }
         
         // Try local storage path first (for legacy compatibility)
         $localBase = rtrim(config('app.url'), '/') . '/storage/';

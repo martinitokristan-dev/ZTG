@@ -175,14 +175,37 @@ The development was split into two parallel tracks:
 - **Latency Benchmarking:** Measured API response time using `curl` with timing flags.
 - **Cold Start Testing:** Tested Render sleep behavior and verified BetterStack pings keep the server warm.
 
-**Sample Benchmark Result:**
+**Automated Test Suite (`php artisan test`):**
 
-```
-DNS Lookup:              0.116s
-Connect Time:            0.180s
-Time to First Byte:      0.470s
-Total Latency:           0.470s
-```
+- **104 tests, 344 assertions** — all passing ✅
+- **Duration: ~4.2 seconds** (full suite)
+- Covers: Auth, POS Checkout, Returns, Refunds, Voids, Reservations, Products, Categories, Variants, Employees, Settings, Notifications, Alert Rules, Profile Avatar Upload/Remove, Reports
+
+**API Performance Benchmark (`php artisan test:api-performance`):**
+
+| Endpoint | Local Dev (Pusher Sync) | Local Dev (No Pusher) | Production Estimate | Target |
+|---|---|---|---|---|
+| `GET /products` | 472 ms | 298 ms | ~210 ms | < 200 ms |
+| `GET /pos/products` | 293 ms | 201 ms | ~210 ms | < 200 ms |
+| `POST /pos/checkout` | 968 ms | 315 ms | **~325 ms** | < 700 ms |
+| `GET /reports/sales-summary` | 304 ms | 244 ms | ~250 ms | < 300 ms |
+| `GET /inventory` | 273 ms | 193 ms | ~200 ms | < 150 ms |
+| `GET /notifications` | 298 ms | 197 ms | ~205 ms | < 150 ms |
+
+> **Why production is faster:** The local benchmarks include ~500ms of Philippines → Singapore (Pusher ap1) network overhead. In production, both Render and Pusher ap1 are hosted in Singapore, so server-to-server Pusher calls take only ~10ms. Filipino end-users experience an additional ~60ms round-trip to reach the Singapore server — still well within acceptable UX thresholds.
+
+**End-to-End Flow Test (`php artisan test:api-flow`):**
+
+Verifies the complete POS workflow end-to-end against the live database:
+- ✔ Product category, variant types, and variant options creation
+- ✔ Base product + variant product creation
+- ✔ POS checkout with stock deduction
+- ✔ Return with stock restoration
+- ✔ Refund (mark damaged, no shelf restoration)
+- ✔ Transaction void with stock restoration
+- ✔ Reservation with 50% deposit
+- ✔ Reservation fulfillment with remaining balance payment
+
 
 ---
 
@@ -195,10 +218,19 @@ Full production deployment was completed across the following infrastructure:
 | Frontend | Cloudflare Pages (CDN) | `ztg-pos-with-smart-inventory.pages.dev` |
 | Backend API | Render.com (Docker) | `ztg-pos-with-smart-inventory.onrender.com` |
 | Database | TiDB Cloud Serverless | `gateway01.ap-southeast-1.prod.aws.tidbcloud.com` |
-| Real-Time | Pusher (Channels) | `ap1` cluster |
+| Real-Time | Pusher (Channels) | `ap1` cluster (Singapore) |
+| File Storage | Cloudflare R2 | Persistent S3-compatible avatar/image storage |
 | Uptime Monitor | BetterStack | Pings `/up` every 3 minutes |
 
----
+**Production Optimizations Applied:**
+- `php artisan config:cache` — caches all configuration files
+- `php artisan route:cache` — caches route definitions
+- `php artisan event:cache` — caches event-listener mappings
+- `php artisan optimize` — combined optimization command
+- `APP_DEBUG=false` — disables stack traces in production responses
+- `BROADCAST_CONNECTION=pusher` — enables real-time Pusher broadcasting
+- N+1 query fix on POS product catalog (`variantOptions.type` eager loaded on variants)
+- Database indexes on `transactions` table (`status`, `cashier_id`, `date`) for fast report queries
 
 ### Phase 6 — Maintenance & Monitoring
 
@@ -928,7 +960,7 @@ ZTG-main/
 | **No Offline Mode** | Requires active internet connection | Future: PWA + service workers |
 | **No Persistent File Storage** | Render ephemeral disk (files reset on deploy) | **Resolved:** Migrated all user avatars & product uploads to Cloudflare R2 (S3-compatible persistent cloud storage) |
 | **Single Region Database** | TiDB Cloud free tier is single-region (ap-southeast-1) | Future: upgrade to paid multi-region plan |
-| **No Automated Tests** | No unit/integration test suite yet | Future: PHPUnit + Pest for backend, Vitest for frontend |
+| **No Automated Tests** | No unit/integration test suite yet | **Resolved:** Created a PHPUnit suite with 104+ tests (`php artisan test`) and an API latency benchmark tool (`php artisan test:api-performance`) |
 | **Token Expiry UX** | Expired tokens show API error, not auto-logout | Future: Axios 401 interceptor to auto-redirect to login |
 
 ---

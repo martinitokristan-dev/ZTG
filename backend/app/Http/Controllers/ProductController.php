@@ -139,16 +139,11 @@ class ProductController extends Controller
              $file = $request->file('image');
              $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
              
-             // Ensure public/uploads directory exists
-             $uploadPath = public_path('uploads');
-             if (!file_exists($uploadPath)) {
-                 mkdir($uploadPath, 0755, true);
-             }
-
-             $file->move($uploadPath, $filename);
+             // Upload directly to Cloudflare R2 (s3 disk)
+             $path = \Illuminate\Support\Facades\Storage::disk('s3')->putFileAs('uploads', $file, $filename, 'public');
 
              return response()->json([
-                 'url' => asset('uploads/' . $filename)
+                 'url' => \Illuminate\Support\Facades\Storage::disk('s3')->url($path)
              ]);
          }
 

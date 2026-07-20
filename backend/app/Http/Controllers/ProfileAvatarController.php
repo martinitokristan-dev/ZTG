@@ -39,8 +39,8 @@ class ProfileAvatarController extends Controller
         if ($user->profile_photo) {
             try {
                 $oldPath = $this->urlToStoragePath($user->profile_photo);
-                if ($oldPath && Storage::disk('public')->exists($oldPath)) {
-                    Storage::disk('public')->delete($oldPath);
+                if ($oldPath && Storage::disk('s3')->exists($oldPath)) {
+                    Storage::disk('s3')->delete($oldPath);
                 }
             } catch (\Throwable $e) {
                 // Log the failure but continue with the new upload
@@ -56,10 +56,10 @@ class ProfileAvatarController extends Controller
         $file = $request->file('avatar');
         $ext  = $file->extension();                   // guessed from MIME, NOT getClientOriginalExtension()
         $filename = 'avatar_' . $user->id . '_' . Str::random(16) . '.' . $ext;
-        $path = $file->storeAs('avatars', $filename, 'public');
+        $path = $file->storeAs('avatars', $filename, 's3');
 
-        // Build the public URL served through the storage symlink
-        $url = rtrim(config('app.url'), '/') . '/storage/' . $path;
+        // Build the public URL served through Cloudflare R2
+        $url = Storage::disk('s3')->url($path);
 
         $user->update(['profile_photo' => $url]);
 
@@ -80,8 +80,8 @@ class ProfileAvatarController extends Controller
         if ($user->profile_photo) {
             try {
                 $oldPath = $this->urlToStoragePath($user->profile_photo);
-                if ($oldPath && Storage::disk('public')->exists($oldPath)) {
-                    Storage::disk('public')->delete($oldPath);
+                if ($oldPath && Storage::disk('s3')->exists($oldPath)) {
+                    Storage::disk('s3')->delete($oldPath);
                 }
             } catch (\Throwable $e) {
                 Log::warning('ProfileAvatar: could not delete avatar on remove.', [
@@ -111,10 +111,19 @@ class ProfileAvatarController extends Controller
     private function urlToStoragePath(?string $url): ?string
     {
         if (!$url) return null;
-        $base = rtrim(config('app.url'), '/') . '/storage/';
-        if (str_starts_with($url, $base)) {
-            return substr($url, strlen($base));
+        
+        // Try local storage path first (for legacy compatibility)
+        $localBase = rtrim(config('app.url'), '/') . '/storage/';
+        if (str_starts_with($url, $localBase)) {
+            return substr($url, strlen($localBase));
         }
+
+        // Try S3/R2 storage path
+        $s3Base = rtrim(config('filesystems.disks.s3.url'), '/') . '/';
+        if ($s3Base && str_starts_with($url, $s3Base)) {
+            return substr($url, strlen($s3Base));
+        }
+
         return null;  // external/unknown URL — do not touch
     }
 }

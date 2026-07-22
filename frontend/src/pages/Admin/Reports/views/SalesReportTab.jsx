@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import api from '../../../../shared/api';
 import { resetReportsCache } from '../../../../shared/hooks/useReportsCache';
+import { exportSalesToExcel, exportSalesToCSV } from '../../../../shared/utils/clientExcelExporter';
 import StatusBadge from '../../../../shared/components/StatusBadge';
 
 export default function SalesReportTab({ salesSummary, employees = [], fmt, fmtDate, isReportGenerated, setIsReportGenerated, startDate, setStartDate, endDate, setEndDate }) {
@@ -135,43 +136,13 @@ export default function SalesReportTab({ salesSummary, employees = [], fmt, fmtD
 
     const handleExportCSV = () => {
         if (flattenedTransactionsItems.length === 0) return;
+        exportSalesToCSV(flattenedTransactionsItems, { startDate, endDate });
+        setHasExported(true);
+    };
 
-        // Build CSV header & rows
-        const headers = ["Date", "S.I./C.I./D.R.", "Part No.", "Product", "Qty", "Amount", "Payment", "Served By", "Status"];
-        const csvRows = [headers.join(",")];
-
-        flattenedTransactionsItems.forEach(item => {
-            const tx = item.tx;
-            const isDeduction = (tx.status === 'Refund' || tx.status === 'Return' || tx.status === 'Void');
-            const resolvedName = (item.product?.name || item.name || 'Unknown Product').replace(/"/g, '""');
-            const resolvedPartNo = item.product?.part_no || item.partNo || 'N/A';
-            const rowAmount = item.qty * (item.price || 0);
-            const displayAmount = isDeduction ? `-${rowAmount}` : `${rowAmount}`;
-
-            const row = [
-                `"${fmtDate(tx.date || tx.created_at)}"`,
-                `"${tx.si_no || tx.receipt_number || '-'}"`,
-                `"${resolvedPartNo}"`,
-                `"${resolvedName}"`,
-                item.qty,
-                displayAmount,
-                `"${tx.payment_method}"`,
-                `"${tx.cashier?.real_name || tx.cashier?.name || tx.checker?.name || '—'}"`,
-                `"${tx.status}"`
-            ];
-            csvRows.push(row.join(","));
-        });
-
-        // Download CSV file
-        const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Sales_Report_${startDate}_to_${endDate}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
+    const handleExportExcel = () => {
+        if (flattenedTransactionsItems.length === 0) return;
+        exportSalesToExcel(flattenedTransactionsItems, { startDate, endDate });
         setHasExported(true);
     };
 
@@ -231,17 +202,32 @@ export default function SalesReportTab({ salesSummary, employees = [], fmt, fmtD
                 <div style={{ display: 'flex', gap: '12px' }}>
                     <button 
                         className="btn btn-success" 
-                        onClick={handleExportCSV}
+                        onClick={handleExportExcel}
                         disabled={flattenedTransactionsItems.length === 0}
                         style={{ 
                             display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '700', fontSize: '13px', 
-                            borderRadius: '8px', padding: '8px 20px', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', 
-                            border: 'none', color: '#FFFFFF', boxShadow: '0 4px 12px rgba(16,185,129,0.2)',
+                            borderRadius: '8px', padding: '8px 20px', background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', 
+                            border: 'none', color: '#FFFFFF', boxShadow: '0 4px 12px rgba(5,150,105,0.3)',
                             cursor: flattenedTransactionsItems.length === 0 ? 'not-allowed' : 'pointer'
                         }}
+                        title="Export formatted Excel report matching Daily Sales template"
                     >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        Export CSV
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        Export Excel (.xlsx)
+                    </button>
+
+                    <button 
+                        className="btn" 
+                        onClick={handleExportCSV}
+                        disabled={flattenedTransactionsItems.length === 0}
+                        style={{ 
+                            display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '12px', 
+                            borderRadius: '8px', padding: '8px 14px', background: '#F1F5F9', color: '#334155',
+                            border: '1px solid #CBD5E1', cursor: flattenedTransactionsItems.length === 0 ? 'not-allowed' : 'pointer'
+                        }}
+                    >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        CSV
                     </button>
 
                     {isReportGenerated ? (

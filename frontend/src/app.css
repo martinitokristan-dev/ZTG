@@ -1338,7 +1338,6 @@ body {
         .alert-banner.warning {
             background-color: var(--warning-light);
             border: 1px solid var(--warning);
-            border-left: 4px solid var(--warning);
             border-radius: 6px;
             padding: 12px 16px;
             margin-bottom: 24px;

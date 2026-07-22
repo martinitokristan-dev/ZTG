@@ -39,22 +39,33 @@ export default function VoidModal({ isOpen, onClose, onSubmit, transaction, fmtD
         <div className="modal-overlay" style={{ zIndex: 999 }}>
             <div className="modal-card" style={{ maxWidth: '540px', width: '95%', background: '#FFFFFF', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.12)', border: '1px solid #E2E8F0' }}>
                 <form onSubmit={handleSubmit}>
-                    <div className="modal-header" style={{ background: '#FFFFFF', borderBottom: '1px solid #F1F5F9', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                            <h3 style={{ color: '#991B1B', fontSize: '18px', fontWeight: '700', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" strokeWidth="2.5" style={{ color: '#EF4444', flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Void Transaction
-                            </h3>
-                            <p style={{ color: '#6B7280', fontSize: '11.5px', margin: 0 }}>Admin authorization required — Cashier must physically request this action</p>
-                        </div>
-                        <button type="button" style={{ color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', transition: 'color 0.2s' }} onClick={onClose}>
+                    <div className="modal-header" style={{ position: 'relative', background: '#FEF2F2', borderBottom: '1px solid #FCA5A5', padding: '20px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '8px' }}>
+                        <button type="button" style={{ position: 'absolute', top: '16px', right: '16px', color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }} onClick={onClose}>
                             <svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
+
+                        <div style={{
+                            width: '42px', height: '42px',
+                            background: '#FFF5F5',
+                            borderRadius: '50%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            border: '1.5px solid #EF4444',
+                            flexShrink: 0
+                        }}>
+                            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" strokeWidth="2.5" style={{ color: '#DC2626' }}><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                        </div>
+                        <div>
+                            <h3 style={{ color: '#991B1B', fontSize: '18px', fontWeight: '700', margin: '0 0 2px 0', fontFamily: '"Outfit", sans-serif' }}>
+                                Void Transaction
+                            </h3>
+                            <p style={{ color: '#7F1D1D', fontSize: '12px', margin: 0 }}>Admin authorization required — Cashier must physically request this action</p>
+                        </div>
                     </div>
     
                     <div className="modal-body" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '75vh', overflowY: 'auto' }}>
     
                         {/* Warning Banner */}
-                        <div style={{ background: '#FFF5F5', border: '1px solid #FEE2E2', borderLeft: '4px solid #EF4444', borderRadius: '8px', padding: '12px 16px', fontSize: '12.5px', color: '#991B1B' }}>
+                        <div style={{ background: '#FFF5F5', border: '1px solid #FEE2E2', borderRadius: '8px', padding: '12px 16px', fontSize: '12.5px', color: '#991B1B' }}>
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" strokeWidth="2.5" style={{ flexShrink: 0, marginTop: '1px' }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                                 <span><strong>This action cannot be undone.</strong> Voiding cancels the sale and generates an Official Receipt (OR-VOID) as proof. Only proceed after the cashier's physical request.</span>
@@ -109,7 +120,7 @@ export default function VoidModal({ isOpen, onClose, onSubmit, transaction, fmtD
                         </div>
     
                         {/* Admin Authorization Box */}
-                        <div style={{ background: '#FFFDF5', border: '1px solid #FEF3C7', borderLeft: '4px solid #D97706', borderRadius: '10px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '14px', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
+                        <div style={{ background: '#FFFDF5', border: '1px solid #FEF3C7', borderRadius: '10px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '14px', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
                             <h4 style={{ fontSize: '11px', fontWeight: '700', color: '#B45309', textTransform: 'uppercase', margin: 0, letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" strokeWidth="2.5" style={{ flexShrink: 0 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Admin Authorization
                             </h4>

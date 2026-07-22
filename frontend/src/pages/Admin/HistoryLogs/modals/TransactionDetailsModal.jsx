@@ -80,13 +80,17 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction, 
         </div>
     );
 
+    const resolvedCustomer = tx.customer_name || tx.customer?.name || (tx.customer_id ? `Customer #${tx.customer_id}` : null);
+
     return (
         <div className="modal-overlay" style={{ zIndex: 999 }}>
             <div className="modal-card audit-detail-card" style={{ maxWidth: '680px', width: '95%', background: '#FFFFFF', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
                 <div className="modal-header audit-detail-header" style={{ padding: '20px 24px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                         <h3 className="modal-title" style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#111827' }}>{title}</h3>
-                        <p className="audit-detail-subtitle" style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#6B7280' }}>{subtitle}</p>
+                        <p className="audit-detail-subtitle" style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#475569', fontWeight: '600' }}>
+                            {subtitle} {resolvedCustomer ? `• Customer: ${resolvedCustomer}` : ''}
+                        </p>
                     </div>
                     <button type="button" className="modal-close" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF' }}>
                         <svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -99,7 +103,7 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction, 
                                 {auditDetailRow('Invoice No.', tx.si_no || '—')}
                                 {auditDetailRow('Date & Time', fmtDate(tx.date || tx.created_at))}
                                 {auditDetailRow('Verified By', tx.cashier?.name || '—')}
-                                {auditDetailRow('Source', tx.customer?.name || 'SUPPLIER RESTOCK')}
+                                {auditDetailRow('Source', tx.customer_name || tx.customer?.name || 'SUPPLIER RESTOCK')}
                                 {auditDetailRow('Status', status, { color: statusColor, fontWeight: '700' })}
                             </>
                         )}
@@ -108,7 +112,7 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction, 
                             <>
                                 {auditDetailRow('Invoice No.', tx.si_no || '—')}
                                 {auditDetailRow('Date & Time', fmtDate(tx.date || tx.created_at))}
-                                {auditDetailRow('Customer', tx.customer?.name || 'Walk-in')}
+                                {auditDetailRow('Customer', tx.customer_name || tx.customer?.name || 'Walk-in')}
                                 {auditDetailRow('Cashier', tx.cashier?.name || '—')}
                                 {auditDetailRow('Amount', fmt(tx.amount || tx.total))}
                                 {auditDetailRow('Voided By', tx.approver_name || tx.cashier?.name || '—')}
@@ -121,25 +125,25 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction, 
                             <>
                                 {auditDetailRow('Reference No.', tx.si_no || '—')}
                                 {auditDetailRow('Date & Time', fmtDate(tx.date || tx.created_at))}
-                                {auditDetailRow('Customer', tx.customer?.name || 'Walk-in')}
-                                {auditDetailRow('Payment Method', tx.payment_method)}
+                                {auditDetailRow('Customer', tx.customer_name || tx.customer?.name || 'Walk-in')}
+                                {auditDetailRow('Payment Method', tx.payment_method || '—')}
                                 {auditDetailRow('Amount', fmt(tx.amount || tx.total))}
                                 {auditDetailRow('Served By', tx.checker?.name || tx.cashier?.name || '—')}
                                 {auditDetailRow('Status', status, { color: statusColor, fontWeight: '700' })}
                             </>
                         )}
 
-                        {(status === 'Completed' || status === 'Refund' || status === 'Return') && (
+                        {status !== 'Restocked' && status !== 'Void' && status !== 'Deposit' && status !== 'Paid' && (
                             <>
                                 {auditDetailRow('Invoice No.', tx.si_no || '—')}
                                 {auditDetailRow('Date & Time', fmtDate(tx.date || tx.created_at))}
-                                {auditDetailRow('Customer', tx.customer?.name || 'Walk-in')}
-                                {auditDetailRow('Contact Phone', tx.customer?.phone || '—')}
+                                {auditDetailRow('Customer', tx.customer_name || tx.customer?.name || (tx.customer_id ? `Customer #${tx.customer_id}` : 'Walk-in'))}
+                                {(tx.customer?.phone || tx.customer_phone) && auditDetailRow('Contact Phone', tx.customer?.phone || tx.customer_phone)}
                                 {auditDetailRow('Payment Method', tx.payment_method || 'Cash')}
                                 {auditDetailRow('Amount', fmt(tx.amount || tx.total))}
                                 {auditDetailRow('Served By', tx.checker?.name || tx.cashier?.name || '—')}
                                 {auditDetailRow('Status', status, { color: statusColor, fontWeight: '700' })}
-                                {(status === 'Refund' || status === 'Return') && auditDetailRow('Reason', reason)}
+                                {(status === 'Refund' || status === 'Return' || reason !== '—') && auditDetailRow('Reason', reason)}
                             </>
                         )}
                     </div>

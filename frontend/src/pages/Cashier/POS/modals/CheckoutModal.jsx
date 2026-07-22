@@ -253,7 +253,7 @@ export default function CheckoutModal({
                                 textAlign: 'center',
                                 borderBottom: '1px dashed #CBD5E1'
                             }}>
-                                <p style={{ fontSize: '13px', fontWeight: 800, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 2px' }}>ZTG Heavy Parts</p>
+                                <p style={{ fontSize: '13px', fontWeight: 800, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 2px' }}>ZTG Heavy Equipment Parts</p>
                                 <p style={{ fontSize: '11px', color: '#64748B', margin: 0 }}>Official Sales Receipt</p>
                             </div>
 

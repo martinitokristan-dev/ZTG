@@ -141,3 +141,23 @@ The company logo works differently from text details:
 2. **Next Year:** Your business moves to *456 Industrial Parkway*. You update the address in General Settings and type **CONFIRM** to save. You also upload a fresh new company logo.
 3. **Reprinting the Old Sale:** A customer asks to reprint their receipt from last year. The reprinted receipt will still show the original address (*123 Main Street*) to maintain accurate historical records. However, it will display your newly uploaded company logo at the top.
 
+---
+
+### 7. Excel & Sales Reporting Export Behavior (Desktop vs. Cloud Sync)
+
+This system provides **1-Click Formatted Excel & CSV Exports** designed to match the store's exact 11-column daily sales template (`DATE`, `QTY`, `PART NUMBER`, `PART NAME`, `PRICE`, `SALES`, `CUSTOMER NAME`, `PAYMENT`, `DISCOUNTED`, `S.I./C.I./D.R.`, `SERVE BY`).
+
+#### **Technical Behavior & Account Scope:**
+* **Desktop File Exports (`.xls` / `.csv`):** 
+  * The system exports fully formatted `.xls` spreadsheets and UTF-8 BOM `.csv` files that open cleanly in desktop Microsoft Excel, WPS Office, or Google Sheets with zero warning popups.
+  * Data formatting (currency separators, short dates, bold part numbers, green title headers, red `P.O` font, and 11 matching columns) is pre-applied.
+
+* **Account Limitations (Offline/Desktop Excel vs. Cloud API):**
+  * Local desktop Microsoft Excel applications running on personal/unlicenced Windows accounts do not support inbound web API connections. Therefore, web browsers cannot edit an offline `.xlsx` file open on a user's hard drive without downloading an updated file.
+  * **Workflow:** Users click **Export Excel**, open the updated file, and either use the exported file as their updated master report or copy-paste rows into their master Excel workbook.
+
+* **Future Enterprise Upgrade Path:**
+  * The data structures, date filters, and column definitions in this system are built to be **100% compatible with Microsoft Graph API**. 
+  * If the store upgrades to a paid Microsoft 365 Business / Azure account in the future, entering their Azure App credentials in settings will immediately enable silent, real-time cloud synchronization straight into their OneDrive / Excel Online spreadsheets without modifying any core sales data models.
+
+

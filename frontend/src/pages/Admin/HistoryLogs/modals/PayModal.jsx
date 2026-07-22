@@ -41,16 +41,29 @@ export default function PayModal({ isOpen, onClose, onSubmit, transaction, fmtDa
         <div className="modal-overlay" style={{ zIndex: 999 }}>
             <div className="modal-card" style={{ maxWidth: '500px', width: '95%', background: '#FFFFFF', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.12)', border: '1px solid #E2E8F0' }}>
                 <form onSubmit={handleSubmit}>
-                    <div className="modal-header" style={{ background: '#FFFFFF', borderBottom: '1px solid #F1F5F9', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                            <h3 style={{ color: '#047857', fontSize: '18px', fontWeight: '700', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" strokeWidth="2.5" style={{ color: '#10B981', flexShrink: 0 }}><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Pay Pending Order
-                            </h3>
-                            <p style={{ color: '#6B7280', fontSize: '11.5px', margin: 0 }}>Collect payment for a parked P.O. transaction</p>
-                        </div>
-                        <button type="button" style={{ color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', transition: 'color 0.2s' }} onClick={onClose}>
+                    <div className="modal-header" style={{ position: 'relative', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: '20px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '8px' }}>
+                        <button type="button" style={{ position: 'absolute', top: '16px', right: '16px', color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', transition: 'color 0.2s' }} onClick={onClose}>
                             <svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
+                        
+                        <div style={{
+                            width: '42px', height: '42px',
+                            background: '#ECFDF5',
+                            borderRadius: '50%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            border: '1.5px solid #10B981',
+                            flexShrink: 0
+                        }}>
+                            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" strokeWidth="2.5" style={{ color: '#047857' }}>
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 style={{ color: '#047857', fontSize: '18px', fontWeight: '700', margin: '0 0 2px 0', fontFamily: '"Outfit", sans-serif' }}>
+                                Pay Pending Order
+                            </h3>
+                            <p style={{ color: '#6B7280', fontSize: '12px', margin: 0 }}>Collect payment for a parked P.O. transaction</p>
+                        </div>
                     </div>
     
                     <div className="modal-body" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', maxHeight: '75vh', overflowY: 'auto' }}>

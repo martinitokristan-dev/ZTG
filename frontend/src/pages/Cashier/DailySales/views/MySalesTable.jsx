@@ -1,6 +1,7 @@
 import React from 'react';
 import LoadingSpinner from '../../../../shared/components/LoadingSpinner';
 import StatusBadge from '../../../../shared/components/StatusBadge';
+import { exportSalesToExcel } from '../../../../shared/utils/clientExcelExporter';
 
 export default function MySalesTable({ loading, items, fmt, fmtDate }) {
     if (loading) return <LoadingSpinner text="Loading sales data..." minHeight="200px" />;
@@ -13,10 +14,40 @@ export default function MySalesTable({ loading, items, fmt, fmtDate }) {
         );
     }
 
+    const handleExportExcel = () => {
+        const flattened = items.map(item => ({
+            qty: item.qty,
+            price: item.price,
+            name: item.name,
+            partNo: item.part_no || item.partNo,
+            tx: {
+                date: item._txDate,
+                si_no: item._txReceipt,
+                customer_name: item._txCustomer,
+                payment_method: item._txPayment,
+                status: item._txStatus,
+                cashier: { name: item._txChecker }
+            }
+        }));
+        exportSalesToExcel(flattened, { filename: `My_Daily_Sales_${new Date().toISOString().slice(0, 10)}.xlsx` });
+    };
+
     return (
         <div className="card table-card" style={{ background: '#FFFFFF', borderRadius: '10px', border: '1px solid var(--border)' }}>
-            <div className="table-header-bar" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+            <div className="table-header-bar" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>Fulfilled Sales Invoices</h3>
+                <button 
+                    className="btn btn-success btn-sm"
+                    onClick={handleExportExcel}
+                    style={{ 
+                        display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', fontSize: '12px', 
+                        borderRadius: '6px', padding: '6px 14px', background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', 
+                        border: 'none', color: '#FFFFFF', cursor: 'pointer'
+                    }}
+                >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                    Export Excel (.xlsx)
+                </button>
             </div>
             <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>

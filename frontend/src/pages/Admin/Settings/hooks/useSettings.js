@@ -46,6 +46,7 @@ export default function useSettings() {
     const [showPIN, setShowPIN] = useState(false);
     const [passwordData, setPasswordData] = useState({ current_password: '', password: '', password_confirmation: '' });
     const [avatarUploading, setAvatarUploading] = useState(false);
+    const [avatarRemoving, setAvatarRemoving] = useState(false);
     const [confirmingRemove, setConfirmingRemove] = useState(false);
 
     // Check if profile tab has unsaved changes
@@ -58,7 +59,7 @@ export default function useSettings() {
     // ------------------------------------------------------------------------
     const [settings, setSettings] = useState({
         // Business details (TIN & Full Address)
-        business_name: 'ZTG HEAVY PARTS',
+        business_name: 'ZTG HEAVY EQUIPMENT PARTS',
         branch_location: 'Butuan City',
         address: '123 Industrial Ave., Brgy. San Jose, Butuan City',
         contact_number: '0917-000-1111',
@@ -121,6 +122,7 @@ export default function useSettings() {
     // Business logo — loaded from settings, admin-only upload/remove
     const [logoUrl, setLogoUrl] = useState(null);
     const [logoUploading, setLogoUploading] = useState(false);
+    const [logoRemoving, setLogoRemoving] = useState(false);
 
     // Check if general settings tab has unsaved changes
     const isSettingsDirty = useMemo(() => {
@@ -318,6 +320,7 @@ export default function useSettings() {
             setShowPasswordModal(false);
             setEditingTab(null);
             resetSettingsCache('user');
+            window.dispatchEvent(new Event('auth_user_updated'));
             showToast('Profile updated successfully!', 'success');
         } catch (err) {
             showToast(err.response?.data?.message || 'Failed to update profile.', 'error');
@@ -351,7 +354,6 @@ export default function useSettings() {
             });
             const newPhotoUrl = res.data?.profile_photo;
             setProfileData(prev => ({ ...prev, profile_photo: newPhotoUrl }));
-            setInitialProfileData(prev => ({ ...prev, profile_photo: newPhotoUrl }));
 
             const stored = localStorage.getItem('auth_user');
             if (stored) {
@@ -359,6 +361,7 @@ export default function useSettings() {
                 localStorage.setItem('auth_user', JSON.stringify({ ...parsed, profile_photo: newPhotoUrl }));
             }
             resetSettingsCache('user');
+            window.dispatchEvent(new Event('auth_user_updated'));
             showToast('Profile photo updated successfully!', 'success');
         } catch (err) {
             showToast(err.response?.data?.message || 'Failed to upload photo.', 'error');
@@ -374,11 +377,10 @@ export default function useSettings() {
 
     const handleAvatarRemoveConfirmed = async () => {
         setConfirmingRemove(false);
-        setAvatarUploading(true);
+        setAvatarRemoving(true);
         try {
             await api.delete('/profile/avatar');
             setProfileData(prev => ({ ...prev, profile_photo: null }));
-            setInitialProfileData(prev => ({ ...prev, profile_photo: null }));
 
             const stored = localStorage.getItem('auth_user');
             if (stored) {
@@ -386,11 +388,12 @@ export default function useSettings() {
                 localStorage.setItem('auth_user', JSON.stringify({ ...parsed, profile_photo: null }));
             }
             resetSettingsCache('user');
+            window.dispatchEvent(new Event('auth_user_updated'));
             showToast('Profile photo removed.', 'success');
         } catch (err) {
             showToast(err.response?.data?.message || 'Failed to remove photo.', 'error');
         } finally {
-            setAvatarUploading(false);
+            setAvatarRemoving(false);
         }
     };
 
@@ -442,7 +445,13 @@ export default function useSettings() {
             setLogoUrl(newUrl);
             setSettings(prev => ({ ...prev, business_logo: newUrl }));
             setInitialSettings(prev => ({ ...prev, business_logo: newUrl }));
+            if (newUrl) {
+                localStorage.setItem('cached_business_logo', newUrl);
+            } else {
+                localStorage.removeItem('cached_business_logo');
+            }
             resetSettingsCache('settings');
+            window.dispatchEvent(new Event('settings_updated'));
             showToast('Business logo updated successfully!', 'success');
         } catch (err) {
             showToast(err.response?.data?.message || 'Failed to upload logo. Max 2MB, images only.', 'error');
@@ -453,18 +462,20 @@ export default function useSettings() {
     };
 
     const handleLogoRemove = async () => {
-        setLogoUploading(true);
+        setLogoRemoving(true);
         try {
             await api.delete('/settings/logo');
             setLogoUrl(null);
             setSettings(prev => ({ ...prev, business_logo: null }));
             setInitialSettings(prev => ({ ...prev, business_logo: null }));
+            localStorage.removeItem('cached_business_logo');
             resetSettingsCache('settings');
+            window.dispatchEvent(new Event('settings_updated'));
             showToast('Business logo removed.', 'success');
         } catch (err) {
             showToast(err.response?.data?.message || 'Failed to remove logo.', 'error');
         } finally {
-            setLogoUploading(false);
+            setLogoRemoving(false);
         }
     };
 
@@ -829,14 +840,14 @@ export default function useSettings() {
         showPasswordModal, setShowPasswordModal,
         showPIN, setShowPIN,
         passwordData, setPasswordData,
-        avatarUploading, handleAvatarUpload, handleAvatarRemove,
+        avatarUploading, avatarRemoving, handleAvatarUpload, handleAvatarRemove,
         confirmingRemove, handleAvatarRemoveConfirmed, handleAvatarRemoveCancel,
         handleProfileSubmit, handlePasswordSubmit,
 
         // Tab 2: General System Settings & Logo
         settings, handleSettingInputChange, handleToggleSetting, handleSaveBulkSettings,
         showConfirmSaveModal, handleConfirmSaveBulkSettings, handleCancelSaveBulkSettings,
-        logoUrl, logoUploading, handleLogoUpload, handleLogoRemove,
+        logoUrl, logoUploading, logoRemoving, handleLogoUpload, handleLogoRemove,
 
         // Tab 3: Products Settings
         categories, showCategoryModal, setShowCategoryModal, selectedCategory, setSelectedCategory,

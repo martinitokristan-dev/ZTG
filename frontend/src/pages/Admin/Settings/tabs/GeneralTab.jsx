@@ -9,6 +9,7 @@ export default function GeneralTab({
     onLogoUpload, 
     onLogoRemove, 
     logoUploading,
+    logoRemoving,
     isEditing,
     onStartEdit,
     onCancelEdit
@@ -93,7 +94,7 @@ export default function GeneralTab({
                                         className="btn btn-secondary"
                                         style={{ fontSize: '11px', padding: '4px 10px', flex: 1 }}
                                         onClick={() => logoInputRef.current?.click()}
-                                        disabled={logoUploading}
+                                        disabled={logoUploading || logoRemoving}
                                     >
                                         {logoUploading ? 'Uploading…' : logoUrl ? 'Change' : 'Upload'}
                                     </button>
@@ -103,9 +104,9 @@ export default function GeneralTab({
                                             className="btn"
                                             style={{ fontSize: '11px', padding: '4px 10px', color: '#EF4444', border: '1px solid #EF4444', background: 'transparent' }}
                                             onClick={onLogoRemove}
-                                            disabled={logoUploading}
+                                            disabled={logoUploading || logoRemoving}
                                         >
-                                            Remove
+                                            {logoRemoving ? 'Removing…' : 'Remove'}
                                         </button>
                                     )}
                                 </div>

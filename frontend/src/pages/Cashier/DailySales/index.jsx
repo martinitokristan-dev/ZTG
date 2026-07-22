@@ -21,7 +21,7 @@ export default function DailySales() {
                     
                     {/* Stat Cards Row */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', marginBottom: '24px' }}>
-                        <div className="card stat-box" style={{ padding: '24px', background: '#FFFFFF', borderRadius: '10px', border: '1px solid var(--border)', borderLeft: '4px solid #10B981' }}>
+                        <div className="card stat-box" style={{ padding: '24px', background: '#FFFFFF', borderRadius: '10px', border: '1px solid var(--border)' }}>
                             <div>
                                 <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Gross Sales Revenue</span>
                                 <div style={{ fontSize: '32px', fontWeight: '800', color: 'var(--text-primary)', fontFamily: '"Outfit", sans-serif' }}>{ds.fmt(ds.grossSales)}</div>

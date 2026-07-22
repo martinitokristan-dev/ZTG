@@ -3,7 +3,7 @@ import React, { useRef } from 'react';
 export default function ProfileTab({
     profileData, setProfileData, handleProfileSubmit,
     setShowPasswordModal, showPIN, setShowPIN, isProfileDirty,
-    handleAvatarUpload, handleAvatarRemove, avatarUploading,
+    handleAvatarUpload, handleAvatarRemove, avatarUploading, avatarRemoving,
     confirmingRemove, handleAvatarRemoveConfirmed, handleAvatarRemoveCancel,
     isEditing, onStartEdit, onCancelEdit
 }) {
@@ -82,62 +82,66 @@ export default function ProfileTab({
                         <p className="profile-section-desc" style={{ marginBottom: '20px' }}>
                             This photo will appear in the sidebar and across the system.
                         </p>
-                        <div className="profile-photo-actions" style={{ flexDirection: 'column' }}>
-                            {/* Hidden real file input */}
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                                style={{ display: 'none' }}
-                                onChange={handleAvatarUpload}
-                            />
-                            <button
-                                type="button"
-                                className="btn btn-secondary profile-upload-btn"
-                                style={{ width: '100%' }}
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={avatarUploading || hasPhoto || !isEditing}
-                            >
-                                {avatarUploading ? 'Uploading...' : 'Upload New Photo'}
-                            </button>
-                            {hasPhoto && !avatarUploading && (
-                                <span style={{ fontSize: '11px', color: '#64748B', marginTop: '6px', marginBottom: '4px', textAlign: 'center' }}>
-                                    Please remove your current photo first.
-                                </span>
-                            )}
-                            {hasPhoto && !confirmingRemove && (
+                        {isEditing && (
+                            <div className="profile-photo-actions" style={{ flexDirection: 'column' }}>
+                                {/* Hidden real file input */}
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+                                    style={{ display: 'none' }}
+                                    onChange={handleAvatarUpload}
+                                />
                                 <button
                                     type="button"
-                                    className="btn btn-danger profile-remove-btn"
-                                    style={{ width: '100%', background: 'transparent', border: 'none', color: '#DC2626' }}
-                                    onClick={handleAvatarRemove}
-                                    disabled={avatarUploading || !isEditing}
+                                    className="btn btn-secondary profile-upload-btn"
+                                    style={{ width: '100%' }}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={avatarUploading || avatarRemoving || hasPhoto}
                                 >
-                                    Remove Photo
+                                    {avatarUploading ? 'Uploading...' : 'Upload New Photo'}
                                 </button>
-                            )}
-                            {confirmingRemove && (
-                                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-                                    <span style={{ fontSize: '12px', color: '#64748B', textAlign: 'center' }}>Remove your profile photo?</span>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button
-                                            type="button"
-                                            onClick={handleAvatarRemoveConfirmed}
-                                            style={{ flex: 1, padding: '6px 0', background: '#DC2626', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
-                                        >
-                                            Yes, Remove
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={handleAvatarRemoveCancel}
-                                            style={{ flex: 1, padding: '6px 0', background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: '6px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
-                                        >
-                                            Cancel
-                                        </button>
+                                {hasPhoto && !avatarUploading && !avatarRemoving && (
+                                    <span style={{ fontSize: '11px', color: '#64748B', marginTop: '6px', marginBottom: '4px', textAlign: 'center' }}>
+                                        Please remove your current photo first.
+                                    </span>
+                                )}
+                                {hasPhoto && !confirmingRemove && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-danger profile-remove-btn"
+                                        style={{ width: '100%', background: 'transparent', border: 'none', color: '#DC2626' }}
+                                        onClick={handleAvatarRemove}
+                                        disabled={avatarUploading || avatarRemoving}
+                                    >
+                                        {avatarRemoving ? 'Removing...' : 'Remove Photo'}
+                                    </button>
+                                )}
+                                {confirmingRemove && (
+                                    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                                        <span style={{ fontSize: '12px', color: '#64748B', textAlign: 'center' }}>Remove your profile photo?</span>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <button
+                                                type="button"
+                                                onClick={handleAvatarRemoveConfirmed}
+                                                disabled={avatarRemoving}
+                                                style={{ flex: 1, padding: '6px 0', background: '#DC2626', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600, fontSize: '13px', cursor: avatarRemoving ? 'not-allowed' : 'pointer', opacity: avatarRemoving ? 0.7 : 1 }}
+                                            >
+                                                {avatarRemoving ? 'Removing...' : 'Yes, Remove'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={handleAvatarRemoveCancel}
+                                                disabled={avatarRemoving}
+                                                style={{ flex: 1, padding: '6px 0', background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: '6px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </section>
 

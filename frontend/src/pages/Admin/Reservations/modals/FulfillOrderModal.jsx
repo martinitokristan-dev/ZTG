@@ -23,7 +23,7 @@ export default function FulfillOrderModal({
                 </div>
 
                 <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '24px', minHeight: '500px' }}>
-                    <div style={{ background: '#DCFCE7', color: '#166534', padding: '12px 16px', borderRadius: '6px', fontSize: '11px', fontWeight: 500, borderLeft: '4px solid #22C55E' }}>
+                    <div style={{ background: '#DCFCE7', color: '#166534', padding: '12px 16px', borderRadius: '6px', fontSize: '11px', fontWeight: 500, border: '1px solid #86EFAC' }}>
                         Customer is here to pick up their order. Collect the balance due and complete the transaction to release items from warehouse.
                     </div>
 

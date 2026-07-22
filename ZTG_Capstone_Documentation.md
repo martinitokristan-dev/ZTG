@@ -962,7 +962,8 @@ ZTG-main/
 | **No Persistent File Storage** | Render ephemeral disk (files reset on deploy) | **Resolved:** Migrated all user avatars & product uploads to Cloudflare R2 (S3-compatible persistent cloud storage) |
 | **Single Region Database** | TiDB Cloud free tier is single-region (ap-southeast-1) | Future: upgrade to paid multi-region plan |
 | **No Automated Tests** | No unit/integration test suite yet | **Resolved:** Created a PHPUnit suite with 104+ tests (`php artisan test`) and an API latency benchmark tool (`php artisan test:api-performance`) |
-| **Token Expiry UX** | Expired tokens show API error, not auto-logout | Future: Axios 401 interceptor to auto-redirect to login |
+| **Token Expiry UX** | Expired tokens show API error, not auto-logout | **Resolved:** Implemented global Axios 401 interceptor to auto-redirect unauthenticated sessions back to `/login` |
+| **Direct Cloud Excel Sync vs. Desktop File Export** | Personal/unlicenced Microsoft accounts lack Azure Tenant Cloud API permissions for silent background cloud pushes | **Resolved:** Export formatted 11-column `.xls` / UTF-8 BOM `.csv` files matching client template for desktop Excel, with data models 100% prepared for instant Microsoft Graph API integration when upgrading to a paid Microsoft 365 Business plan. |
 
 ---
 

@@ -115,7 +115,7 @@ export default function HistoryLogs() {
 
                         </div>
 
-                        <div style={{ marginTop: '12px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderLeft: '4px solid #3B82F6', borderRadius: '6px', padding: '10px 16px', fontSize: '11px', color: '#1E40AF', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ marginTop: '12px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '6px', padding: '10px 16px', fontSize: '11px', color: '#1E40AF', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <svg viewBox="0 0 24 24" style={{ width: '16px', height: '16px', flexShrink: 0, fill: 'none', stroke: 'currentColor', strokeWidth: '2' }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                             <span><strong>Business Activity Log:</strong> Records all business transactions — sales, refunds, returns, voids, restocks, and order releases.</span>
                         </div>

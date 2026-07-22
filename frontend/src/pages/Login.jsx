@@ -10,7 +10,40 @@ function Login() {
     const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [logoUrl, setLogoUrl] = useState(() => {
+        return localStorage.getItem('cached_business_logo') || null;
+    });
+    const [businessName, setBusinessName] = useState(() => {
+        return localStorage.getItem('cached_business_name') || '';
+    });
     const navigate = useNavigate();
+
+    React.useEffect(() => {
+        const fetchSettings = async () => {
+            const token = localStorage.getItem('auth_token');
+            if (!token) return; // Unauthenticated guest on login screen uses cached logo
+            try {
+                const res = await api.get('/settings');
+                if (res.data) {
+                    const newLogo = res.data.business_logo || null;
+                    const newName = res.data.business_name || '';
+                    setLogoUrl(newLogo);
+                    setBusinessName(newName);
+                    if (newLogo) {
+                        localStorage.setItem('cached_business_logo', newLogo);
+                    } else {
+                        localStorage.removeItem('cached_business_logo');
+                    }
+                    if (newName) {
+                        localStorage.setItem('cached_business_name', newName);
+                    }
+                }
+            } catch (e) {
+                // Silently ignore 401 on login page
+            }
+        };
+        fetchSettings();
+    }, []);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -70,7 +103,18 @@ function Login() {
             <div className="login-bg-glow-2"></div>
 
             <div className="login-card">
-                <div className="login-logo">ZTG <span>Heavy Parts</span></div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '-15px', marginBottom: '0px' }}>
+                    <img 
+                        src={logoUrl || "/ztg-logo.png"} 
+                        alt="ZTG Heavy Equipment Parts" 
+                        style={{ 
+                            height: '175px', 
+                            objectFit: 'contain', 
+                            mixBlendMode: 'multiply',
+                            filter: 'contrast(1.05)'
+                        }} 
+                    />
+                </div>
                 <p className="login-subtitle">Select your role and sign in to continue</p>
                 
                 {error && (
@@ -181,11 +225,6 @@ function Login() {
 
                     <button type="submit" className="btn login-btn" style={{ width: '100%', marginTop: '14px' }} disabled={loading}>
                         {loading ? 'Signing In...' : 'Sign In'}
-                        {!loading && (
-                            <svg style={{ width: '16px', height: '16px', stroke: 'currentColor', fill: 'none', strokeWidth: '2.5' }} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-                            </svg>
-                        )}
                     </button>
                 </form>
             </div>

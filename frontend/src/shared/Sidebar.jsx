@@ -10,14 +10,48 @@ function Sidebar() {
         return userStr ? JSON.parse(userStr) : null;
     });
 
+    const [logoUrl, setLogoUrl] = React.useState(() => {
+        return localStorage.getItem('cached_business_logo') || null;
+    });
+    const [businessName, setBusinessName] = React.useState(() => {
+        return localStorage.getItem('cached_business_name') || '';
+    });
+
     React.useEffect(() => {
         const handleUpdate = () => {
             const userStr = localStorage.getItem('auth_user');
             setUser(userStr ? JSON.parse(userStr) : null);
         };
+
+        const loadSettings = async () => {
+            try {
+                const res = await api.get('/settings');
+                if (res.data) {
+                    const newLogo = res.data.business_logo || null;
+                    const newName = res.data.business_name || '';
+                    setLogoUrl(newLogo);
+                    setBusinessName(newName);
+                    if (newLogo) {
+                        localStorage.setItem('cached_business_logo', newLogo);
+                    } else {
+                        localStorage.removeItem('cached_business_logo');
+                    }
+                    if (newName) {
+                        localStorage.setItem('cached_business_name', newName);
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load settings in Sidebar:', e);
+            }
+        };
+
+        loadSettings();
+
         window.addEventListener('auth_user_updated', handleUpdate);
+        window.addEventListener('settings_updated', loadSettings);
         return () => {
             window.removeEventListener('auth_user_updated', handleUpdate);
+            window.removeEventListener('settings_updated', loadSettings);
         };
     }, []);
 
@@ -166,15 +200,20 @@ function Sidebar() {
         }}>
             {/* Brand Header */}
             <div style={{ padding: 24, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ color: '#FFFFFF', fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <svg style={{ width: 20, height: 20, stroke: '#3B82F6', fill: 'none', strokeWidth: 2.5 }} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    ZTG Heavy Parts
-                </div>
-                <div style={{ color: '#94A3B8', fontSize: 12, marginTop: 4, fontWeight: 500, letterSpacing: '0.5px' }}>
-                    {role === 'Cashier' ? 'Cashier View' : 'Inventory & POS'}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+                    <div style={{ width: 56, height: 56, borderRadius: '50%', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                        <img src={logoUrl || "/ztg-icon.png"} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', transform: logoUrl ? 'none' : 'scale(1.45)' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ color: '#FFFFFF', fontSize: 18, fontWeight: 800, letterSpacing: '0.5px', lineHeight: '1.2' }}>
+                            {businessName ? businessName.split(' ')[0] : 'ZTG'}
+                        </span>
+                        <span style={{ color: '#94A3B8', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            {businessName && !businessName.toLowerCase().includes('heavy parts')
+                                ? businessName.split(' ').slice(1).join(' ')
+                                : 'Heavy Equipment Parts'}
+                        </span>
+                    </div>
                 </div>
             </div>
 

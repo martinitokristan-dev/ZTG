@@ -54,6 +54,7 @@ export default function ReviewRestockModal({
                                                         onError={(e) => { e.target.src = DEFAULT_PLACEHOLDER_IMAGE; }} />
                                                     <div>
                                                         <span className="text-xs font-bold text-slate-800 block">{p.name}</span>
+                                                        {p.chinese_name && <span className="text-[10px] text-slate-400 font-medium block mt-0.5">{p.chinese_name}</span>}
                                                         <span className="text-[10px] text-slate-455 font-bold block uppercase mt-0.5">Part No: {p.part_no}</span>
                                                     </div>
                                                 </td>
@@ -82,12 +83,21 @@ export default function ReviewRestockModal({
                 </div>
 
                 <div className="modal-footer flex justify-end gap-3">
-                    <button onClick={onClose} className="px-4 py-2 border border-slate-250 text-slate-500 rounded-lg text-xs font-bold bg-white hover:bg-slate-50">Cancel</button>
-                    <button onClick={onConfirm} className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 shadow">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Confirm & Restock
+                    <button onClick={onClose} className="px-4 py-2 border border-slate-250 text-slate-500 rounded-lg text-xs font-bold bg-white hover:bg-slate-50" disabled={isSubmitting}>Cancel</button>
+                    <button onClick={onConfirm} className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 shadow disabled:opacity-50" disabled={isSubmitting}>
+                        {isSubmitting ? (
+                            <>
+                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" style={{ width: '12px', height: '12px', borderWidth: '2px' }}></span>
+                                Restocking Items...
+                            </>
+                        ) : (
+                            <>
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Confirm & Restock
+                            </>
+                        )}
                     </button>
                 </div>
             </div>

@@ -19,37 +19,51 @@ export default function Dashboard() {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-            <div style={{
-                height: 70,
+            <div className="dashboard-top-bar" style={{
+                minHeight: 60,
+                height: 'auto',
                 backgroundColor: '#FFFFFF',
                 borderBottom: '1px solid #E2E8F0',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '0 88px 0 32px',
+                padding: '16px 20px',
                 flexShrink: 0,
             }}>
                 <div>
-                    <h1 style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.5px', margin: 0 }}>
+                    <h1 style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.5px', margin: 0 }}>
                         Good morning, {name}
                     </h1>
-                    <p style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>
+                    <p style={{ color: '#64748B', fontSize: 12, marginTop: 2, margin: '2px 0 0' }}>
                         You're signed in as <strong style={{ color: '#0F172A' }}>Admin</strong>. Here's your store at a glance.
                     </p>
                 </div>
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', padding: 32, display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+                <div className="dashboard-time-pills" style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+                    gap: 8,
+                    overflowX: 'auto',
+                    padding: '4px 0 8px 0',
+                    width: '100%',
+                    minHeight: '44px',
+                    whiteSpace: 'nowrap',
+                    WebkitOverflowScrolling: 'touch',
+                    scrollbarWidth: 'none',
+                    flexShrink: 0
+                }}>
                     {['Today', 'This Week', 'This Month', 'This Year'].map(range => (
                         <button
                             key={range}
                             onClick={() => setCurrentTimeRange(range)}
                             style={{
-                                padding: '6px 16px',
+                                padding: '8px 16px',
                                 borderRadius: 9999,
-                                fontSize: 12,
+                                fontSize: 13,
                                 fontWeight: 600,
                                 cursor: 'pointer',
                                 transition: 'all 0.15s ease',
@@ -57,6 +71,11 @@ export default function Dashboard() {
                                 color: currentTimeRange === range ? '#FFFFFF' : '#64748B',
                                 border: currentTimeRange === range ? '1px solid #3B82F6' : '1px solid #E2E8F0',
                                 boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
+                                flexShrink: 0,
+                                height: '36px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
                             }}
                         >
                             {range}
@@ -70,7 +89,12 @@ export default function Dashboard() {
                     <>
                         <StatCards stats={stats} currentTimeRange={currentTimeRange} />
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24, alignItems: 'start' }}>
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: window.innerWidth < 900 ? '1fr' : '1fr 320px',
+                            gap: 24,
+                            alignItems: 'start'
+                        }}>
                             <SalesTrendChart last7Days={stats.last7Days || []} timeRange={currentTimeRange} />
                             <CriticalStockAlerts />
                         </div>

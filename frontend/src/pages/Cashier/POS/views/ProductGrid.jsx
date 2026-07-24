@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import LoadingSpinner from '../../../../shared/components/LoadingSpinner';
 import useDisplayChineseNames from '../../../../shared/hooks/useDisplayChineseNames';
 
-const DEFAULT_PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&q=80";
+const DEFAULT_PLACEHOLDER_IMAGE = "/ztg-icon.png";
 
 export default function ProductGrid({ 
     products, 
@@ -65,8 +65,8 @@ export default function ProductGrid({
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: '"Outfit", sans-serif', margin: 0 }}>Catalogue Picker</h3>
                 </div>
-                <div style={{ overflowY: 'auto', flex: 1 }}>
-                    <table className="pos-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div style={{ overflowY: 'auto', overflowX: 'auto', flex: 1 }}>
+                    <table className="pos-table" style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse' }}>
                         <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#FFFFFF' }}>
                             <tr>
                                 <th style={{ textAlign: 'left', padding: '12px 14px', fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border)' }}>Product</th>
@@ -109,20 +109,7 @@ export default function ProductGrid({
                                                 />
                                                 <div>
                                                     <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
-                                                        {p.parent_product_id ? (
-                                                            <>
-                                                                {p.parent_product_name || p.name}
-                                                                {(() => {
-                                                                    const opts = p.variant_options || p.variantOptions;
-                                                                    const label = Array.isArray(opts) && opts.length > 0
-                                                                        ? opts.map(o => o.value).join(', ')
-                                                                        : null;
-                                                                    return label
-                                                                        ? <span style={{ color: 'var(--primary)', fontWeight: '500' }}> ({label})</span>
-                                                                        : null;
-                                                                })()}
-                                                            </>
-                                                        ) : p.name}
+                                                        {p.name}
                                                     </div>
                                                     {showChineseNames && p.chinese_name && <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'normal', marginTop: '2px' }}>{p.chinese_name}</div>}
                                                 </div>

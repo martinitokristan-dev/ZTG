@@ -9,7 +9,6 @@ import CheckersTab from './tabs/CheckersTab';
 import CategoryModal from './modals/CategoryModal';
 import EmployeeModal from './modals/EmployeeModal';
 import PasswordModal from './modals/PasswordModal';
-import RuleModal from './modals/RuleModal';
 import CheckerModal from './modals/CheckerModal';
 import ConfirmSaveModal from './modals/ConfirmSaveModal';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
@@ -24,9 +23,9 @@ export default function SettingsView() {
         passwordData, setPasswordData, showPasswordModal, setShowPasswordModal, showPIN, setShowPIN,
         settings, handleSettingInputChange, handleToggleSetting, handleSaveBulkSettings,
         handleConfirmSaveBulkSettings, handleCancelSaveBulkSettings, showConfirmSaveModal,
-        logoUrl, logoUploading, logoRemoving, handleLogoUpload, handleLogoRemove,
+        logoUrl, sidebarLogoUrl, logoUploading, logoRemoving, handleLogoUpload, handleLogoUploadWithCrop, handleLogoRemove,
         categories, showCategoryModal, setShowCategoryModal, selectedCategory, setSelectedCategory, categoryName, setCategoryName,
-        categoryVariants, setCategoryVariants,
+        categoryVariants, setCategoryVariants, categorySubmitting,
         newOptionValue, setNewOptionValue,
         alertRules, showRuleModal, setShowRuleModal, ruleForm, setRuleForm,
         employees, showEmployeeModal, setShowEmployeeModal, employeeForm, setEmployeeForm, selectedEmployee, setSelectedEmployee,
@@ -112,7 +111,9 @@ export default function SettingsView() {
                                         handleToggleSetting={handleToggleSetting}
                                         handleSaveBulkSettings={handleSaveBulkSettings}
                                         logoUrl={logoUrl}
+                                        sidebarLogoUrl={sidebarLogoUrl}
                                         onLogoUpload={handleLogoUpload}
+                                        onLogoUploadWithCrop={handleLogoUploadWithCrop}
                                         onLogoRemove={handleLogoRemove}
                                         logoUploading={logoUploading}
                                         logoRemoving={logoRemoving}
@@ -172,6 +173,7 @@ export default function SettingsView() {
                 categoryVariants={categoryVariants} setCategoryVariants={setCategoryVariants}
                 getOptionsForType={getOptionsForType}
                 handleCategorySubmit={handleCategorySubmit}
+                categorySubmitting={categorySubmitting}
             />
             <EmployeeModal 
                 showEmployeeModal={showEmployeeModal} setShowEmployeeModal={setShowEmployeeModal}
@@ -181,10 +183,6 @@ export default function SettingsView() {
             <PasswordModal 
                 showPasswordModal={showPasswordModal} setShowPasswordModal={setShowPasswordModal}
                 passwordData={passwordData} setPasswordData={setPasswordData} handlePasswordSubmit={handlePasswordSubmit}
-            />
-            <RuleModal 
-                showRuleModal={showRuleModal} setShowRuleModal={setShowRuleModal}
-                ruleForm={ruleForm} setRuleForm={setRuleForm} handleRuleSubmit={handleRuleSubmit}
             />
             <CheckerModal 
                 showCheckerModal={showCheckerModal} setShowCheckerModal={setShowCheckerModal}

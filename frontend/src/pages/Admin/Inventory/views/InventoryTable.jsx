@@ -55,9 +55,9 @@ export default function InventoryTable({ products, loading, handleViewProduct, p
                     {isVariant ? (
                         <>
                             <strong style={{ display: 'block' }}>
-                                {parentProduct.name} <span style={{ color: 'var(--primary)', fontWeight: 500 }}>({variantOptionText})</span>
+                                {item.name || parentProduct.name} {variantOptionText && !(item.name || '').includes(variantOptionText) && <span style={{ color: 'var(--primary)', fontWeight: 500 }}>({variantOptionText})</span>}
                             </strong>
-                            {showChineseNames && <span className="chinese-subtitle">{item.chinese_name || ''}</span>}
+                            {showChineseNames && (item.chinese_name || parentProduct.chinese_name) && <span className="chinese-subtitle">{item.chinese_name || parentProduct.chinese_name}</span>}
                         </>
                     ) : (
                         <>
@@ -112,8 +112,8 @@ export default function InventoryTable({ products, loading, handleViewProduct, p
 
     return (
         <div className="card table-card">
-            <div style={{ overflowX: 'auto' }}>
-                <table>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table style={{ minWidth: '850px', width: '100%' }}>
                     <thead>
                         <tr>
                             <th>Product</th>

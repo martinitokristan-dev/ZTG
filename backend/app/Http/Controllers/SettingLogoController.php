@@ -27,6 +27,12 @@ class SettingLogoController extends Controller
                 'mimes:jpeg,jpg,png,gif,webp',
                 'max:5120',
             ],
+            'sidebar_logo' => [
+                'nullable',
+                'image',
+                'mimes:jpeg,jpg,png,gif,webp',
+                'max:5120',
+            ],
         ]);
 
         $existing = Setting::where('key', 'business_logo')->first();
@@ -57,9 +63,43 @@ class SettingLogoController extends Controller
             ['value' => $url]
         );
 
+        $sidebarUrl = null;
+
+        // Handle optional sidebar_logo (circle cropped image)
+        if ($request->hasFile('sidebar_logo')) {
+            $existingSidebar = Setting::where('key', 'sidebar_logo')->first();
+            if ($existingSidebar && $existingSidebar->value) {
+                try {
+                    $oldSidebarPath = $this->urlToStoragePath($existingSidebar->value);
+                    if ($oldSidebarPath && Storage::disk('s3')->exists($oldSidebarPath)) {
+                        Storage::disk('s3')->delete($oldSidebarPath);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('SettingLogo: could not delete old sidebar logo.', [
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            $sidebarFile = $request->file('sidebar_logo');
+            $sidebarExt = $sidebarFile->extension() ?: 'png';
+            $sidebarFilename = 'sidebar_logo_' . Str::random(20) . '.' . $sidebarExt;
+            $sidebarPath = $sidebarFile->storeAs('logos', $sidebarFilename, 's3');
+            $sidebarUrl = Storage::disk('s3')->url($sidebarPath);
+
+            Setting::updateOrCreate(
+                ['key' => 'sidebar_logo'],
+                ['value' => $sidebarUrl]
+            );
+        } else {
+            $existingSidebar = Setting::where('key', 'sidebar_logo')->first();
+            $sidebarUrl = $existingSidebar ? $existingSidebar->value : null;
+        }
+
         return response()->json([
-            'message'  => 'Business logo uploaded successfully.',
-            'logo_url' => $url,
+            'message'          => 'Business logo uploaded successfully.',
+            'logo_url'         => $url,
+            'sidebar_logo_url' => $sidebarUrl,
         ]);
     }
 
@@ -85,9 +125,26 @@ class SettingLogoController extends Controller
             $setting->update(['value' => null]);
         }
 
+        $sidebarSetting = Setting::where('key', 'sidebar_logo')->first();
+        if ($sidebarSetting && $sidebarSetting->value) {
+            try {
+                $oldSidebarPath = $this->urlToStoragePath($sidebarSetting->value);
+                if ($oldSidebarPath && Storage::disk('s3')->exists($oldSidebarPath)) {
+                    Storage::disk('s3')->delete($oldSidebarPath);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('SettingLogo: could not delete sidebar logo on remove.', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            $sidebarSetting->update(['value' => null]);
+        }
+
         return response()->json([
-            'message'  => 'Business logo removed.',
-            'logo_url' => null,
+            'message'          => 'Business logo removed.',
+            'logo_url'         => null,
+            'sidebar_logo_url' => null,
         ]);
     }
 

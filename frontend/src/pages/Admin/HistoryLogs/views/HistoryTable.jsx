@@ -15,10 +15,10 @@ export default function HistoryTable({
     useEffect(() => {
         api.get('/settings')
             .then(res => {
-                const settingsArr = Array.isArray(res.data) ? res.data : (res.data?.settings || []);
-                const logoSetting = settingsArr.find?.(s => s.key === 'business_logo');
-                if (logoSetting?.value) setLogoUrl(logoSetting.value);
-                else if (res.data?.business_logo) setLogoUrl(res.data.business_logo);
+                const data = res.data || {};
+                const logo = data.business_logo || null;
+                if (logo) setLogoUrl(logo);
+                localStorage.setItem('cached_business_info', JSON.stringify(data));
             })
             .catch(() => { /* logo silently absent */ });
     }, []);
@@ -81,9 +81,9 @@ export default function HistoryTable({
     }
 
     return (
-        <div className="card table-card">
-            <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <div className="card table-card" style={{ minHeight: '280px', paddingBottom: openDropdownId ? '80px' : '0px', transition: 'padding-bottom 0.15s ease-out' }}>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', minHeight: '280px', paddingBottom: openDropdownId ? '80px' : '0px' }}>
+                <table style={{ width: '100%', minWidth: '780px', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead style={{ borderBottom: '1px solid var(--border)', fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
                         <tr>
                             <th style={{ padding: '16px', fontWeight: '700' }}>TRANSACTION DATE & TIME</th>
@@ -97,7 +97,7 @@ export default function HistoryTable({
                         </tr>
                     </thead>
                     <tbody style={{ fontSize: '13px' }}>
-                        {transactions.map(tx => {
+                        {transactions.map((tx, idx) => {
                             // Date formatting
                             const fullDate = fmtDate(tx.date || tx.created_at) || '';
                             const [displayDate, ...timeParts] = fullDate.split(', ');
@@ -112,6 +112,8 @@ export default function HistoryTable({
                             } else if (tx.order_ref && tx.status === 'Completed') {
                                 reservationDisplay = <span style={{display: 'block', fontSize: '10px', color: 'var(--primary)', fontWeight: '700', marginTop: '3px'}}>Pickup · {tx.order_ref}</span>;
                             }
+
+                            const isBottomRow = idx >= transactions.length - 2 && transactions.length > 2;
 
                             return (
                                 <tr key={tx.id} style={{ borderBottom: '1px solid var(--border)' }}>
@@ -161,9 +163,11 @@ export default function HistoryTable({
                                                 </button>
                                                 {openDropdownId === tx.id && (
                                                     <div style={{
-                                                        position: 'absolute', right: 0, top: 'calc(100% + 6px)', zIndex: 999,
+                                                        position: 'absolute', right: 0,
+                                                        ...(isBottomRow ? { bottom: 'calc(100% + 6px)' } : { top: 'calc(100% + 6px)' }),
+                                                        zIndex: 9999,
                                                         background: '#fff', border: '1px solid #E2E8F0', borderRadius: '8px',
-                                                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)', padding: '6px', minWidth: '160px'
+                                                        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1)', padding: '6px', minWidth: '160px'
                                                     }}>
                                                         {tx.status === 'Pending' && (
                                                             <>

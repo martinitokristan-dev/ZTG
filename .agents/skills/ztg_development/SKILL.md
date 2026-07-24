@@ -27,6 +27,11 @@ This skill defines the development workflows, architectural constraints, and fol
 * **State & Storage:** Store session data (JWT/Sanctum Token, user role) in React state and persist it in `localStorage`.
 * **API Calls:** Use `axios` for network requests. Configure a global axios instance with interceptors to automatically attach the Bearer token from `localStorage`.
 
+### Design & UI Standards (Human-Crafted Aesthetics)
+* **NO RAW EMOJIS IN PRODUCTION UI:** Never use raw unicode emojis (e.g. `✋`, `ℹ️`, `⚠️`, `💡`, `🎉`) as icons, bullet points, or banners in UI components, modals, or notifications. Raw emojis make the interface look like a generic AI-generated prototype.
+* **USE REAL SVG ICONS:** Always use clean, professional inline SVG icons (Lucide / Heroicons style vector paths) with consistent stroke widths (`strokeWidth="2"`), proper viewboxes, and curated HSL/Tailwind color palettes.
+* **NON-AI AESTHETICS:** Ensure all modal overlays, note banners, controls, and typography look handcrafted, sleek, and enterprise-grade. Avoid heavy dark blur masks or tacky AI placeholders.
+
 ---
 
 ## Frontend Architecture: Folder-Based Module Structure

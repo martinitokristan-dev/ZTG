@@ -200,7 +200,7 @@ export default function NotificationsDropdown() {
                 )}
 
                 {isOpen && (
-                    <div className="notif-dropdown" style={{ display: 'block', zIndex: 50, right: 0, marginTop: '8px', position: 'absolute', width: '420px', background: '#FFFFFF', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)' }}>
+                    <div className="notif-dropdown" style={{ display: 'block', zIndex: 9999, right: 0, marginTop: '8px', position: 'absolute', width: '380px', maxWidth: 'calc(100vw - 32px)', background: '#FFFFFF', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', border: '1px solid #E2E8F0' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid var(--border, #E2E8F0)', background: '#F8FAFC', borderRadius: '12px 12px 0 0' }}>
                             <span style={{ fontWeight: 700, fontSize: '16px', color: 'var(--text-primary, #0F172A)' }}>Notifications</span>
                             <button onClick={handleMarkAllRead} style={{ background: 'none', border: 'none', color: 'var(--primary, #3B82F6)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', padding: 0 }}>Mark all as read</button>

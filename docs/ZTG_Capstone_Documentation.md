@@ -534,10 +534,30 @@ frontend/src/pages/Admin/<ModuleName>/
 
 | Component | Description |
 |---|---|
-| `Sidebar.jsx` | Global navigation sidebar |
+| `Sidebar.jsx` | Global navigation sidebar & mobile drawer overlay |
 | `NotificationsDropdown.jsx` | Bell icon + real-time notification dropdown |
+| `IOSDatePicker.jsx` | Popover iOS calendar picker with smart right-edge alignment |
+| `IOSSelect.jsx` | iOS custom select popover with active checkmarks (`✓`) |
+| `IOSTimePicker.jsx` | iOS time picker selector popover |
 | `PrivateRoute.jsx` | Auth guard that redirects unauthenticated users |
 | `api.js` | Global Axios instance with Bearer token interceptor |
+
+### Mobile Responsive Optimization & Custom iOS Component System
+
+The frontend implements a unified mobile-first responsive design strategy adhering to **Apple Human Interface Guidelines**:
+
+1. **Non-Destructive Breakpoint Architecture (`@media (max-width: 768px)`)**:
+   - **Desktop Mode (`> 768px`)**: Preserves compact, proportional filter controls (`140px`–`180px`), horizontal card grids, and fixed sidebar navigation.
+   - **Mobile Mode (`< 768px`)**: Automatically expands `.table-filters` elements and form triggers to 100% full-width touch rows.
+
+2. **Custom iOS Form Control System**:
+   - `<IOSSelect />`: Replaces native browser `<select>` dropdowns with smooth floating popovers, checkmarks (`✓`), and backdrop dismiss.
+   - `<IOSDatePicker />`: Replaces native date inputs with popover calendar cards featuring smart right-edge alignment (`alignRight={true}`) and zero screen spill (`maxWidth: calc(100vw - 32px)`).
+   - `<IOSTimePicker />`: Custom time selection popover for scheduling.
+
+3. **Touch UX & Drawer Navigation**:
+   - Hamburger sidebar drawer with dark semi-transparent backdrop overlay.
+   - Minimum `44px` touch targets across all interactive buttons, tabs, and form controls.
 
 ### Global Axios Interceptor Pattern
 
@@ -798,6 +818,33 @@ TiDB Cloud Serverless **prohibits insecure (plain-text) connections**. The setup
 3. It is automatically copied into the Docker image during build.
 4. Set `MYSQL_ATTR_SSL_CA=/var/www/html/isrgrootx1.pem` in Render environment variables.
 
+### 💾 Storage Capacity & 50+ Year Operational Lifespan Analysis (5 GiB Free Tier)
+
+TiDB Cloud provides **5 GiB (5,120 MB)** of free tier storage. Because relational SQL databases store structured numerical data, dates, and normalized string identifiers (rather than heavy binary media), database storage consumption is exceptionally low.
+
+#### Storage Calculation Breakdown per Transaction
+
+- **Single Receipt Header (`transactions` table):** ~400 bytes
+- **Line Item Record (`transaction_items` table):** ~150 bytes per item (avg 2.5 items/sale = ~375 bytes)
+- **Database Indexes & Metadata Overhead:** ~300 bytes
+- **Total Storage Cost per Sale Transaction:** **~1.1 KB per complete transaction**
+
+#### Operational Projections (at 150 Sales per Day)
+
+| Timeframe | Sales Volume | Items Sold | TiDB Storage Consumed | % of 5 GiB Free Tier Used |
+|---|---|---|---|---|
+| **1 Day** | 150 transactions | 375 items | ~170 KB | 0.003% |
+| **1 Month (30 days)** | 4,500 transactions | 11,250 items | ~5.2 MB | 0.10% |
+| **1 Year (365 days)** | 54,750 transactions | 136,875 items | **~62.4 MB** | **1.22%** |
+| **10 Years** | 547,500 transactions | 1,368,750 items | **~624 MB** | **12.18%** |
+| **50 Years** | 2,737,500 transactions | 6,843,750 items | **~3,120 MB (3.1 GiB)** | **60.9%** |
+| **82 Years (Limit)** | **4,489,500 transactions** | **11,223,750 items** | **5,120 MB (5.0 GiB)** | **100.0%** |
+
+#### Why the System Operates 50+ Years Before Hitting Storage Limits:
+1. **Media Offloading:** All heavy binary assets (product images, customer avatars) are offloaded to **Cloudflare R2** object storage. The database only stores light URL strings (~30 bytes).
+2. **Normalized DB Schema:** Database fields use compact binary datatypes (`INT`, `DECIMAL(12,2)`, `DATETIME`) which consume only 4–5 bytes per column.
+3. **Conclusion for Backup / Operational Planning:** For small to medium retail operations averaging 150 transactions/day, the TiDB Cloud 5 GiB free tier provides **over 50 to 80 years of continuous daily operation** before requiring a tier upgrade or data archiving.
+
 ---
 
 ## 16. Uptime Monitoring via BetterStack
@@ -961,7 +1008,7 @@ ZTG-main/
 | **No Offline Mode** | Requires active internet connection | Future: PWA + service workers |
 | **No Persistent File Storage** | Render ephemeral disk (files reset on deploy) | **Resolved:** Migrated all user avatars & product uploads to Cloudflare R2 (S3-compatible persistent cloud storage) |
 | **Single Region Database** | TiDB Cloud free tier is single-region (ap-southeast-1) | Future: upgrade to paid multi-region plan |
-| **No Automated Tests** | No unit/integration test suite yet | **Resolved:** Created a PHPUnit suite with 104+ tests (`php artisan test`) and an API latency benchmark tool (`php artisan test:api-performance`) |
+| **No Automated Tests** | No unit/integration test suite yet | **Resolved:** Created a PHPUnit suite with 161+ tests (`php artisan test`) and an API latency benchmark tool (`php artisan test:api-performance`) |
 | **Token Expiry UX** | Expired tokens show API error, not auto-logout | **Resolved:** Implemented global Axios 401 interceptor to auto-redirect unauthenticated sessions back to `/login` |
 | **Direct Cloud Excel Sync vs. Desktop File Export** | Personal/unlicenced Microsoft accounts lack Azure Tenant Cloud API permissions for silent background cloud pushes | **Resolved:** Export formatted 11-column `.xls` / UTF-8 BOM `.csv` files matching client template for desktop Excel, with data models 100% prepared for instant Microsoft Graph API integration when upgrading to a paid Microsoft 365 Business plan. |
 

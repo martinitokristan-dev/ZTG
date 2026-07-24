@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import IOSDatePicker from '../../../../shared/components/IOSDatePicker';
+import IOSSelect from '../../../../shared/components/IOSSelect';
 
 export default function ProductReportTab({ productPerformance, refundVoidAnalysis, startDate, setStartDate, endDate, setEndDate }) {
     const { top_sellers = [], dead_stock = [], totals = {} } = productPerformance || {};
@@ -64,26 +66,21 @@ export default function ProductReportTab({ productPerformance, refundVoidAnalysi
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
-                <div style={{ padding: 0, margin: 0, display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Date Range:</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} value={startDate} onChange={e => setStartDate(e.target.value)} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                <div className="table-filters" style={{ padding: 0, margin: 0, display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    {/* Date Filters */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <IOSDatePicker value={startDate} onChange={e => setStartDate(e.target.value)} placeholder="Start Date" style={{ width: '140px' }} />
                         <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>to</span>
-                        <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} value={endDate} onChange={e => setEndDate(e.target.value)} />
+                        <IOSDatePicker value={endDate} onChange={e => setEndDate(e.target.value)} placeholder="End Date" style={{ width: '140px' }} alignRight={true} />
                     </div>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '12px' }}>Category:</span>
-                    <select 
-                        className="form-control form-control-sm" 
-                        style={{ width: '180px' }}
-                        value={selectedCategory}
-                        onChange={e => setSelectedCategory(e.target.value)}
-                    >
-                        <option value="All">All Categories</option>
-                        {categoryOptions.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                    </select>
+                    <div style={{ width: '180px' }}>
+                        <IOSSelect
+                            value={selectedCategory}
+                            onChange={e => setSelectedCategory(e.target.value)}
+                            options={[{ value: 'All', label: 'All Categories' }, ...categoryOptions.map(cat => ({ value: cat, label: cat }))]}
+                        />
+                    </div>
                 </div>
                 <button 
                     className="btn btn-success" 

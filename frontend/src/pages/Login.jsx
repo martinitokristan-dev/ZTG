@@ -89,11 +89,6 @@ function Login() {
 
     const handleRoleSelect = (selectedRole) => {
         setRole(selectedRole);
-        if (selectedRole === 'Admin') {
-            setLoginId('admin');
-        } else {
-            setLoginId('EMP-001');
-        }
     };
 
     return (

@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import IOSDatePicker from '../../../../shared/components/IOSDatePicker';
+import IOSSelect from '../../../../shared/components/IOSSelect';
 
 export default function PaymentMethodsTab({ salesSummary, employees = [], fmt, startDate, setStartDate, endDate, setEndDate }) {
     const [selectedCashier, setSelectedCashier] = useState('All');
@@ -90,26 +92,21 @@ export default function PaymentMethodsTab({ salesSummary, employees = [], fmt, s
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
-                <div style={{ padding: 0, margin: 0, display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Date Range:</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} value={startDate} onChange={e => setStartDate(e.target.value)} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                <div className="table-filters" style={{ padding: 0, margin: 0, display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    {/* Date Filters */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <IOSDatePicker value={startDate} onChange={e => setStartDate(e.target.value)} placeholder="Start Date" style={{ width: '140px' }} />
                         <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>to</span>
-                        <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} value={endDate} onChange={e => setEndDate(e.target.value)} />
+                        <IOSDatePicker value={endDate} onChange={e => setEndDate(e.target.value)} placeholder="End Date" style={{ width: '140px' }} alignRight={true} />
                     </div>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '12px' }}>Cashier:</span>
-                    <select 
-                        className="form-control form-control-sm" 
-                        style={{ width: '160px' }}
-                        value={selectedCashier}
-                        onChange={e => setSelectedCashier(e.target.value)}
-                    >
-                        <option value="All">All Cashiers</option>
-                        {cashierOptions.map(name => (
-                            <option key={name} value={name}>{name}</option>
-                        ))}
-                    </select>
+                    <div style={{ width: '160px' }}>
+                        <IOSSelect
+                            value={selectedCashier}
+                            onChange={e => setSelectedCashier(e.target.value)}
+                            options={[{ value: 'All', label: 'All Cashiers' }, ...cashierOptions.map(name => ({ value: name, label: name }))]}
+                        />
+                    </div>
                 </div>
                 <button 
                     className="btn btn-success" 
@@ -124,7 +121,7 @@ export default function PaymentMethodsTab({ salesSummary, employees = [], fmt, s
 
             <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                 {methods.map((m, i) => (
-                    <div key={i} className="kpi-card" style={i === 0 ? { borderTop: '4px solid #10B981' } : {}}>
+                    <div key={i} className="kpi-card">
                         <div className="kpi-label">{m.name}</div>
                         <div className="kpi-value">{fmt(m.amount)}</div>
                         <div className="kpi-trend neutral">{m.count} {m.count === 1 ? 'transaction' : 'transactions'}</div>

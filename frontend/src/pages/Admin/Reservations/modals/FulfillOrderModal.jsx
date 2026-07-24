@@ -63,7 +63,12 @@ export default function FulfillOrderModal({
                                         <tbody>
                                             {selected.items?.map((item, idx) => (
                                                 <tr key={item.id} style={{ borderBottom: '1px solid #F1F5F9', background: idx % 2 === 0 ? '#fff' : '#F8FAFC' }}>
-                                                    <td style={{ padding: '10px 14px', fontWeight: 600 }}>{item.product?.name || item.name || '—'}</td>
+                                                    <td style={{ padding: '10px 14px', fontWeight: 600 }}>
+                                                        <div>{item.product?.name || item.name || '—'}</div>
+                                                        {(item.chinese_name || item.product?.chinese_name) && (
+                                                            <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 'normal' }}>{item.chinese_name || item.product?.chinese_name}</div>
+                                                        )}
+                                                    </td>
                                                     <td style={{ padding: '10px 14px', color: 'var(--text-secondary)', textAlign: 'center' }}>×{item.qty}</td>
                                                     <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700, color: 'var(--primary)' }}>{fmt(item.price * item.qty)}</td>
                                                 </tr>

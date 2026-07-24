@@ -1,4 +1,5 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
+import LogoCropModal from '../modals/LogoCropModal';
 
 export default function GeneralTab({ 
     settings, 
@@ -6,7 +7,9 @@ export default function GeneralTab({
     handleToggleSetting, 
     handleSaveBulkSettings, 
     logoUrl, 
-    onLogoUpload, 
+    sidebarLogoUrl,
+    onLogoUpload,
+    onLogoUploadWithCrop,
     onLogoRemove, 
     logoUploading,
     logoRemoving,
@@ -15,6 +18,24 @@ export default function GeneralTab({
     onCancelEdit
 }) {
     const logoInputRef = useRef(null);
+    const [pendingFile, setPendingFile] = useState(null);
+    const [showCropModal, setShowCropModal] = useState(false);
+
+    const handleFileSelect = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setPendingFile(file);
+        setShowCropModal(true);
+        e.target.value = '';
+    };
+
+    const handleCropConfirm = (originalFile, croppedSidebarBlob) => {
+        setShowCropModal(false);
+        setPendingFile(null);
+        if (onLogoUploadWithCrop) {
+            onLogoUploadWithCrop(originalFile, croppedSidebarBlob);
+        }
+    };
 
     return (
         <div className="card" style={{ marginBottom: '16px', paddingBottom: '24px' }}>
@@ -60,11 +81,11 @@ export default function GeneralTab({
                     )}
                 </div>
 
-                {/* ── Business Identity fields: Logo left, all fields compact right ── */}
-                <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', marginBottom: '24px' }}>
+                {/* ── Business Identity fields: Logo left/top, fields responsive right ── */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'flex-start', marginBottom: '24px' }}>
 
-                    {/* Logo uploader – fixed left column */}
-                    <div style={{ flexShrink: 0, width: '200px' }}>
+                    {/* Logo uploader – fixed column */}
+                    <div style={{ flexShrink: 0, width: '200px', margin: '0 auto' }}>
                         <label className="form-label" style={{ display: 'block', marginBottom: '8px' }}>Business Logo</label>
                         <div
                             style={{
@@ -86,23 +107,32 @@ export default function GeneralTab({
                                 </span>
                             )}
                         </div>
+
                         {isEditing && (
                             <>
-                                <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '10px', width: '100%' }}>
                                     <button
                                         type="button"
                                         className="btn btn-secondary"
-                                        style={{ fontSize: '11px', padding: '4px 10px', flex: 1 }}
+                                        style={{ fontSize: '11px', fontWeight: '600', padding: '6px 12px', flex: 1, whiteSpace: 'nowrap' }}
                                         onClick={() => logoInputRef.current?.click()}
                                         disabled={logoUploading || logoRemoving}
                                     >
-                                        {logoUploading ? 'Uploading…' : logoUrl ? 'Change' : 'Upload'}
+                                        {logoUploading ? 'Uploading…' : logoUrl ? 'Change' : 'Upload Logo'}
                                     </button>
                                     {logoUrl && (
                                         <button
                                             type="button"
                                             className="btn"
-                                            style={{ fontSize: '11px', padding: '4px 10px', color: '#EF4444', border: '1px solid #EF4444', background: 'transparent' }}
+                                            style={{ 
+                                                fontSize: '11px', 
+                                                fontWeight: '600', 
+                                                padding: '6px 12px', 
+                                                color: '#EF4444', 
+                                                border: '1px solid #FCA5A5', 
+                                                backgroundColor: '#FEF2F2',
+                                                whiteSpace: 'nowrap'
+                                            }}
                                             onClick={onLogoRemove}
                                             disabled={logoUploading || logoRemoving}
                                         >
@@ -111,7 +141,7 @@ export default function GeneralTab({
                                     )}
                                 </div>
                                 <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                                    JPG, PNG, WebP · max 2MB
+                                    JPG, PNG, WebP · Crop available
                                 </div>
                             </>
                         )}
@@ -120,13 +150,22 @@ export default function GeneralTab({
                             type="file"
                             accept="image/jpeg,image/jpg,image/png,image/webp"
                             style={{ display: 'none' }}
-                            onChange={onLogoUpload}
+                            onChange={handleFileSelect}
                             disabled={!isEditing}
+                        />
+
+                        {/* Circle Crop Modal */}
+                        <LogoCropModal
+                            isOpen={showCropModal}
+                            onClose={() => { setShowCropModal(false); setPendingFile(null); }}
+                            onConfirm={handleCropConfirm}
+                            imageFile={pendingFile}
+                            loading={logoUploading}
                         />
                     </div>
 
-                    {/* All business detail fields – compact 2-column grid */}
-                    <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 20px' }}>
+                    {/* All business detail fields – responsive grid */}
+                    <div style={{ flex: 1, minWidth: '260px', width: '100%', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px 20px' }}>
 
                         {/* Row 1: Business Name | Branch Location */}
                         <div className="form-group" style={{ marginBottom: 0 }}>

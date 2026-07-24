@@ -10,7 +10,7 @@ use App\Models\Checker;
 
 class TestApiPerformanceCommand extends Command
 {
-    protected $signature = 'test:api-performance {--runs=10 : Number of requests per endpoint}';
+    protected $signature = 'test:api-performance {--runs=10 : Number of requests per endpoint} {--url= : Custom target API base URL}';
     protected $description = 'Benchmark the performance of key API endpoints (Avg, P50, P95, Max, Success Rate)';
 
     private string $baseUrl = 'http://127.0.0.1:8000/api';
@@ -18,6 +18,9 @@ class TestApiPerformanceCommand extends Command
 
     public function handle(): int
     {
+        if ($customUrl = $this->option('url')) {
+            $this->baseUrl = rtrim($customUrl, '/');
+        }
         $this->info('===========================================================');
         $this->info('          ZTG Heavy Parts — API Performance Benchmark       ');
         $this->info('===========================================================');

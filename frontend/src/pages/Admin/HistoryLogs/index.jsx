@@ -6,6 +6,7 @@ import RefundModal from './modals/RefundModal';
 import VoidModal from './modals/VoidModal';
 import TransactionDetailsModal from './modals/TransactionDetailsModal';
 import PayModal from './modals/PayModal';
+import IOSSelect from '../../../shared/components/IOSSelect';
 
 export default function HistoryLogs() {
     const hl = useHistoryLogs();
@@ -52,12 +53,16 @@ export default function HistoryLogs() {
                                 />
                             </div>
                             <div style={{ width: '150px' }}>
-                                <select className="form-control form-control-sm" value={hl.paymentFilter} onChange={(e) => hl.setPaymentFilter(e.target.value)}>
-                                    <option value="All">All Payment</option>
-                                    <option value="Cash">Cash</option>
-                                    <option value="GCash">GCash</option>
-                                    <option value="Bank">Bank</option>
-                                </select>
+                                <IOSSelect
+                                    value={hl.paymentFilter}
+                                    onChange={(e) => hl.setPaymentFilter(e.target.value)}
+                                    options={[
+                                        { value: 'All', label: 'All Payment' },
+                                        { value: 'Cash', label: 'Cash' },
+                                        { value: 'GCash', label: 'GCash' },
+                                        { value: 'Bank', label: 'Bank' }
+                                    ]}
+                                />
                             </div>
                             <button className="btn" style={{ background: '#FEE2E2', color: 'var(--danger)', border: 'none', fontWeight: '600', padding: '8px 16px', borderRadius: '6px', fontSize: '13px' }} onClick={() => hl.handleOpenRefund(null)}>
                                 Refund / Return

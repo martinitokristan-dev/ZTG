@@ -19,6 +19,10 @@ export default function usePOS() {
     const [cart, setCart] = useState([]);
     const [showCheckoutModal, setShowCheckoutModal] = useState(false);
     
+    // Discount state
+    const [orderDiscountType, setOrderDiscountType] = useState('None'); // None, Senior, PWD, CustomAmount, CustomPercent
+    const [orderDiscountVal, setOrderDiscountVal] = useState('');
+    
     // Customer Fields
     const [existingCustomerSearch, setExistingCustomerSearch] = useState('');
     const [selectedCustomer, setSelectedCustomer] = useState(null); // Full customer object if selected
@@ -59,7 +63,19 @@ export default function usePOS() {
                 flat.push(p);
                 // Push the variants
                 p.variants.forEach(v => {
-                    flat.push({ ...v, category: p.category, parent_product_name: p.name });
+                    const opts = v.variant_options || v.variantOptions;
+                    const optLabel = Array.isArray(opts) && opts.length > 0 ? opts.map(o => o.value).join(', ') : null;
+                    let vName = v.name || p.name;
+                    if (optLabel && !vName.includes(optLabel)) {
+                        vName = `${vName} (${optLabel})`;
+                    }
+                    flat.push({
+                        ...v,
+                        name: vName,
+                        category: p.category,
+                        parent_product_name: p.name,
+                        chinese_name: v.chinese_name || p.chinese_name
+                    });
                 });
             }
         });
@@ -78,17 +94,33 @@ export default function usePOS() {
             const q = searchQuery.toLowerCase();
             list = list.filter(p => 
                 (p.name || '').toLowerCase().includes(q) ||
+                (p.chinese_name || '').toLowerCase().includes(q) ||
+                (p.parent_product_name || '').toLowerCase().includes(q) ||
                 (p.part_no || p.partNo || '').toLowerCase().includes(q)
             );
         }
         return list;
-    }, [products, categoryFilter, searchQuery]);
+    }, [flatProducts, categoryFilter, searchQuery]);
 
-    // Unique categories for pills
+    // Unique categories for pills (Top 5 popular categories + 'All')
     const categories = useMemo(() => {
-        const cats = new Set(flatProducts.map(p => p.category?.name || p.category).filter(Boolean));
-        return ['All', ...Array.from(cats)];
-    }, [flatProducts]);
+        const counts = {};
+        flatProducts.forEach(p => {
+            const cat = p.category?.name || p.category;
+            if (cat) {
+                counts[cat] = (counts[cat] || 0) + 1;
+            }
+        });
+        const sortedCats = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+        const top5 = sortedCats.slice(0, 5);
+
+        // If a category filter is selected that isn't in top 5, append it so the active pill is visible
+        if (categoryFilter && categoryFilter !== 'All' && !top5.includes(categoryFilter)) {
+            top5.push(categoryFilter);
+        }
+
+        return ['All', ...top5];
+    }, [flatProducts, categoryFilter]);
 
     // Error Banner State
     const [posError, setPosError] = useState(null);
@@ -209,26 +241,69 @@ export default function usePOS() {
         });
     };
 
-    const clearCart = () => setCart([]);
+    const setItemDiscount = (productId, priceTier, discountVal) => {
+        const parsed = parseFloat(discountVal) || 0;
+        setCart(prev => prev.map(item => {
+            if (item.id == productId && (item.priceTier || 'price1') === priceTier) {
+                return { ...item, item_discount: Math.max(0, parsed) };
+            }
+            return item;
+        }));
+    };
+
+    const clearCart = () => {
+        setCart([]);
+        setOrderDiscountType('None');
+        setOrderDiscountVal('');
+    };
 
     // Cart Totals
     const cartTotals = useMemo(() => {
-        let vatInclusiveTotal = 0;
+        let rawSubtotal = 0;
+        let itemDiscountsTotal = 0;
+
         cart.forEach(item => {
-            const price = item.priceTier === 'price2' ? parseFloat(item.price2 || 0) : parseFloat(item.price1 || 0);
-            vatInclusiveTotal += price * item.qty;
+            const origPrice = item.priceTier === 'price2' ? parseFloat(item.price2 || 0) : parseFloat(item.price1 || 0);
+            const itemDisc = parseFloat(item.item_discount || 0);
+            rawSubtotal += origPrice * item.qty;
+            itemDiscountsTotal += itemDisc * item.qty;
         });
-        
-        // VAT-inclusive logic: The price already includes the 12% tax.
-        const preVatSubtotal = Math.round((vatInclusiveTotal / 1.12) * 100) / 100;
-        const tax = Math.round((vatInclusiveTotal - preVatSubtotal) * 100) / 100;
-        
-        return { 
-            subtotal: preVatSubtotal, 
-            tax: tax, 
-            total: vatInclusiveTotal 
+
+        const afterItemDiscounts = Math.max(0, rawSubtotal - itemDiscountsTotal);
+
+        // Order-wide discount calculation
+        let orderDiscountAmount = 0;
+        let discountRate = 0;
+        const val = parseFloat(orderDiscountVal || 0);
+
+        if (orderDiscountType === 'CustomPercent') {
+            discountRate = Math.min(100, Math.max(0, val));
+            orderDiscountAmount = Math.round((afterItemDiscounts * (discountRate / 100)) * 100) / 100;
+        } else if (orderDiscountType === 'CustomAmount') {
+            orderDiscountAmount = Math.min(afterItemDiscounts, Math.max(0, val));
+        } else if (orderDiscountType === 'Senior' || orderDiscountType === 'PWD') {
+            discountRate = 20;
+            orderDiscountAmount = Math.round((afterItemDiscounts * 0.20) * 100) / 100;
+        }
+
+        const netPayable = Math.max(0, afterItemDiscounts - orderDiscountAmount);
+
+        // VAT-inclusive logic: The net payable includes 12% tax.
+        const preVatSubtotal = Math.round((netPayable / 1.12) * 100) / 100;
+        const tax = Math.round((netPayable - preVatSubtotal) * 100) / 100;
+
+        return {
+            rawSubtotal,
+            itemDiscountsTotal,
+            afterItemDiscounts,
+            orderDiscountAmount,
+            orderDiscountType,
+            discountRate,
+            subtotal: preVatSubtotal,
+            tax: tax,
+            total: netPayable
         };
-    }, [cart]);
+    }, [cart, orderDiscountType, orderDiscountVal]);
 
     // Submit Checkout
     const processCheckout = async (payload) => {
@@ -237,31 +312,36 @@ export default function usePOS() {
             const mappedCart = cart.map(item => ({
                 product_id: item.id,
                 qty: item.qty,
-                price_tier: item.priceTier || 'price1'
+                price_tier: item.priceTier || 'price1',
+                item_discount: parseFloat(item.item_discount || 0)
             }));
 
-            // Map customer and payment details for backend CheckoutRequest validator
-            const fullPayload = {
-                cart: mappedCart,
-                customer_name: selectedCustomer ? selectedCustomer.name : (existingCustomerSearch || newCustomerName || 'Walk-in'),
-                customer_phone: customerPhone || '',
-                customer_tin: customerTin || '',
-                customer_address: customerAddress || '',
-                checker_id: selectedChecker || null,
-                doc_type: payload.doc_type,
-                payment_method: payload.payment.method === 'Bank Transfer' ? 'Bank' : payload.payment.method,
-                amount_tendered: payload.payment.amount_tendered || null,
-                split_method_1: payload.payment.split?.[0]?.method === 'Bank Transfer' ? 'Bank' : (payload.payment.split?.[0]?.method || null),
-                split_amount_1: payload.payment.split?.[0]?.amount || null,
-                split_method_2: payload.payment.split?.[1]?.method === 'Bank Transfer' ? 'Bank' : (payload.payment.split?.[1]?.method || null),
-                split_amount_2: payload.payment.split?.[1]?.amount || null,
-            };
+            const paymentObj = payload.payment || payload;
+            const rawMethod = paymentObj.method || payload.method || 'Cash';
+            const paymentMethodStr = rawMethod === 'Bank Transfer' ? 'Bank' : rawMethod;
+            const docTypeStr = payload.doc_type || payload.docType || 'S.I.';
+            const amountTenderedVal = paymentObj.amount_tendered ?? payload.amount_tendered ?? null;
 
-            const res = await api.post('/pos/checkout', fullPayload);
-            if (res.status === 200 || res.status === 201) {
-                invalidateCachePage('sales', 1);
-                invalidateCachePage('history', 1);
-                invalidateCachePage('daily-sales', 1);
+            const res = await api.post('/pos/checkout', {
+                cart: mappedCart,
+                customer_name: (payload.customerName || selectedCustomer?.name || newCustomerName || 'Walk-in').trim() || 'Walk-in',
+                customer_phone: customerPhone || null,
+                checker_id: selectedChecker ? selectedChecker : null,
+                payment_method: paymentMethodStr,
+                doc_type: docTypeStr,
+                amount_tendered: amountTenderedVal,
+                split_method_1: paymentObj.split?.[0]?.method || null,
+                split_amount_1: paymentObj.split?.[0]?.amount || null,
+                split_method_2: paymentObj.split?.[1]?.method || null,
+                split_amount_2: paymentObj.split?.[1]?.amount || null,
+                discount_amount: cartTotals.orderDiscountAmount,
+                discount_type: orderDiscountType !== 'None' ? orderDiscountType : null,
+                discount_rate: cartTotals.discountRate
+            });
+
+            if (res.status === 201 || res.status === 200) {
+                // Invalidate customer cache page to force fresh data load
+                invalidateCachePage('/customer-log');
 
                 // Only reset customer cache if a new customer was registered
                 const registeredNewCustomer = !selectedCustomer && newCustomerName.trim() !== '';
@@ -295,8 +375,10 @@ export default function usePOS() {
         categoryFilter, setCategoryFilter,
         
         cart,
-        addToCart, updateCartQty, setCartItemQty, removeFromCart, updateCartItemPriceTier, clearCart,
+        addToCart, updateCartQty, setCartItemQty, removeFromCart, updateCartItemPriceTier, setItemDiscount, clearCart,
         cartTotals,
+        orderDiscountType, setOrderDiscountType,
+        orderDiscountVal, setOrderDiscountVal,
         posError, setPosError,
         
         existingCustomerSearch, setExistingCustomerSearch,

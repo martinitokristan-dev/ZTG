@@ -131,48 +131,18 @@ export default function ProductsTab({
                             setNewOptionValue(name);
                         };
 
-                        if (activeSubTab === 'quality') {
                             return (
                                 <div className="prod-vtab-panel active">
-                                    <div style={{ marginBottom: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
-                                        <h4 style={{ margin: '0 0 3px', fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>Quality</h4>
-                                        <p className="panel-desc" style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>Fixed quality variant for marking product condition.</p>
-                                    </div>
-                                    <div className="variant-list">
-                                        <div className="vitem" style={{ background: '#fffbeb', borderColor: '#fef3c7' }}>
-                                            <div className="vitem-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#92400e', fontWeight: 600 }}>
-                                                <svg viewBox="0 0 24 24" style={{ width: '14px', height: '14px', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }}>
-                                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                                </svg>
-                                                Low Quality
-                                            </div>
-                                            <div className="vitem-actions">
-                                                <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', border: '1px solid #d97706', color: '#d97706', textTransform: 'uppercase' }}>Fixed</span>
-                                            </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <h4 style={{ margin: '0 0 3px', fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>{typeName} Options</h4>
+                                            <p className="panel-desc" style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>Manage available {typeName.toLowerCase()} values for products.</p>
                                         </div>
-                                    </div>
-                                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        <svg viewBox="0 0 24 24" style={{ width: '12px', height: '12px', fill: 'none', stroke: 'currentColor', strokeWidth: '2' }}>
-                                            <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
-                                        </svg>
-                                        This is a system-defined variant and cannot be modified.
-                                    </p>
-                                </div>
-                            );
-                        }
-
-                        return (
-                            <div className="prod-vtab-panel active">
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
-                                    <div style={{ flex: 1 }}>
-                                        <h4 style={{ margin: '0 0 3px', fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>{typeName} Options</h4>
-                                        <p className="panel-desc" style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>Manage available {typeName.toLowerCase()} values for products.</p>
-                                    </div>
-                                    <div className="add-option-row" style={{ flexShrink: 0, display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                        <input type="text" className="form-control" placeholder={activeSubTab === 'colors' ? "e.g. Red, Blue, Black" : "e.g. XL, 32, 500ml"} style={{ width: '180px' }} value={newOptionValue} onChange={(e) => setNewOptionValue(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter') handleAddVariantOption(typeName); }} />
-                                        {activeSubTab === 'colors' && (
-                                            <input type="color" defaultValue="#3b82f6" onChange={handleColorChange} style={{ width: '36px', height: '36px', padding: '2px', border: '1px solid var(--border)', borderRadius: '6px', cursor: 'pointer', background: '#fff' }} />
-                                        )}
+                                        <div className="add-option-row" style={{ flexShrink: 0, display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            <input type="text" className="form-control" placeholder={activeSubTab === 'colors' ? "e.g. Red, Blue, Black" : activeSubTab === 'quality' ? "e.g. OEM, High Quality, Low Quality" : "e.g. XL, 32, 500ml"} style={{ width: '180px' }} value={newOptionValue} onChange={(e) => setNewOptionValue(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter') handleAddVariantOption(typeName); }} />
+                                            {activeSubTab === 'colors' && (
+                                                <input type="color" defaultValue="#3b82f6" onChange={handleColorChange} style={{ width: '36px', height: '36px', padding: '2px', border: '1px solid var(--border)', borderRadius: '6px', cursor: 'pointer', background: '#fff' }} />
+                                            )}
                                         <button className="btn btn-primary btn-sm" onClick={() => handleAddVariantOption(typeName)}>Add</button>
                                     </div>
                                 </div>

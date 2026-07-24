@@ -54,15 +54,21 @@ export default function Reports() {
             </div>
             <style>{`
                 .reports-tab-btn:hover { color: var(--text-primary); }
-                .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
-                .kpi-card { background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; transition: border-top 0.2s ease; }
-                .kpi-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; margin-bottom: 8px; }
-                .kpi-value { font-size: 28px; font-weight: 700; color: var(--text-primary); line-height: 1.2; font-family: 'Outfit', sans-serif; }
+                .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 20px; }
+                .kpi-card { background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; transition: border-top 0.2s ease; }
+                .kpi-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; margin-bottom: 6px; }
+                .kpi-value { font-size: 24px; font-weight: 700; color: var(--text-primary); line-height: 1.2; font-family: 'Outfit', sans-serif; }
                 .reports-table { width: 100%; border-collapse: collapse; }
                 .reports-table th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); font-weight: 700; padding: 14px 16px; border-bottom: 1px solid var(--border); text-align: left; }
                 .reports-table td { font-size: 13px; color: var(--text-primary); padding: 14px 16px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
                 .section-card { background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
                 .section-card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 15px; font-weight: 700; color: var(--text-primary); font-family: 'Outfit', sans-serif; }
+                @media (max-width: 768px) {
+                    .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+                    .reports-tabs { overflow-x: auto !important; white-space: nowrap !important; scrollbar-width: none !important; }
+                    .reports-tabs::-webkit-scrollbar { display: none !important; }
+                    .reports-tab-btn { padding: 8px 12px !important; font-size: 13px !important; flex-shrink: 0 !important; }
+                }
             `}</style>
         </div>
     );

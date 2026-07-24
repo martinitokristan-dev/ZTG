@@ -9,7 +9,7 @@ import echo from '../../../../lib/echo';
 let _cachedProductList = [];
 let _cachedProductPagination = null;
 
-const DEFAULT_PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=80&q=80";
+const DEFAULT_PLACEHOLDER_IMAGE = "/ztg-icon.png";
 
 const DEFAULT_FORM = {
     name: '',
@@ -45,6 +45,7 @@ export default function useProductManagement() {
     const [variantOptions, setVariantOptions] = useState([]);
     // Only show loading spinner on first visit (when module cache is empty)
     const [loading, setLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // ── View mode: 'list' | 'restock' ──────────────────────────
     const [viewMode, setViewState] = useState('list');
@@ -316,6 +317,8 @@ export default function useProductManagement() {
     };
 
     const handleConfirmRestock = async () => {
+        if (isSubmitting) return;
+        setIsSubmitting(true);
         try {
             setErrorMessage('');
             const payload = Object.entries(restockQuantities)
@@ -346,12 +349,16 @@ export default function useProductManagement() {
             // Rollback all
             rollbacks.forEach(r => r());
             setErrorMessage(error.response?.data?.message || 'Error occurred while saving restock order.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     // ── Product CRUD ─────────────────────────────────────────────
     const handleAddProduct = async (e) => {
         e.preventDefault();
+        if (isSubmitting) return;
+        setIsSubmitting(true);
         try {
             setErrorMessage('');
             const res = await api.post('/products', formData);
@@ -363,11 +370,15 @@ export default function useProductManagement() {
             loadProducts(); // We still load to refresh search if needed, but the context is updated
         } catch (error) {
             setErrorMessage(error.response?.data?.message || 'Error occurred while saving product.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleEditProduct = async (e) => {
         e.preventDefault();
+        if (isSubmitting) return;
+        setIsSubmitting(true);
         const { commit, rollback } = optimisticUpdateProduct(selectedProduct.id, formData);
         try {
             setErrorMessage('');
@@ -380,11 +391,15 @@ export default function useProductManagement() {
         } catch (error) {
             rollback();
             setErrorMessage(error.response?.data?.message || 'Error occurred while updating product.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleDamageSubmit = async (e) => {
         e.preventDefault();
+        if (isSubmitting) return;
+        setIsSubmitting(true);
         const newStock = Math.max(0, selectedProduct.stock - parseInt(damageQty));
         const { commit, rollback } = optimisticUpdateProduct(selectedProduct.id, { stock: newStock });
         try {
@@ -398,6 +413,8 @@ export default function useProductManagement() {
         } catch (error) {
             rollback();
             setErrorMessage(error.response?.data?.message || 'Error logging damaged stock.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -519,7 +536,7 @@ export default function useProductManagement() {
 
     return {
         // Data
-        products, categories, variantOptions, loading,
+        products, categories, variantOptions, loading, isSubmitting,
         DEFAULT_PLACEHOLDER_IMAGE,
         // Derived
         sortedProducts: getSortedProducts(),

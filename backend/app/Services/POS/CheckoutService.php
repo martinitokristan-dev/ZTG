@@ -54,13 +54,17 @@ class CheckoutService
                 }
             }
 
-            // 3. Calculate grand total
+            // 3. Calculate grand total considering item discounts & order-wide discount
             $grandTotal = 0;
             foreach ($cart as $item) {
                 $product = $products->get($item['product_id']);
-                $price = $item['price_tier'] === 'price2' ? $product->price2 : $product->price1;
-                $grandTotal += $price * $item['qty'];
+                $origPrice = $item['price_tier'] === 'price2' ? $product->price2 : $product->price1;
+                $itemDiscount = (float)($item['item_discount'] ?? 0);
+                $finalPrice = max(0, $origPrice - $itemDiscount);
+                $grandTotal += $finalPrice * $item['qty'];
             }
+            $orderDiscount = (float)($data['discount_amount'] ?? 0);
+            $grandTotal = max(0, $grandTotal - $orderDiscount);
 
             // 4. Validate payment amounts
             $this->validatePayment($data, $grandTotal);
@@ -112,7 +116,7 @@ class CheckoutService
                 default          => $grandTotal, // GCash/Bank: auto-set to total
             };
 
-            // 10. Create Transaction record with frozen business snapshot
+            // 10. Create Transaction record with frozen business snapshot & discounts
             $transaction = Transaction::create([
                 'si_no'             => $siNo,
                 'date'              => now(),
@@ -121,6 +125,9 @@ class CheckoutService
                 'checker_id'        => $data['checker_id'] ?? null,
                 'total_qty'         => array_sum(array_column($cart, 'qty')),
                 'amount'            => $grandTotal,
+                'discount_amount'   => $orderDiscount,
+                'discount_type'     => $data['discount_type'] ?? null,
+                'discount_rate'     => $data['discount_rate'] ?? 0,
                 'amount_tendered'   => $amountTendered,
                 'payment_method'    => $paymentMethodStr,
                 'doc_type'          => $data['doc_type'],
@@ -132,13 +139,17 @@ class CheckoutService
             // 11. Create TransactionItem records
             foreach ($cart as $item) {
                 $product = $products->get($item['product_id']);
-                $price = $item['price_tier'] === 'price2' ? $product->price2 : $product->price1;
+                $origPrice = $item['price_tier'] === 'price2' ? $product->price2 : $product->price1;
+                $itemDiscount = (float)($item['item_discount'] ?? 0);
+                $finalPrice = max(0, $origPrice - $itemDiscount);
 
                 TransactionItem::create([
                     'transaction_id' => $transaction->id,
                     'product_id'     => $product->id,
                     'qty'            => $item['qty'],
-                    'price'          => $price,
+                    'price'          => $origPrice,
+                    'original_price' => $origPrice,
+                    'discount'       => $itemDiscount,
                     'price_tier'     => $item['price_tier'],
                     'unit'           => 'pc',
                 ]);
@@ -153,6 +164,49 @@ class CheckoutService
                 event(new InventoryUpdated($item->product_id, (int) $item->product->stock));
             }
         }
+
+        // Trigger formal discount notification if any discount was applied
+        $itemDiscountsTotal = 0;
+        foreach ($transaction->items as $item) {
+            $itemDiscountsTotal += ((float)$item->discount) * (int)$item->qty;
+        }
+        $totalDiscount = $itemDiscountsTotal + ((float)$transaction->discount_amount);
+
+        if ($totalDiscount > 0) {
+            $rawType = $transaction->discount_type;
+            $rate = (float) $transaction->discount_rate;
+
+            $formalType = '';
+            if ($rawType === 'Senior') {
+                $formalType = 'Senior Citizen Discount (20%)';
+            } elseif ($rawType === 'PWD') {
+                $formalType = 'PWD Discount (20%)';
+            } elseif ($rawType === 'CustomPercent') {
+                $formalType = $rate > 0 ? "Custom {$rate}% Discount" : "Custom Percentage Discount";
+            } elseif ($rawType === 'CustomAmount') {
+                $formalType = 'Custom Fixed Discount';
+            } elseif ($itemDiscountsTotal > 0 && !$rawType) {
+                $formalType = 'Item-Level Special Discount';
+            } elseif ($rawType) {
+                $formalType = "{$rawType} Discount";
+            }
+
+            $discDetail = $formalType ? " ({$formalType})" : "";
+            $cashierName = $transaction->cashier ? ($transaction->cashier->real_name ?? $transaction->cashier->name) : 'Cashier';
+            $formattedTotalDisc = number_format($totalDiscount, 2);
+
+            $notif = \App\Models\Notification::create([
+                'type'           => 'system',
+                'title'          => 'Transaction Discount Applied',
+                'message'        => "Cashier {$cashierName} applied a total discount of ₱{$formattedTotalDisc}{$discDetail} on Invoice {$transaction->si_no}.",
+                'transaction_id' => $transaction->id,
+                'link'           => "/history",
+                'is_read'        => false,
+            ]);
+
+            event(new \App\Events\NotificationSent($notif));
+        }
+
         event(new TransactionCreated($transaction));
 
         return $transaction;

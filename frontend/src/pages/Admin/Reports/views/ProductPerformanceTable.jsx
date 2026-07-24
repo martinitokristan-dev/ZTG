@@ -30,6 +30,7 @@ export default function ProductPerformanceTable({ productPerformance, fmt }) {
                                 <tr key={p.id} style={{ borderBottom: i === top_sellers.length - 1 ? 'none' : '1px solid var(--border)' }}>
                                     <td style={{ padding: '12px 20px' }}>
                                         <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{p.name}</div>
+                                        {p.chinese_name && <div style={{ fontSize: '11px', color: '#94A3B8' }}>{p.chinese_name}</div>}
                                         <div style={{ fontSize: '11px', color: '#64748B' }}>{p.part_no}</div>
                                     </td>
                                     <td style={{ padding: '12px 20px', textAlign: 'right', fontWeight: '700', color: '#10B981' }}>{p.sales_count}</td>
@@ -62,6 +63,7 @@ export default function ProductPerformanceTable({ productPerformance, fmt }) {
                                 <tr key={p.product_id} style={{ borderBottom: i === Math.min(revenue_per_product.length, 10) - 1 ? 'none' : '1px solid var(--border)' }}>
                                     <td style={{ padding: '12px 20px' }}>
                                         <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{p.name}</div>
+                                        {p.chinese_name && <div style={{ fontSize: '11px', color: '#94A3B8' }}>{p.chinese_name}</div>}
                                         <div style={{ fontSize: '11px', color: '#64748B' }}>{p.part_no}</div>
                                     </td>
                                     <td style={{ padding: '12px 20px', textAlign: 'right', fontWeight: '700', color: 'var(--primary)' }}>{fmt(p.revenue)}</td>
@@ -93,6 +95,7 @@ export default function ProductPerformanceTable({ productPerformance, fmt }) {
                                 <tr key={p.id} style={{ borderBottom: i === Math.min(dead_stock.length, 5) - 1 ? 'none' : '1px solid var(--border)' }}>
                                     <td style={{ padding: '12px 20px' }}>
                                         <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{p.name}</div>
+                                        {p.chinese_name && <div style={{ fontSize: '11px', color: '#94A3B8' }}>{p.chinese_name}</div>}
                                         <div style={{ fontSize: '11px', color: '#64748B' }}>{p.part_no}</div>
                                     </td>
                                     <td style={{ padding: '12px 20px', textAlign: 'right', fontWeight: '700', color: '#DC2626' }}>{p.stock} units</td>

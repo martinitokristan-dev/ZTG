@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import IOSSelect from '../../../shared/components/IOSSelect';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import useDisplayChineseNames from '../../../shared/hooks/useDisplayChineseNames';
 
@@ -98,7 +99,7 @@ export default function ProductsTable({
                             {isVariantSubRow ? (
                                 <>
                                     <strong style={{ color: '#0F172A', fontSize: '13px', display: 'block' }}>
-                                        {parentProduct?.name} <span style={{ color: '#3B82F6', fontWeight: '500' }}>({varLabel})</span>
+                                        {product.name || parentProduct?.name} {varLabel && !(product.name || '').includes(varLabel) && <span style={{ color: '#3B82F6', fontWeight: '500' }}>({varLabel})</span>}
                                     </strong>
                                     {showChineseNames && product.chinese_name && <span style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px', display: 'block' }}>{product.chinese_name}</span>}
                                 </>
@@ -254,51 +255,60 @@ export default function ProductsTable({
 
             {/* Filters */}
             <div className="card" style={{ marginBottom: '16px' }}>
-                <div className="table-filters" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
+                <div className="table-filters" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <div style={{ flex: 1, minWidth: '240px', position: 'relative' }}>
                         <svg style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', width: '18px', height: '18px', color: '#94A3B8' }} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                             <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                         <input
                             type="text"
-                            className="form-control"
+                            className="form-control table-search-input"
                             placeholder="Search by part number or name..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             style={{ paddingLeft: '44px' }}
                         />
                     </div>
+                    <div style={{ width: '180px' }}>
+                        <IOSSelect
+                            value={categoryId}
+                            onChange={(e) => setCategoryId(e.target.value)}
+                            options={[{ value: '', label: 'All Categories' }, ...categories.map(c => ({ value: c.id, label: c.name }))]}
+                        />
+                    </div>
+                    <div style={{ width: '150px' }}>
+                        <IOSSelect
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            options={[
+                                { value: 'All', label: 'All Status' },
+                                { value: 'Active', label: 'Active' },
+                                { value: 'Low Stock', label: 'Low Stock' },
+                                { value: 'No Stock', label: 'No Stock' },
+                                { value: 'Disabled', label: 'Disabled' },
+                                { value: 'Dead Stock', label: 'Dead Stock' }
+                            ]}
+                        />
+                    </div>
                     <div style={{ width: '160px' }}>
-                        <select className="form-control" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-                            <option value="">All Categories</option>
-                            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
-                    </div>
-                    <div style={{ width: '140px' }}>
-                        <select className="form-control" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                            <option value="All">All Status</option>
-                            <option value="Active">Active</option>
-                            <option value="Low Stock">Low Stock</option>
-                            <option value="No Stock">No Stock</option>
-                            <option value="Disabled">Disabled</option>
-                            <option value="Dead Stock">Dead Stock</option>
-                        </select>
-                    </div>
-                    <div style={{ width: '140px' }}>
-                        <select className="form-control" value={sortOption || 'Default'} onChange={(e) => setSortOption(e.target.value)}>
-                            <option value="Default">Sort: Default</option>
-                            <option value="Name: A-Z">Name (A-Z)</option>
-                            <option value="Sales">Top Sales</option>
-                            <option value="Damaged">Most Damaged</option>
-                        </select>
+                        <IOSSelect
+                            value={sortOption || 'Default'}
+                            onChange={(e) => setSortOption(e.target.value)}
+                            options={[
+                                { value: 'Default', label: 'Sort: Default' },
+                                { value: 'Name: A-Z', label: 'Name (A-Z)' },
+                                { value: 'Sales', label: 'Top Sales' },
+                                { value: 'Damaged', label: 'Most Damaged' }
+                            ]}
+                        />
                     </div>
                 </div>
             </div>
 
             {/* Products Table */}
             <div className="card table-card" style={{ overflow: 'visible', paddingBottom: '120px' }}>
-                <div style={{ overflowX: 'visible' }}>
-                    <table>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                    <table style={{ minWidth: '780px', width: '100%' }}>
                         <thead style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748B', borderBottom: '1px solid #E2E8F0', background: '#F8FAFC' }}>
                             <tr>
                                 <th style={{ padding: '12px 16px', fontWeight: '600', textAlign: 'left' }}>Product</th>

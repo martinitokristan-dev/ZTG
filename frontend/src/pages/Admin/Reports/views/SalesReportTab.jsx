@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
+import IOSDatePicker from '../../../../shared/components/IOSDatePicker';
+import IOSSelect from '../../../../shared/components/IOSSelect';
 import api from '../../../../shared/api';
 import { resetReportsCache } from '../../../../shared/hooks/useReportsCache';
-import { exportSalesToExcel, exportSalesToCSV } from '../../../../shared/utils/clientExcelExporter';
+import { exportSalesToExcel, getItemDiscountAmount } from '../../../../shared/utils/clientExcelExporter';
 import StatusBadge from '../../../../shared/components/StatusBadge';
 
 export default function SalesReportTab({ salesSummary, employees = [], fmt, fmtDate, isReportGenerated, setIsReportGenerated, startDate, setStartDate, endDate, setEndDate }) {
@@ -106,6 +108,7 @@ export default function SalesReportTab({ salesSummary, employees = [], fmt, fmtD
     const flattenedTransactionsItems = [];
     let totalQty = 0;
     let totalAmount = 0;
+    let totalDiscountAmount = 0;
 
     if (filteredTransactions.length > 0) {
         filteredTransactions.forEach(tx => {
@@ -123,12 +126,18 @@ export default function SalesReportTab({ salesSummary, employees = [], fmt, fmtD
                 });
 
                 const isDeduction = (tx.status === 'Refund' || tx.status === 'Return' || tx.status === 'Void');
-                const rowAmount = item.qty * (item.price || 0);
+                const unitPrice = Number(item.original_price || item.price || 0);
+                const discountVal = getItemDiscountAmount(item, tx);
+                const grossRowAmount = (item.qty || 1) * unitPrice;
+                const netRowAmount = Math.max(0, grossRowAmount - discountVal);
+
                 totalQty += item.qty || 0;
+                totalDiscountAmount += discountVal;
+
                 if (isDeduction) {
-                    totalAmount -= rowAmount;
+                    totalAmount -= netRowAmount;
                 } else {
-                    totalAmount += rowAmount;
+                    totalAmount += netRowAmount;
                 }
             });
         });
@@ -164,39 +173,28 @@ export default function SalesReportTab({ salesSummary, employees = [], fmt, fmtD
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '16px' }}>
-                <div style={{ padding: 0, margin: 0, display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                <div className="table-filters" style={{ padding: 0, margin: 0, display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                     {/* Date Filters */}
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Date Range:</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} value={startDate} onChange={e => setStartDate(e.target.value)} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <IOSDatePicker value={startDate} onChange={e => setStartDate(e.target.value)} placeholder="Start Date" style={{ width: '140px' }} />
                         <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>to</span>
-                        <input type="date" className="form-control form-control-sm" style={{ width: '150px' }} value={endDate} onChange={e => setEndDate(e.target.value)} />
+                        <IOSDatePicker value={endDate} onChange={e => setEndDate(e.target.value)} placeholder="End Date" style={{ width: '140px' }} alignRight={true} />
                     </div>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '12px' }}>Cashier:</span>
-                    <select 
-                        className="form-control form-control-sm" 
-                        style={{ width: '160px' }}
-                        value={selectedCashier}
-                        onChange={e => setSelectedCashier(e.target.value)}
-                    >
-                        <option value="All">All Cashiers</option>
-                        {cashierOptions.map(name => (
-                            <option key={name} value={name}>{name}</option>
-                        ))}
-                    </select>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '12px' }}>Payment:</span>
-                    <select 
-                        className="form-control form-control-sm" 
-                        style={{ width: '160px' }}
-                        value={selectedPayment}
-                        onChange={e => setSelectedPayment(e.target.value)}
-                    >
-                        <option value="All">All Payments</option>
-                        {paymentOptions.map(pm => (
-                            <option key={pm} value={pm}>{pm}</option>
-                        ))}
-                    </select>
+                    <div style={{ width: '150px' }}>
+                        <IOSSelect
+                            value={selectedCashier}
+                            onChange={e => setSelectedCashier(e.target.value)}
+                            options={[{ value: 'All', label: 'All Cashiers' }, ...cashierOptions.map(name => ({ value: name, label: name }))]}
+                        />
+                    </div>
+                    <div style={{ width: '150px' }}>
+                        <IOSSelect
+                            value={selectedPayment}
+                            onChange={e => setSelectedPayment(e.target.value)}
+                            options={[{ value: 'All', label: 'All Payments' }, ...paymentOptions.map(pm => ({ value: pm, label: pm }))]}
+                        />
+                    </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '12px' }}>
@@ -213,21 +211,7 @@ export default function SalesReportTab({ salesSummary, employees = [], fmt, fmtD
                         title="Export formatted Excel report matching Daily Sales template"
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                        Export Excel (.xlsx)
-                    </button>
-
-                    <button 
-                        className="btn" 
-                        onClick={handleExportCSV}
-                        disabled={flattenedTransactionsItems.length === 0}
-                        style={{ 
-                            display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '12px', 
-                            borderRadius: '8px', padding: '8px 14px', background: '#F1F5F9', color: '#334155',
-                            border: '1px solid #CBD5E1', cursor: flattenedTransactionsItems.length === 0 ? 'not-allowed' : 'pointer'
-                        }}
-                    >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        CSV
+                        Export Excel
                     </button>
 
                     {isReportGenerated ? (
@@ -249,7 +233,7 @@ export default function SalesReportTab({ salesSummary, employees = [], fmt, fmtD
                                 cursor: (!hasExported || confirming) ? 'not-allowed' : 'pointer',
                                 boxShadow: (!hasExported) ? 'none' : '0 4px 12px rgba(37,99,235,0.2)' 
                             }}
-                            title={!hasExported ? "Please export CSV first to enable confirmation" : ""}
+                            title={!hasExported ? "Please export Excel first to enable confirmation" : ""}
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
                             {confirming ? 'Confirming...' : 'Confirm Daily Report'}
@@ -287,41 +271,57 @@ export default function SalesReportTab({ salesSummary, employees = [], fmt, fmtD
                                 <th>S.I./C.I./D.R.</th>
                                 <th>PART NO.</th>
                                 <th>PRODUCT</th>
-                                <th>QTY</th>
-                                <th>AMOUNT</th>
+                                <th style={{ textAlign: 'center' }}>QTY</th>
+                                <th style={{ textAlign: 'right' }}>PRICE</th>
+                                <th style={{ textAlign: 'right' }}>SALES</th>
+                                <th>CUSTOMER NAME</th>
                                 <th>PAYMENT</th>
-                                <th>SERVED BY</th>
+                                <th style={{ textAlign: 'center' }}>DISCOUNTED</th>
+                                <th>SERVE BY</th>
                                 <th>STATUS</th>
                             </tr>
                         </thead>
                         <tbody>
                             {flattenedTransactionsItems.length === 0 ? (
                                 <tr>
-                                    <td colSpan="9" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                    <td colSpan="12" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
                                         No transactions found for the selected date range.
                                     </td>
                                 </tr>
                             ) : (
                                 flattenedTransactionsItems.map((item, i) => {
-                                    const tx = item.tx;
+                                    const tx = item.tx || {};
                                     const isDeduction = (tx.status === 'Refund' || tx.status === 'Return' || tx.status === 'Void');
                                     const isPending = tx.status === 'Pending';
                                     const amountColor = (isDeduction || isPending) ? 'var(--danger, #DC2626)' : 'var(--success, #16A34A)';
                                     const amountPrefix = isDeduction ? '- ' : '';
                                     const resolvedName = item.product?.name || item.name || 'Unknown Product';
                                     const resolvedPartNo = item.product?.part_no || item.partNo || 'N/A';
-                                    const rowAmount = item.qty * (item.price || 0);
+                                    const qty = Number(item.qty || 1);
+                                    const unitPrice = Number(item.original_price || item.price || 0);
+                                    const discountVal = getItemDiscountAmount(item, tx);
+                                    const grossRowAmount = qty * unitPrice;
+                                    const netRowAmount = Math.max(0, grossRowAmount - discountVal);
+                                    const customerVal = tx.customer_name || tx.customer?.name || (tx.customer_id ? `Customer #${tx.customer_id}` : 'WALK-IN');
+                                    const serveByVal = tx.cashier?.real_name || tx.cashier?.name || tx.checker?.name || '—';
 
                                     return (
                                         <tr key={`${tx.id}-${item.id || i}`}>
-                                            <td style={{ color: '#64748B' }}>{fmtDate(tx.date || tx.created_at)}</td>
-                                            <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{tx.si_no || tx.receipt_number || '-'}</td>
-                                            <td style={{ color: 'var(--text-secondary)' }}>{resolvedPartNo}</td>
+                                            <td style={{ color: '#64748B', whiteSpace: 'nowrap' }}>{fmtDate(tx.date || tx.created_at)}</td>
+                                            <td style={{ fontWeight: '700', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{tx.si_no || tx.receipt_number || '-'}</td>
+                                            <td style={{ color: 'var(--text-secondary)', fontFamily: 'monospace', fontWeight: '600' }}>{resolvedPartNo}</td>
                                             <td><span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{resolvedName}</span></td>
-                                            <td style={{ color: 'var(--text-secondary)' }}>{item.qty}</td>
-                                            <td style={{ fontWeight: '700', color: amountColor }}>{amountPrefix}{fmt(rowAmount)}</td>
-                                            <td style={{ color: 'var(--text-secondary)' }}>{tx.payment_method}</td>
-                                            <td style={{ color: 'var(--text-secondary)' }}>{((tx.cashier?.real_name || tx.cashier?.name || tx.checker?.name) || '—').split(' ')[0]}</td>
+                                            <td style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>{qty}</td>
+                                            <td style={{ textAlign: 'right', color: 'var(--text-secondary)' }}>
+                                                {fmt(unitPrice)}
+                                            </td>
+                                            <td style={{ fontWeight: '700', textAlign: 'right', color: amountColor }}>{amountPrefix}{fmt(netRowAmount)}</td>
+                                            <td style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{customerVal}</td>
+                                            <td style={{ fontWeight: tx.payment_method?.startsWith('P.O') ? '700' : '400', color: tx.payment_method?.startsWith('P.O') ? '#C00000' : 'var(--text-secondary)' }}>{tx.payment_method || 'CASH'}</td>
+                                            <td style={{ textAlign: 'center', color: discountVal > 0 ? '#2563EB' : '#94A3B8', fontWeight: discountVal > 0 ? '700' : '400' }}>
+                                                {discountVal > 0 ? `-${fmt(discountVal)}` : '—'}
+                                            </td>
+                                            <td style={{ color: 'var(--text-secondary)' }}>{serveByVal.split(' ')[0]}</td>
                                             <td><StatusBadge status={tx.status} /></td>
                                         </tr>
                                     );
@@ -335,9 +335,14 @@ export default function SalesReportTab({ salesSummary, employees = [], fmt, fmtD
                                     <td></td>
                                     <td></td>
                                     <td></td>
-                                    <td style={{ fontWeight: '800', padding: '16px', color: 'var(--text-secondary)' }}>{totalQty}</td>
-                                    <td style={{ fontWeight: '800', padding: '16px', color: 'var(--success, #16A34A)', fontSize: '15px' }}>{fmt(totalAmount)}</td>
+                                    <td style={{ fontWeight: '800', padding: '16px', textAlign: 'center', color: 'var(--text-secondary)' }}>{totalQty}</td>
                                     <td></td>
+                                    <td style={{ fontWeight: '800', padding: '16px', textAlign: 'right', color: 'var(--success, #16A34A)', fontSize: '15px' }}>{fmt(totalAmount)}</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td style={{ fontWeight: '800', padding: '16px', textAlign: 'center', color: '#2563EB', fontSize: '13px' }}>
+                                        {totalDiscountAmount > 0 ? `-${fmt(totalDiscountAmount)}` : '—'}
+                                    </td>
                                     <td></td>
                                     <td></td>
                                 </tr>

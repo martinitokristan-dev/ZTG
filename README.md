@@ -160,4 +160,18 @@ This system provides **1-Click Formatted Excel & CSV Exports** designed to match
   * The data structures, date filters, and column definitions in this system are built to be **100% compatible with Microsoft Graph API**. 
   * If the store upgrades to a paid Microsoft 365 Business / Azure account in the future, entering their Azure App credentials in settings will immediately enable silent, real-time cloud synchronization straight into their OneDrive / Excel Online spreadsheets without modifying any core sales data models.
 
+---
+
+### 8. 💾 Cloud Database Capacity & 50+ Year Operational Projections
+
+This system is configured for **TiDB Cloud Serverless** with a **5 GiB (5,120 MB)** free storage allowance. Because binary media assets (product photos, avatars) are offloaded to **Cloudflare R2**, database storage is restricted to ultra-compact binary relational rows (~1.1 KB per complete transaction).
+
+#### Operational Lifespan Projections (150 Sales/Day = ~54,750 Sales/Year):
+* **Year 1:** ~62.4 MB *(1.2% of 5 GiB)*
+* **Year 10:** ~624 MB *(12.2% of 5 GiB)*
+* **Year 50:** ~3.12 GB *(60.9% of 5 GiB)*
+* **Year 82 (Storage Limit):** 5.0 GB *(100% of 5 GiB — 4.48 Million Transactions)*
+
+> **Documentation Note:** For audit, backup, and system capability documentation, the 5 GiB database limitation provides **over 50 to 80 years of continuous retail operations** at 150 sales/day before hitting capacity.
+
 

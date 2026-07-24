@@ -61,14 +61,21 @@ export function printUnifiedReceipt(options) {
     } = options;
 
     // Resolve business identity from snapshot (or live-settings fallback).
-    // If businessInfo is empty/null, all fields gracefully fall back to empty strings.
-    const bizName    = businessInfo?.business_name    || '';
-    const bizBranch  = businessInfo?.branch_location  || '';
-    const bizAddress = businessInfo?.address          || '';
-    const bizContact = businessInfo?.contact_number   || '';
-    const bizEmail   = businessInfo?.email_address    || '';
-    const bizTin     = businessInfo?.tin              || '';
-    const taxRate    = parseFloat(businessInfo?.tax_rate || '12') || 12;
+    let cachedBiz = {};
+    try {
+        const stored = localStorage.getItem('cached_business_info');
+        if (stored) cachedBiz = JSON.parse(stored);
+    } catch (e) {
+        // Silently ignore JSON parse errors
+    }
+
+    const bizName    = businessInfo?.business_name    || cachedBiz?.business_name    || '';
+    const bizBranch  = businessInfo?.branch_location  || cachedBiz?.branch_location  || '';
+    const bizAddress = businessInfo?.address          || cachedBiz?.address          || '';
+    const bizContact = businessInfo?.contact_number   || cachedBiz?.contact_number   || '';
+    const bizEmail   = businessInfo?.email_address    || cachedBiz?.email_address    || '';
+    const bizTin     = businessInfo?.tin              || cachedBiz?.tin              || '';
+    const taxRate    = parseFloat(businessInfo?.tax_rate || cachedBiz?.tax_rate || '12') || 12;
     const taxDivisor = 1 + (taxRate / 100);
 
     // Type-specific styling
@@ -108,7 +115,8 @@ export function printUnifiedReceipt(options) {
     const itemsRows = items.map(item => `
         <tr style="border-bottom: 1px dashed #E5E7EB;">
             <td style="padding: 5px 4px; font-size: 11px; line-height: 1.4;">
-                ${item.name || item.product?.name || '—'}<br>
+                ${item.name || item.product?.name || '—'}
+                ${(item.chinese_name || item.product?.chinese_name) ? `<br><span style="color: #4B5563; font-size: 10px;">${item.chinese_name || item.product?.chinese_name}</span>` : ''}<br>
                 <span style="color: #6B7280; font-size: 10px;">Part #: ${item.product?.part_no || item.partNo || item.part_no || '—'}</span>
             </td>
             <td style="padding: 5px 4px; text-align: center; font-size: 11px; width: 28px;">${item.unit || 'pc'}</td>

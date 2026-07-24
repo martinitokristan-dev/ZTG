@@ -1,28 +1,9 @@
 import React from 'react';
 import useSalesLog from './hooks/useSalesLog';
 import SalesTable from './views/SalesTable';
-import { exportSalesToExcel } from '../../../shared/utils/clientExcelExporter';
-
+import IOSSelect from '../../../shared/components/IOSSelect';
 export default function SalesLog() {
     const sl = useSalesLog();
-
-    const handleExportExcel = () => {
-        const flattened = (sl.filteredItems || []).map(item => ({
-            qty: item.qty,
-            price: item.price,
-            name: item.name,
-            partNo: item.part_no || item.partNo,
-            tx: {
-                date: item._txDate,
-                si_no: item._txReceipt,
-                customer_name: item._txCustomer,
-                payment_method: item._txPayment,
-                status: item._txStatus,
-                cashier: { name: item._txChecker }
-            }
-        }));
-        exportSalesToExcel(flattened, { filename: `Master_Sales_Log_${sl.timeFilter.replace(/\s+/g, '_')}.xlsx` });
-    };
 
     return (
         <div className="main-workspace">
@@ -31,42 +12,27 @@ export default function SalesLog() {
                     <h1 style={{ fontSize: '20px', marginBottom: '2px', fontFamily: '"Outfit", sans-serif', color: 'var(--text-primary)' }}>Sales Log</h1>
                     <div className="page-description" style={{ marginTop: '0', fontSize: '12px', color: 'var(--text-secondary)' }}>Master administrative record of all sales, returns, and POS activity.</div>
                 </div>
-                <button 
-                    className="btn btn-success"
-                    onClick={handleExportExcel}
-                    disabled={!sl.filteredItems || sl.filteredItems.length === 0}
-                    style={{ 
-                        display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '700', fontSize: '13px', 
-                        borderRadius: '8px', padding: '8px 20px', background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', 
-                        border: 'none', color: '#FFFFFF', boxShadow: '0 4px 12px rgba(5,150,105,0.3)',
-                        cursor: (!sl.filteredItems || sl.filteredItems.length === 0) ? 'not-allowed' : 'pointer'
-                    }}
-                    title="Export formatted Master Sales Log Excel sheet"
-                >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                    Export Excel (.xlsx)
-                </button>
             </div>
 
                 <div className="content-body" style={{ padding: '20px 24px', backgroundColor: '#F8FAFC', minHeight: 'calc(100vh - 120px)' }}>
                     
                     {/* Metrics Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
-                        <div className="card" style={{ padding: '20px', background: '#FFFFFF', borderRadius: '10px', border: '1px solid var(--border)' }}>
-                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500', marginBottom: '8px' }}>Total Transactions</div>
-                            <div style={{ fontSize: '28px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: '"Outfit", sans-serif' }}>{sl.metrics.totalTx}</div>
+                    <div className="daily-sales-kpis" style={{ display: 'grid', gap: '16px', marginBottom: '24px' }}>
+                        <div className="card" style={{ padding: '16px 20px', background: '#FFFFFF', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500', marginBottom: '6px' }}>Total Transactions</div>
+                            <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: '"Outfit", sans-serif' }}>{sl.metrics.totalTx}</div>
                         </div>
-                        <div className="card" style={{ padding: '20px', background: '#FFFFFF', borderRadius: '10px', border: '1px solid var(--border)' }}>
-                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500', marginBottom: '8px' }}>Total Sales (Filtered)</div>
-                            <div style={{ fontSize: '28px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: '"Outfit", sans-serif' }}>{sl.fmt(sl.metrics.totalSales)}</div>
+                        <div className="card" style={{ padding: '16px 20px', background: '#FFFFFF', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500', marginBottom: '6px' }}>Total Sales (Filtered)</div>
+                            <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: '"Outfit", sans-serif' }}>{sl.fmt(sl.metrics.totalSales)}</div>
                         </div>
-                        <div className="card" style={{ padding: '20px', background: '#FFFFFF', borderRadius: '10px', border: '1px solid var(--border)' }}>
-                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500', marginBottom: '8px' }}>Total Refunds / Returns</div>
-                            <div style={{ fontSize: '28px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: '"Outfit", sans-serif' }}>{sl.fmt(sl.metrics.totalRefunds)}</div>
+                        <div className="card" style={{ padding: '16px 20px', background: '#FFFFFF', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500', marginBottom: '6px' }}>Total Refunds / Returns</div>
+                            <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: '"Outfit", sans-serif' }}>{sl.fmt(sl.metrics.totalRefunds)}</div>
                         </div>
-                        <div className="card" style={{ padding: '20px', background: '#FFFFFF', borderRadius: '10px', border: '1px solid var(--border)' }}>
-                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500', marginBottom: '8px' }}>Average Sale</div>
-                            <div style={{ fontSize: '28px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: '"Outfit", sans-serif' }}>{sl.fmt(sl.metrics.avgSale)}</div>
+                        <div className="card" style={{ padding: '16px 20px', background: '#FFFFFF', borderRadius: '10px', border: '1px solid var(--border)' }}>
+                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500', marginBottom: '6px' }}>Average Sale</div>
+                            <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: '"Outfit", sans-serif' }}>{sl.fmt(sl.metrics.avgSale)}</div>
                         </div>
                     </div>
 
@@ -87,37 +53,48 @@ export default function SalesLog() {
                                 />
                             </div>
                             <div style={{ width: '150px' }}>
-                                <select className="form-control form-control-sm" value={sl.timeFilter} onChange={(e) => sl.setTimeFilter(e.target.value)}>
-                                    <option value="Today">Today</option>
-                                    <option value="All">All Time</option>
-                                    <option value="This Week">This Week</option>
-                                    <option value="This Month">This Month</option>
-                                </select>
+                                <IOSSelect
+                                    value={sl.timeFilter}
+                                    onChange={(e) => sl.setTimeFilter(e.target.value)}
+                                    options={[
+                                        { value: 'Today', label: 'Today' },
+                                        { value: 'All', label: 'All Time' },
+                                        { value: 'This Week', label: 'This Week' },
+                                        { value: 'This Month', label: 'This Month' }
+                                    ]}
+                                />
                             </div>
                             <div style={{ width: '150px' }}>
-                                <select className="form-control form-control-sm" value={sl.cashierFilter} onChange={(e) => sl.setCashierFilter(e.target.value)}>
-                                    <option value="All">All Cashiers</option>
-                                    {sl.cashiers.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </select>
+                                <IOSSelect
+                                    value={sl.cashierFilter}
+                                    onChange={(e) => sl.setCashierFilter(e.target.value)}
+                                    options={[{ value: 'All', label: 'All Cashiers' }, ...sl.cashiers.map(c => ({ value: c.id, label: c.name }))]}
+                                />
                             </div>
                             <div style={{ width: '150px' }}>
-                                <select className="form-control form-control-sm" value={sl.paymentFilter} onChange={(e) => sl.setPaymentFilter(e.target.value)}>
-                                    <option value="All">All Payments</option>
-                                    <option value="Cash">Cash</option>
-                                    <option value="GCash">GCash</option>
-                                    <option value="Bank">Bank Transfer</option>
-                                    <option value="Credit Card">Credit Card</option>
-                                    <option value="P.O. (Pending)">P.O. (Pending)</option>
-                                </select>
+                                <IOSSelect
+                                    value={sl.paymentFilter}
+                                    onChange={(e) => sl.setPaymentFilter(e.target.value)}
+                                    options={[
+                                        { value: 'All', label: 'All Payments' },
+                                        { value: 'Cash', label: 'Cash' },
+                                        { value: 'GCash', label: 'GCash' },
+                                        { value: 'Bank Transfer', label: 'Bank Transfer' },
+                                        { value: 'P.O. (Pending)', label: 'P.O. (Pending)' },
+                                        { value: 'Split', label: 'Split' }
+                                    ]}
+                                />
                             </div>
-                            <div style={{ width: '150px' }}>
-                                <select className="form-control form-control-sm" value={sl.sortFilter} onChange={(e) => sl.setSortFilter(e.target.value)}>
-                                    <option value="Transaction #">Transaction #</option>
-                                    <option value="Date (Newest)">Date (Newest)</option>
-                                    <option value="Date (Oldest)">Date (Oldest)</option>
-                                </select>
+                            <div style={{ width: '160px' }}>
+                                <IOSSelect
+                                    value={sl.sortFilter}
+                                    onChange={(e) => sl.setSortFilter(e.target.value)}
+                                    options={[
+                                        { value: 'Transaction #', label: 'Transaction #' },
+                                        { value: 'Date (Newest)', label: 'Date (Newest)' },
+                                        { value: 'Date (Oldest)', label: 'Date (Oldest)' }
+                                    ]}
+                                />
                             </div>
                         </div>
                         

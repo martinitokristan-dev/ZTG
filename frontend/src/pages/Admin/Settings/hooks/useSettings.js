@@ -121,6 +121,7 @@ export default function useSettings() {
 
     // Business logo — loaded from settings, admin-only upload/remove
     const [logoUrl, setLogoUrl] = useState(null);
+    const [sidebarLogoUrl, setSidebarLogoUrl] = useState(null);
     const [logoUploading, setLogoUploading] = useState(false);
     const [logoRemoving, setLogoRemoving] = useState(false);
 
@@ -210,9 +211,15 @@ export default function useSettings() {
             const settingsData = await fetchSettingData('settings', '/settings');
             if (settingsData) {
                 const logo = settingsData.business_logo || settingsData.logo_url || null;
+                const sidebarLogo = settingsData.sidebar_logo || null;
                 setLogoUrl(logo);
+                setSidebarLogoUrl(sidebarLogo);
+                if (sidebarLogo) {
+                    localStorage.setItem('cached_sidebar_logo', sidebarLogo);
+                }
+                localStorage.setItem('cached_business_info', JSON.stringify(settingsData));
                 setSettings(prev => {
-                    const next = { ...prev, ...settingsData, business_logo: logo };
+                    const next = { ...prev, ...settingsData, business_logo: logo, sidebar_logo: sidebarLogo };
                     setInitialSettings(next);
                     return next;
                 });
@@ -416,6 +423,50 @@ export default function useSettings() {
     // ------------------------------------------------------------------------
     // BUSINESS LOGO ACTIONS (Admin only, R2 bucket storage)
     // ------------------------------------------------------------------------
+    const handleLogoUploadWithCrop = async (originalFile, croppedSidebarBlob) => {
+        if (!originalFile) return;
+
+        const formData = new FormData();
+        formData.append('logo', originalFile);
+        if (croppedSidebarBlob) {
+            formData.append('sidebar_logo', croppedSidebarBlob);
+        }
+
+        setLogoUploading(true);
+        try {
+            const res = await api.post('/settings/logo', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            const newUrl = res.data?.logo_url || null;
+            const newSidebarUrl = res.data?.sidebar_logo_url || null;
+
+            setLogoUrl(newUrl);
+            setSidebarLogoUrl(newSidebarUrl);
+            setSettings(prev => ({ ...prev, business_logo: newUrl, sidebar_logo: newSidebarUrl }));
+            setInitialSettings(prev => ({ ...prev, business_logo: newUrl, sidebar_logo: newSidebarUrl }));
+
+            if (newUrl) {
+                localStorage.setItem('cached_business_logo', newUrl);
+            } else {
+                localStorage.removeItem('cached_business_logo');
+            }
+
+            if (newSidebarUrl) {
+                localStorage.setItem('cached_sidebar_logo', newSidebarUrl);
+            } else {
+                localStorage.removeItem('cached_sidebar_logo');
+            }
+
+            resetSettingsCache('settings');
+            window.dispatchEvent(new Event('settings_updated'));
+            showToast('Business logo updated successfully!', 'success');
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed to upload logo.', 'error');
+        } finally {
+            setLogoUploading(false);
+        }
+    };
+
     const handleLogoUpload = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -427,38 +478,14 @@ export default function useSettings() {
             return;
         }
 
-        if (file.size > 2 * 1024 * 1024) {
-            showToast('Logo file size exceeds 2MB limit.', 'error');
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('Logo file size exceeds 5MB limit.', 'error');
             e.target.value = '';
             return;
         }
 
-        const formData = new FormData();
-        formData.append('logo', file);
-
-        setLogoUploading(true);
-        try {
-            const res = await api.post('/settings/logo', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            const newUrl = res.data?.logo_url || null;
-            setLogoUrl(newUrl);
-            setSettings(prev => ({ ...prev, business_logo: newUrl }));
-            setInitialSettings(prev => ({ ...prev, business_logo: newUrl }));
-            if (newUrl) {
-                localStorage.setItem('cached_business_logo', newUrl);
-            } else {
-                localStorage.removeItem('cached_business_logo');
-            }
-            resetSettingsCache('settings');
-            window.dispatchEvent(new Event('settings_updated'));
-            showToast('Business logo updated successfully!', 'success');
-        } catch (err) {
-            showToast(err.response?.data?.message || 'Failed to upload logo. Max 2MB, images only.', 'error');
-        } finally {
-            setLogoUploading(false);
-            e.target.value = '';
-        }
+        await handleLogoUploadWithCrop(file, null);
+        e.target.value = '';
     };
 
     const handleLogoRemove = async () => {
@@ -466,9 +493,11 @@ export default function useSettings() {
         try {
             await api.delete('/settings/logo');
             setLogoUrl(null);
-            setSettings(prev => ({ ...prev, business_logo: null }));
-            setInitialSettings(prev => ({ ...prev, business_logo: null }));
+            setSidebarLogoUrl(null);
+            setSettings(prev => ({ ...prev, business_logo: null, sidebar_logo: null }));
+            setInitialSettings(prev => ({ ...prev, business_logo: null, sidebar_logo: null }));
             localStorage.removeItem('cached_business_logo');
+            localStorage.removeItem('cached_sidebar_logo');
             resetSettingsCache('settings');
             window.dispatchEvent(new Event('settings_updated'));
             showToast('Business logo removed.', 'success');
@@ -495,6 +524,14 @@ export default function useSettings() {
             const payload = { ...settings, business_logo: logoUrl };
             await api.put('/settings', { settings: payload });
             resetSettingsCache('settings');
+
+            // Instantly update cached business details and notify all active listeners (Sidebar, Receipts, POS)
+            localStorage.setItem('cached_business_info', JSON.stringify(payload));
+            if (payload.business_name) {
+                localStorage.setItem('cached_business_name', payload.business_name);
+            }
+            window.dispatchEvent(new Event('settings_updated'));
+
             showToast('System settings saved successfully!', 'success');
             setSettings(payload);
             setInitialSettings(payload);
@@ -572,8 +609,12 @@ export default function useSettings() {
     // ------------------------------------------------------------------------
     // TAB 3 ACTIONS: CATEGORIES & VARIANTS OPTIONS CRUD
     // ------------------------------------------------------------------------
+    const [categorySubmitting, setCategorySubmitting] = useState(false);
+
     const handleCategorySubmit = async (e) => {
         e.preventDefault();
+        if (categorySubmitting) return;
+        setCategorySubmitting(true);
         let commitFn, rollbackFn;
         if (selectedCategory) {
             const { commit, rollback } = optimisticUpdateCategory(selectedCategory.id, { name: categoryName, variants: categoryVariants });
@@ -599,6 +640,8 @@ export default function useSettings() {
         } catch (err) {
             rollbackFn();
             showToast(err.response?.data?.message || 'Failed to save product category.', 'error');
+        } finally {
+            setCategorySubmitting(false);
         }
     };
 
@@ -630,16 +673,28 @@ export default function useSettings() {
 
             if (!typeId) {
                 const createTypeRes = await api.post('/variants', { name: typeName });
-                typeObj = createTypeRes.data;
+                const typeData = createTypeRes.data;
+                typeObj = typeData.variant_type || typeData;
                 typeId = typeObj.id;
+
+                setVariantTypes(prev => {
+                    if (!prev.some(v => v.name?.toLowerCase() === typeName?.toLowerCase())) {
+                        return [...prev, { ...typeObj, options: [] }];
+                    }
+                    return prev;
+                });
             }
 
             const optRes = await api.post(`/variants/${typeId}/options`, { value: newOptionValue.trim() });
-            const newOption = optRes.data;
+            const optData = optRes.data;
+            const newOption = optData.variant_option || optData;
 
             setVariantTypes(prev => prev.map(vt => {
-                if (vt.id === typeId) {
-                    return { ...vt, options: [...(vt.options || []), newOption] };
+                if (vt.id === typeId || vt.name?.toLowerCase() === typeName?.toLowerCase()) {
+                    const existingOpts = vt.options || [];
+                    if (!existingOpts.some(o => o.id === newOption.id)) {
+                        return { ...vt, options: [...existingOpts, newOption] };
+                    }
                 }
                 return vt;
             }));
@@ -655,7 +710,8 @@ export default function useSettings() {
     const handleUpdateVariantOption = async (optionId, newValue, typeName) => {
         try {
             const res = await api.put(`/variant-options/${optionId}`, { value: newValue });
-            const updatedOption = res.data;
+            const optData = res.data;
+            const updatedOption = optData.variant_option || optData;
 
             setVariantTypes(prev => prev.map(vt => {
                 if (vt.name?.toLowerCase() === typeName?.toLowerCase()) {
@@ -847,12 +903,12 @@ export default function useSettings() {
         // Tab 2: General System Settings & Logo
         settings, handleSettingInputChange, handleToggleSetting, handleSaveBulkSettings,
         showConfirmSaveModal, handleConfirmSaveBulkSettings, handleCancelSaveBulkSettings,
-        logoUrl, logoUploading, logoRemoving, handleLogoUpload, handleLogoRemove,
+        logoUrl, sidebarLogoUrl, logoUploading, logoRemoving, handleLogoUpload, handleLogoUploadWithCrop, handleLogoRemove,
 
         // Tab 3: Products Settings
         categories, showCategoryModal, setShowCategoryModal, selectedCategory, setSelectedCategory,
         categoryName, setCategoryName, categoryVariants, setCategoryVariants,
-        newOptionValue, setNewOptionValue,
+        newOptionValue, setNewOptionValue, categorySubmitting,
         handleCategorySubmit, handleDeleteCategory, handleAddVariantOption, handleUpdateVariantOption, handleDeleteVariantOption, getOptionsForType,
 
         // Tab 4: Alert Rules

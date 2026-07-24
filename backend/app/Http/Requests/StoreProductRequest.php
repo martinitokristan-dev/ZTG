@@ -38,6 +38,7 @@ class StoreProductRequest extends FormRequest
             'variants.*.price1'          => 'required_with:variants|numeric|min:0',
             'variants.*.price2'          => 'required_with:variants|numeric|min:0',
             'variants.*.image'           => 'nullable|string|max:255',
+            'variants.*.chinese_name'    => 'nullable|string|max:255',
             'variants.*.option_ids'      => 'required_with:variants|array',
             'variants.*.option_ids.*'    => 'exists:variant_options,id',
         ];

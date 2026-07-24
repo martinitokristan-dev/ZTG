@@ -99,7 +99,12 @@ export default function ViewProductModal({ isOpen, onClose, product }) {
                                         return (
                                             <tr key={v.id} style={{ borderBottom: '1px solid #F1F5F9', background: rowBg }}>
                                                 <td style={{ padding: '10px 12px', fontWeight: '700', color: '#1E293B', fontFamily: 'monospace', fontSize: '12px' }}>{v.part_no}</td>
-                                                <td style={{ padding: '10px 12px', color: '#475569', fontWeight: '500' }}>{varLabel}</td>
+                                                <td style={{ padding: '10px 12px', color: '#475569', fontWeight: '500' }}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                        <span style={{ fontWeight: '600', color: '#0F172A' }}>{v.name || product.name} {varLabel && `(${varLabel})`}</span>
+                                                        {v.chinese_name && <span style={{ fontSize: '11px', color: '#94A3B8', marginTop: '1px' }}>{v.chinese_name}</span>}
+                                                    </div>
+                                                </td>
                                                 <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                                                     <span style={{ background: vStockBg, color: vStockColor, padding: '3px 10px', borderRadius: '9999px', fontWeight: '700', fontSize: '11px' }}>{v.stock}</span>
                                                 </td>

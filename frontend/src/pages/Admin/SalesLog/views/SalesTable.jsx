@@ -23,10 +23,12 @@ export default function SalesTable({ loading, items, fmt, fmtDate }) {
                             <th style={{ padding: '12px 16px', fontWeight: '700' }}>S.I./C.I./D.R.</th>
                             <th style={{ padding: '12px 16px', fontWeight: '700' }}>PART NO.</th>
                             <th style={{ padding: '12px 16px', fontWeight: '700' }}>PRODUCT</th>
-                            <th style={{ padding: '12px 16px', fontWeight: '700' }}>QTY</th>
-                            <th style={{ padding: '12px 16px', fontWeight: '700' }}>AMOUNT</th>
+                            <th style={{ padding: '12px 16px', fontWeight: '700', textAlign: 'center' }}>QTY</th>
+                            <th style={{ padding: '12px 16px', fontWeight: '700', textAlign: 'right' }}>PRICE</th>
+                            <th style={{ padding: '12px 16px', fontWeight: '700', textAlign: 'right' }}>AMOUNT</th>
                             <th style={{ padding: '12px 16px', fontWeight: '700' }}>CUSTOMER</th>
                             <th style={{ padding: '12px 16px', fontWeight: '700' }}>PAYMENT</th>
+                            <th style={{ padding: '12px 16px', fontWeight: '700', textAlign: 'center' }}>DISCOUNTED</th>
                             <th style={{ padding: '12px 16px', fontWeight: '700' }}>SERVED BY</th>
                             <th style={{ padding: '12px 16px', fontWeight: '700' }}>STATUS</th>
                         </tr>
@@ -37,7 +39,13 @@ export default function SalesTable({ loading, items, fmt, fmtDate }) {
                             const isPending = item._txStatus === 'Pending';
                             const amountColor = (isDeduction || isPending) ? 'var(--danger, #DC2626)' : 'var(--success, #16A34A)';
                             const amountPrefix = isDeduction ? '- ' : '';
-                            const rowAmount = (item.price !== null && item.price !== undefined) ? item.price * item.qty : 0;
+
+                            const qty = Number(item.qty || 1);
+                            const unitPrice = Number(item.original_price || item.price || 0);
+                            const itemDisc = Number(item.discount || item.item_discount || 0);
+                            const discountVal = itemDisc > 0 ? itemDisc * qty : Number(item._txDiscountAmount || 0);
+                            const grossRow = qty * unitPrice;
+                            const netRowAmount = Math.max(0, grossRow - discountVal);
 
                             return (
                                 <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
@@ -47,10 +55,14 @@ export default function SalesTable({ loading, items, fmt, fmtDate }) {
                                     <td style={{ padding: '16px' }}>
                                         <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{item.name}</span>
                                     </td>
-                                    <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{item.qty}</td>
-                                    <td style={{ padding: '16px', fontWeight: '700', color: amountColor }}>{amountPrefix}{fmt(rowAmount)}</td>
+                                    <td style={{ padding: '16px', color: 'var(--text-secondary)', textAlign: 'center' }}>{qty}</td>
+                                    <td style={{ padding: '16px', color: 'var(--text-secondary)', textAlign: 'right' }}>{fmt(unitPrice)}</td>
+                                    <td style={{ padding: '16px', fontWeight: '700', textAlign: 'right', color: amountColor }}>{amountPrefix}{fmt(netRowAmount)}</td>
                                     <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{item._txCustomer}</td>
                                     <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{item._txPayment}</td>
+                                    <td style={{ padding: '16px', textAlign: 'center', color: discountVal > 0 ? '#2563EB' : '#94A3B8', fontWeight: discountVal > 0 ? '700' : '400' }}>
+                                        {discountVal > 0 ? `-${fmt(discountVal)}` : '—'}
+                                    </td>
                                     <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{(item._txChecker || '—').split(' ')[0]}</td>
                                     <td style={{ padding: '16px' }}><StatusBadge status={item._txStatus} /></td>
                                 </tr>

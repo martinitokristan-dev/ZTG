@@ -7,6 +7,11 @@ export default function CheckoutModal({
     onClose, 
     cart, 
     cartTotals, 
+    setItemDiscount,
+    orderDiscountType,
+    setOrderDiscountType,
+    orderDiscountVal,
+    setOrderDiscountVal,
     processCheckout, 
     fmt 
 }) {
@@ -44,14 +49,14 @@ export default function CheckoutModal({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, checkoutSuccess, isProcessing]);
 
-    // Fetch live logo on mount — logo is always current, never frozen per BIR spec
+    // Fetch live settings on mount
     useEffect(() => {
         api.get('/settings')
             .then(res => {
-                const settingsArr = Array.isArray(res.data) ? res.data : (res.data?.settings || []);
-                const logoSetting = settingsArr.find?.(s => s.key === 'business_logo');
-                if (logoSetting?.value) setLogoUrl(logoSetting.value);
-                else if (res.data?.business_logo) setLogoUrl(res.data.business_logo);
+                const data = res.data || {};
+                const logo = data.business_logo || null;
+                if (logo) setLogoUrl(logo);
+                localStorage.setItem('cached_business_info', JSON.stringify(data));
             })
             .catch(() => { /* logo silently absent */ });
     }, []);
@@ -289,6 +294,9 @@ export default function CheckoutModal({
                                                 <span style={{ flex: 1, paddingRight: '12px', fontWeight: '500' }}>
                                                     {item.product?.name || item.name || 'Item'}
                                                     {tierBadge}
+                                                    {(item.chinese_name || item.product?.chinese_name) && (
+                                                        <div style={{ fontSize: '10px', color: '#64748B', fontWeight: 'normal' }}>{item.chinese_name || item.product?.chinese_name}</div>
+                                                    )}
                                                 </span>
                                                 <span style={{ color: 'var(--text-secondary)', width: '40px', textAlign: 'center' }}>x{item.qty}</span>
                                                 <span style={{ fontWeight: '600', width: '80px', textAlign: 'right' }}>₱{itemTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
@@ -425,20 +433,65 @@ export default function CheckoutModal({
                         
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px', overflowY: 'auto', paddingRight: '4px' }}>
                             {cart.map(item => {
-                                const price = item.priceTier === 'price2' ? parseFloat(item.price2 || 0) : parseFloat(item.price1 || 0);
+                                const origPrice = item.priceTier === 'price2' ? parseFloat(item.price2 || 0) : parseFloat(item.price1 || 0);
+                                const itemDisc = parseFloat(item.item_discount || 0);
+                                const finalUnitPrice = Math.max(0, origPrice - itemDisc);
+                                const lineTotal = finalUnitPrice * item.qty;
+                                const origLineTotal = origPrice * item.qty;
+
                                 return (
-                                    <div key={`${item.id}-${item.priceTier}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', background: '#FFFFFF', border: '1px solid var(--border)', borderRadius: '8px' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                            <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>
-                                                {item.name}
-                                                <span style={{ fontSize: '10px', marginLeft: '6px', padding: '2px 6px', borderRadius: '4px', fontWeight: '700', backgroundColor: item.priceTier === 'price2' ? '#F5F3FF' : '#EFF6FF', color: item.priceTier === 'price2' ? '#7C3AED' : '#2563EB' }}>
-                                                    {item.priceTier === 'price2' ? 'P2' : 'P1'}
+                                    <div key={`${item.id}-${item.priceTier}`} style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '10px 12px', background: '#FFFFFF', border: itemDisc > 0 ? '1px solid #3B82F6' : '1px solid var(--border)', borderRadius: '8px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>
+                                                    {item.name}
+                                                    <span style={{ fontSize: '10px', marginLeft: '6px', padding: '2px 6px', borderRadius: '4px', fontWeight: '700', backgroundColor: item.priceTier === 'price2' ? '#F5F3FF' : '#EFF6FF', color: item.priceTier === 'price2' ? '#7C3AED' : '#2563EB' }}>
+                                                        {item.priceTier === 'price2' ? 'P2' : 'P1'}
+                                                    </span>
                                                 </span>
-                                            </span>
-                                            <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{item.qty} x {fmt(price)}</span>
+                                                {item.chinese_name && <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{item.chinese_name}</span>}
+                                                <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                                                    {item.qty} x {itemDisc > 0 ? (
+                                                        <>
+                                                            <span style={{ textDecoration: 'line-through', color: '#94A3B8', marginRight: '4px' }}>{fmt(origPrice)}</span>
+                                                            <strong style={{ color: '#2563EB' }}>{fmt(finalUnitPrice)}</strong>
+                                                        </>
+                                                    ) : (
+                                                        fmt(origPrice)
+                                                    )}
+                                                </span>
+                                            </div>
+                                            <div style={{ textAlign: 'right' }}>
+                                                {itemDisc > 0 ? (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                                        <span style={{ fontSize: '11px', textDecoration: 'line-through', color: '#94A3B8' }}>{fmt(origLineTotal)}</span>
+                                                        <span style={{ fontWeight: '700', fontSize: '13px', color: '#2563EB' }}>{fmt(lineTotal)}</span>
+                                                    </div>
+                                                ) : (
+                                                    <div style={{ fontWeight: '700', fontSize: '13px', color: 'var(--text-primary)' }}>
+                                                        {fmt(lineTotal)}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div style={{ fontWeight: '700', fontSize: '13px', color: 'var(--text-primary)' }}>
-                                            {fmt(price * item.qty)}
+                                        
+                                        {/* Per-Item Discount Input */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '4px', borderTop: '1px dashed #F1F5F9' }}>
+                                            <span style={{ fontSize: '10px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>🏷️ Item Disc:</span>
+                                            <input 
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                placeholder="₱0.00 off"
+                                                value={item.item_discount || ''}
+                                                onChange={e => setItemDiscount(item.id, item.priceTier || 'price1', e.target.value)}
+                                                style={{ width: '100px', fontSize: '11px', padding: '2px 6px', height: '26px', borderRadius: '4px', border: '1px solid #CBD5E1', textAlign: 'right', fontWeight: '600' }}
+                                            />
+                                            {itemDisc > 0 && (
+                                                <button type="button" onClick={() => setItemDiscount(item.id, item.priceTier || 'price1', 0)} style={{ background: 'none', border: 'none', color: '#EF4444', fontSize: '10px', fontWeight: '700', cursor: 'pointer', padding: 0 }}>
+                                                    Clear
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -449,8 +502,23 @@ export default function CheckoutModal({
                         <div style={{ background: '#FFFFFF', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-secondary)' }}>
                                 <span>Subtotal</span>
-                                <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{fmt(cartTotals.subtotal)}</span>
+                                <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{fmt(cartTotals.rawSubtotal || cartTotals.subtotal)}</span>
                             </div>
+                            
+                            {(cartTotals.itemDiscountsTotal || 0) > 0 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#2563EB' }}>
+                                    <span>Item Discounts</span>
+                                    <span style={{ fontWeight: '700' }}>-{fmt(cartTotals.itemDiscountsTotal)}</span>
+                                </div>
+                            )}
+
+                            {(cartTotals.orderDiscountAmount || 0) > 0 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#16A34A' }}>
+                                    <span>Order Discount ({orderDiscountType})</span>
+                                    <span style={{ fontWeight: '700' }}>-{fmt(cartTotals.orderDiscountAmount)}</span>
+                                </div>
+                            )}
+
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                                 <span>Tax (12%)</span>
                                 <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{fmt(cartTotals.tax)}</span>
@@ -488,6 +556,49 @@ export default function CheckoutModal({
                                 <option value="Split">Split Payment</option>
                                 <option value="P.O. (Pending)">P.O. (Pending)</option>
                             </select>
+                        </div>
+
+                        {/* Whole-Sale / Order Discount Controls */}
+                        <div style={{ background: '#F8FAFC', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ fontSize: '10px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Order Discount (Whole Sale)</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                {['None', 'CustomAmount', 'CustomPercent'].map(t => (
+                                    <button 
+                                        type="button"
+                                        key={t}
+                                        onClick={() => setOrderDiscountType(t)}
+                                        style={{
+                                            padding: '4px 10px',
+                                            borderRadius: '6px',
+                                            fontSize: '11px',
+                                            fontWeight: '700',
+                                            cursor: 'pointer',
+                                            border: orderDiscountType === t ? '1px solid #2563EB' : '1px solid #CBD5E1',
+                                            background: orderDiscountType === t ? '#EFF6FF' : '#FFFFFF',
+                                            color: orderDiscountType === t ? '#2563EB' : '#475569'
+                                        }}
+                                    >
+                                        {t === 'None' && 'None'}
+                                        {t === 'CustomAmount' && 'Custom ₱'}
+                                        {t === 'CustomPercent' && 'Custom %'}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {(orderDiscountType === 'CustomAmount' || orderDiscountType === 'CustomPercent') && (
+                                <div style={{ marginTop: '4px' }}>
+                                    <input 
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        className="form-control form-control-sm"
+                                        placeholder={orderDiscountType === 'CustomAmount' ? 'Enter discount amount (₱)' : 'Enter discount percentage (%)'}
+                                        value={orderDiscountVal}
+                                        onChange={e => setOrderDiscountVal(e.target.value)}
+                                        style={{ fontSize: '12px', fontWeight: '700' }}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         {paymentMethod === 'Split' && (

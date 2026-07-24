@@ -32,7 +32,42 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction, 
 
     const txItems = Array.isArray(tx.items) ? tx.items : [];
 
-    if (status !== 'Restocked' && status !== 'Damaged' && txItems.length > 0) {
+    // Calculate overall financial totals across transaction items
+    let grossSubtotal = 0;
+    let itemDiscountsTotal = 0;
+
+    const processedItems = txItems.map(item => {
+        const qty = Number(item.qty || 1);
+        let origPrice = Number(item.original_price || item.price || 0);
+        let itemDisc = Number(item.discount || item.item_discount || 0);
+
+        // Fallback for older records where price was saved as net price instead of orig price
+        if (item.original_price && Number(item.original_price) > Number(item.price) && itemDisc === 0) {
+            origPrice = Number(item.original_price);
+            itemDisc = origPrice - Number(item.price);
+        }
+
+        const lineGross = qty * origPrice;
+        const lineDisc = qty * itemDisc;
+        const lineNet = Math.max(0, lineGross - lineDisc);
+
+        grossSubtotal += lineGross;
+        itemDiscountsTotal += lineDisc;
+
+        return {
+            ...item,
+            qty,
+            unitPrice: origPrice,
+            itemDisc,
+            lineNet
+        };
+    });
+
+    const orderDiscountAmt = Number(tx.discount_amount || 0);
+    const totalDiscounts = itemDiscountsTotal + orderDiscountAmt;
+    const discountTypeLabel = tx.discount_type ? ` (${tx.discount_type})` : '';
+
+    if (status !== 'Restocked' && status !== 'Damaged' && processedItems.length > 0) {
         itemsBlock = (
             <div className="audit-detail-section" style={{ marginTop: '14px' }}>
                 <span className="audit-detail-section-title" style={{ fontSize: '11px', fontWeight: '700', color: '#64748B', textTransform: 'uppercase', marginBottom: '8px', display: 'block', letterSpacing: '0.5px' }}>Items Purchased</span>
@@ -42,27 +77,36 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction, 
                             <tr>
                                 <th style={{ padding: '8px 12px', fontWeight: '600' }}>Part No.</th>
                                 <th style={{ padding: '8px 12px', fontWeight: '600' }}>Product</th>
-                                <th style={{ padding: '8px 12px', fontWeight: '600', textAlign: 'center', width: '60px' }}>Qty</th>
-                                <th style={{ padding: '8px 12px', fontWeight: '600', textAlign: 'right', width: '100px' }}>Price</th>
-                                <th style={{ padding: '8px 12px', fontWeight: '600', textAlign: 'right', width: '110px' }}>Total</th>
+                                <th style={{ padding: '8px 12px', fontWeight: '600', textAlign: 'center', width: '50px' }}>Qty</th>
+                                <th style={{ padding: '8px 12px', fontWeight: '600', textAlign: 'right', width: '90px' }}>Price</th>
+                                <th style={{ padding: '8px 12px', fontWeight: '600', textAlign: 'center', width: '95px' }}>Discounted</th>
+                                <th style={{ padding: '8px 12px', fontWeight: '600', textAlign: 'right', width: '100px' }}>Total</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {txItems.map((item, index) => {
+                             {processedItems.map((item, index) => {
                                 const partNo = item.product?.part_no || item.part_no || '—';
                                 const name = item.product?.name || item.name || 'Unknown Part';
-                                const qty = item.qty || 0;
-                                const price = item.price || 0;
-                                const total = qty * price;
+                                const chineseName = item.product?.chinese_name || item.chinese_name;
+                                const itemDiscTotal = item.itemDisc * item.qty;
+
                                 return (
                                     <tr key={index} style={{ borderBottom: '1px solid #F1F5F9' }}>
                                         <td style={{ padding: '10px 12px', color: '#0F172A', fontWeight: '700', fontFamily: 'monospace' }}>{partNo}</td>
                                         <td style={{ padding: '10px 12px', color: '#334155' }}>
                                             <div style={{ fontWeight: '600' }}>{name}</div>
+                                            {chineseName && <div style={{ fontSize: '11px', color: '#94A3B8' }}>{chineseName}</div>}
                                         </td>
-                                        <td style={{ padding: '10px 12px', textAlign: 'center', color: '#0F172A', fontWeight: '700' }}>{qty}</td>
-                                        <td style={{ padding: '10px 12px', textAlign: 'right', color: '#475569' }}>{fmt(price)}</td>
-                                        <td style={{ padding: '10px 12px', textAlign: 'right', color: '#0F172A', fontWeight: '700' }}>{fmt(total)}</td>
+                                        <td style={{ padding: '10px 12px', textAlign: 'center', color: '#0F172A', fontWeight: '700' }}>{item.qty}</td>
+                                        <td style={{ padding: '10px 12px', textAlign: 'right', color: '#475569' }}>
+                                            {fmt(item.unitPrice)}
+                                        </td>
+                                        <td style={{ padding: '10px 12px', textAlign: 'center', color: itemDiscTotal > 0 ? '#2563EB' : '#94A3B8', fontWeight: itemDiscTotal > 0 ? '700' : '400' }}>
+                                            {itemDiscTotal > 0 ? `-${fmt(itemDiscTotal)}` : '—'}
+                                        </td>
+                                        <td style={{ padding: '10px 12px', textAlign: 'right', color: '#0F172A', fontWeight: '700' }}>
+                                            {fmt(item.lineNet)}
+                                        </td>
                                     </tr>
                                 );
                             })}
@@ -114,6 +158,8 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction, 
                                 {auditDetailRow('Date & Time', fmtDate(tx.date || tx.created_at))}
                                 {auditDetailRow('Customer', tx.customer_name || tx.customer?.name || 'Walk-in')}
                                 {auditDetailRow('Cashier', tx.cashier?.name || '—')}
+                                {auditDetailRow('Subtotal (Gross)', fmt(grossSubtotal > 0 ? grossSubtotal : (tx.amount || tx.total)))}
+                                {totalDiscounts > 0 && auditDetailRow(`Total Discounts${discountTypeLabel}`, `-${fmt(totalDiscounts)}`, { color: '#2563EB', fontWeight: '700' })}
                                 {auditDetailRow('Amount', fmt(tx.amount || tx.total))}
                                 {auditDetailRow('Voided By', tx.approver_name || tx.cashier?.name || '—')}
                                 {auditDetailRow('Reason', tx.void_reason || '—')}
@@ -127,6 +173,8 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction, 
                                 {auditDetailRow('Date & Time', fmtDate(tx.date || tx.created_at))}
                                 {auditDetailRow('Customer', tx.customer_name || tx.customer?.name || 'Walk-in')}
                                 {auditDetailRow('Payment Method', tx.payment_method || '—')}
+                                {auditDetailRow('Subtotal (Gross)', fmt(grossSubtotal > 0 ? grossSubtotal : (tx.amount || tx.total)))}
+                                {totalDiscounts > 0 && auditDetailRow(`Total Discounts${discountTypeLabel}`, `-${fmt(totalDiscounts)}`, { color: '#2563EB', fontWeight: '700' })}
                                 {auditDetailRow('Amount', fmt(tx.amount || tx.total))}
                                 {auditDetailRow('Served By', tx.checker?.name || tx.cashier?.name || '—')}
                                 {auditDetailRow('Status', status, { color: statusColor, fontWeight: '700' })}
@@ -140,7 +188,11 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction, 
                                 {auditDetailRow('Customer', tx.customer_name || tx.customer?.name || (tx.customer_id ? `Customer #${tx.customer_id}` : 'Walk-in'))}
                                 {(tx.customer?.phone || tx.customer_phone) && auditDetailRow('Contact Phone', tx.customer?.phone || tx.customer_phone)}
                                 {auditDetailRow('Payment Method', tx.payment_method || 'Cash')}
-                                {auditDetailRow('Amount', fmt(tx.amount || tx.total))}
+                                {grossSubtotal > 0 && auditDetailRow('Subtotal (Gross)', fmt(grossSubtotal))}
+                                {itemDiscountsTotal > 0 && auditDetailRow('Item Discounts', `-${fmt(itemDiscountsTotal)}`, { color: '#2563EB', fontWeight: '700' })}
+                                {orderDiscountAmt > 0 && auditDetailRow(`Order Discount${discountTypeLabel}`, `-${fmt(orderDiscountAmt)}`, { color: '#2563EB', fontWeight: '700' })}
+                                {totalDiscounts > 0 && itemDiscountsTotal > 0 && orderDiscountAmt > 0 && auditDetailRow('Total Discounts', `-${fmt(totalDiscounts)}`, { color: '#2563EB', fontWeight: '700' })}
+                                {auditDetailRow('Net Amount Paid', fmt(tx.amount || tx.total), { color: '#0F172A', fontWeight: '700', fontSize: '15px' })}
                                 {auditDetailRow('Served By', tx.checker?.name || tx.cashier?.name || '—')}
                                 {auditDetailRow('Status', status, { color: statusColor, fontWeight: '700' })}
                                 {(status === 'Refund' || status === 'Return' || reason !== '—') && auditDetailRow('Reason', reason)}

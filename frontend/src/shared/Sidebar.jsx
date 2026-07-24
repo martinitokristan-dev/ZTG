@@ -3,7 +3,7 @@ import { NavLink as RouterNavLink, useNavigate as useRouterNavigate } from 'reac
 import api from './api';
 import { clearEntireCache } from './hooks/usePaginatedCache';
 
-function Sidebar() {
+function Sidebar({ isOpen = false, onClose = () => {}, isMobile = false }) {
     const navigate = useRouterNavigate();
     const [user, setUser] = React.useState(() => {
         const userStr = localStorage.getItem('auth_user');
@@ -12,6 +12,9 @@ function Sidebar() {
 
     const [logoUrl, setLogoUrl] = React.useState(() => {
         return localStorage.getItem('cached_business_logo') || null;
+    });
+    const [sidebarLogoUrl, setSidebarLogoUrl] = React.useState(() => {
+        return localStorage.getItem('cached_sidebar_logo') || null;
     });
     const [businessName, setBusinessName] = React.useState(() => {
         return localStorage.getItem('cached_business_name') || '';
@@ -28,13 +31,20 @@ function Sidebar() {
                 const res = await api.get('/settings');
                 if (res.data) {
                     const newLogo = res.data.business_logo || null;
+                    const newSidebarLogo = res.data.sidebar_logo || null;
                     const newName = res.data.business_name || '';
                     setLogoUrl(newLogo);
+                    setSidebarLogoUrl(newSidebarLogo);
                     setBusinessName(newName);
                     if (newLogo) {
                         localStorage.setItem('cached_business_logo', newLogo);
                     } else {
                         localStorage.removeItem('cached_business_logo');
+                    }
+                    if (newSidebarLogo) {
+                        localStorage.setItem('cached_sidebar_logo', newSidebarLogo);
+                    } else {
+                        localStorage.removeItem('cached_sidebar_logo');
                     }
                     if (newName) {
                         localStorage.setItem('cached_business_name', newName);
@@ -188,34 +198,83 @@ function Sidebar() {
     const navSections = role === 'Cashier' ? cashierNavSections : adminNavSections;
 
     return (
-        <div style={{
-            width: 260,
-            flexShrink: 0,
-            backgroundColor: '#1E293B',
-            display: 'flex',
-            flexDirection: 'column',
-            height: 'calc(100vh / 0.9)',
-            borderRight: '1px solid rgba(255,255,255,0.05)',
-            userSelect: 'none',
-        }}>
-            {/* Brand Header */}
-            <div style={{ padding: 24, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-                    <div style={{ width: 56, height: 56, borderRadius: '50%', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-                        <img src={logoUrl || "/ztg-icon.png"} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', transform: logoUrl ? 'none' : 'scale(1.45)' }} />
+        <>
+            {/* Mobile Backdrop Overlay */}
+            {isMobile && isOpen && (
+                <div
+                    onClick={onClose}
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                        backdropFilter: 'blur(4px)',
+                        zIndex: 999,
+                        transition: 'opacity 0.3s ease',
+                    }}
+                />
+            )}
+
+            <div style={{
+                width: isMobile ? '280px' : 260,
+                flexShrink: 0,
+                backgroundColor: '#1E293B',
+                display: 'flex',
+                flexDirection: 'column',
+                height: isMobile ? '100dvh' : '100%',
+                maxHeight: isMobile ? '100dvh' : 'none',
+                position: isMobile ? 'fixed' : 'relative',
+                top: 0,
+                bottom: 0,
+                left: isMobile ? 0 : 'auto',
+                zIndex: isMobile ? 1000 : 'auto',
+                transform: isMobile ? (isOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none',
+                transition: isMobile ? 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)' : 'none',
+                borderRight: '1px solid rgba(255,255,255,0.05)',
+                boxShadow: isMobile && isOpen ? '4px 0 24px rgba(0,0,0,0.3)' : 'none',
+                userSelect: 'none',
+                boxSizing: 'border-box',
+            }}>
+                {/* Brand Header */}
+                <div style={{ padding: isMobile ? '16px 20px' : 24, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <div style={{ width: isMobile ? 44 : 56, height: isMobile ? 44 : 56, borderRadius: '50%', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                            <img src={sidebarLogoUrl || logoUrl || "/web-browser-logo.png"} alt="Logo" style={{ width: '100%', height: '100%', objectFit: (sidebarLogoUrl || logoUrl) ? 'cover' : 'contain', transform: (sidebarLogoUrl || logoUrl) ? 'none' : 'scale(1.45)' }} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ color: '#FFFFFF', fontSize: isMobile ? 16 : 18, fontWeight: 800, letterSpacing: '0.5px', lineHeight: '1.2' }}>
+                                {businessName ? businessName.split(' ')[0] : 'ZTG'}
+                            </span>
+                            <span style={{ color: '#94A3B8', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                {businessName && !businessName.toLowerCase().includes('heavy parts')
+                                    ? businessName.split(' ').slice(1).join(' ')
+                                    : 'Heavy Equipment Parts'}
+                            </span>
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ color: '#FFFFFF', fontSize: 18, fontWeight: 800, letterSpacing: '0.5px', lineHeight: '1.2' }}>
-                            {businessName ? businessName.split(' ')[0] : 'ZTG'}
-                        </span>
-                        <span style={{ color: '#94A3B8', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {businessName && !businessName.toLowerCase().includes('heavy parts')
-                                ? businessName.split(' ').slice(1).join(' ')
-                                : 'Heavy Equipment Parts'}
-                        </span>
-                    </div>
+
+                    {/* Mobile Close Button */}
+                    {isMobile && (
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#94A3B8',
+                                cursor: 'pointer',
+                                padding: 6,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}
+                        >
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    )}
                 </div>
-            </div>
 
             {/* Nav Menu */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 16px' }}>
@@ -237,6 +296,7 @@ function Sidebar() {
                                 <li key={item.path} style={{ marginBottom: 4 }}>
                                     <RouterNavLink
                                         to={item.path}
+                                        onClick={() => { if (isMobile) onClose(); }}
                                         style={({ isActive }) => ({
                                             display: 'flex',
                                             alignItems: 'center',
@@ -280,16 +340,16 @@ function Sidebar() {
 
             {/* Footer / User Profile */}
             <div style={{
-                padding: '14px 20px 16px',
-                borderTop: '1px solid rgba(255,255,255,0.05)',
-                backgroundColor: 'rgba(0,0,0,0.1)',
+                padding: '16px 18px',
+                borderTop: '1px solid rgba(255,255,255,0.08)',
+                backgroundColor: 'rgba(15, 23, 42, 0.6)',
                 flexShrink: 0,
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 0 }}>
                     {/* Avatar */}
                     <div style={{
-                        width: 38,
-                        height: 38,
+                        width: 40,
+                        height: 40,
                         borderRadius: '50%',
                         backgroundColor: user?.profile_photo ? 'transparent' : '#3B82F6',
                         color: '#FFFFFF',
@@ -297,10 +357,11 @@ function Sidebar() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: 13,
+                        fontSize: 14,
                         flexShrink: 0,
                         overflow: 'hidden',
-                        border: user?.profile_photo ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                        border: user?.profile_photo ? '2px solid rgba(255,255,255,0.15)' : 'none',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
                     }}>
                         {user?.profile_photo ? (
                             <img
@@ -318,41 +379,59 @@ function Sidebar() {
                         )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ color: '#FFFFFF', fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
-                        <div style={{ color: '#94A3B8', fontSize: 11 }}>{role === 'Admin' ? 'Administrator' : role}</div>
+                        <div style={{ color: '#FFFFFF', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {name}
+                        </div>
+                        <div style={{ color: '#94A3B8', fontSize: 11, fontWeight: 500, marginTop: '1px' }}>
+                            {role === 'Admin' ? 'Administrator' : role}
+                        </div>
                     </div>
                 </div>
 
-                {/* Sign Out */}
+                {/* Sign Out Button */}
                 <button
                     onClick={handleLogout}
                     style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 6,
-                        marginTop: 10,
-                        paddingTop: 10,
-                        borderTop: '1px solid rgba(255,255,255,0.06)',
+                        justifyContent: 'center',
+                        gap: 8,
+                        marginTop: 14,
+                        padding: '10px 14px',
+                        borderRadius: '10px',
                         width: '100%',
-                        color: '#EF4444',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        background: 'none',
-                        border: 'none',
+                        color: '#F87171',
+                        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        fontSize: 13,
+                        fontWeight: 700,
+                        letterSpacing: '0.5px',
                         cursor: 'pointer',
-                        padding: '10px 0 0 0',
-                        textAlign: 'left',
+                        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                        minHeight: '42px',
+                        boxSizing: 'border-box'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#DC2626'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = '#EF4444'}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#DC2626';
+                        e.currentTarget.style.color = '#FFFFFF';
+                        e.currentTarget.style.borderColor = '#DC2626';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(220, 38, 38, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.12)';
+                        e.currentTarget.style.color = '#F87171';
+                        e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.25)';
+                        e.currentTarget.style.boxShadow = 'none';
+                    }}
                 >
-                    <svg style={{ width: 14, height: 14, stroke: 'currentColor', fill: 'none', strokeWidth: 2 }} viewBox="0 0 24 24">
+                    <svg style={{ width: 16, height: 16, stroke: 'currentColor', fill: 'none', strokeWidth: 2.5 }} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    Sign Out
+                    <span>SIGN OUT</span>
                 </button>
             </div>
         </div>
+        </>
     );
 }
 

@@ -28,12 +28,15 @@ export default function ProductFormModal({
     categories, variantOptions,
     handleAddressChange, handleImageUpload,
     errorMessage, selectedProduct,
+    isSubmitting = false
 }) {
     if (!isOpen) return null;
 
     const isEdit = mode === 'edit';
     const title = isEdit ? `Edit Product: ${selectedProduct?.name}` : 'Add New Product';
-    const submitLabel = isEdit ? 'Update Product' : 'Add Product';
+    const submitLabel = isEdit 
+        ? (isSubmitting ? 'Updating Product...' : 'Update Product') 
+        : (isSubmitting ? 'Adding Product...' : 'Add Product');
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -93,6 +96,39 @@ export default function ProductFormModal({
             return () => clearTimeout(timer);
         }
     }, [formData.name]);
+
+    // Debounced automatic translation for Variant Chinese Names
+    useEffect(() => {
+        if (!formData.variants || formData.variants.length === 0) return;
+
+        const timer = setTimeout(() => {
+            formData.variants.forEach(async (variant, idx) => {
+                const nameVal = variant.name?.trim();
+                if (nameVal && (!variant.chinese_name || variant.chinese_name.trim() === '')) {
+                    try {
+                        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(nameVal)}&langpair=en|zh-CN`);
+                        const data = await res.json();
+                        if (data?.responseData?.translatedText) {
+                            const translated = data.responseData.translatedText;
+                            setFormData(prev => {
+                                if (!prev.variants || !prev.variants[idx]) return prev;
+                                if (!prev.variants[idx].chinese_name) {
+                                    const nv = [...prev.variants];
+                                    nv[idx] = { ...nv[idx], chinese_name: translated };
+                                    return { ...prev, variants: nv };
+                                }
+                                return prev;
+                            });
+                        }
+                    } catch (err) {
+                        console.error("Variant translation failed:", err);
+                    }
+                }
+            });
+        }, 600);
+
+        return () => clearTimeout(timer);
+    }, [formData.variants?.map(v => v.name).join('||')]);
 
     const triggerTranslation = async () => {
         const nameVal = formData.name?.trim();
@@ -272,7 +308,7 @@ export default function ProductFormModal({
                                 <button type="button" className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px' }}
                                     onClick={() => {
                                         const newVariants = [...(formData.variants || []), {
-                                            name: '', part_no: formData.part_no ? `${formData.part_no}-` : '',
+                                            name: '', chinese_name: '', part_no: formData.part_no ? formData.part_no : '',
                                             price1: formData.price1 || 0, price2: formData.price2 || 0,
                                             stock: 0, alert_limit: formData.alert_limit || 5, option_ids: []
                                         }];
@@ -297,12 +333,24 @@ export default function ProductFormModal({
                                                 setFormData({ ...formData, variants: nv });
                                             }} style={{ position: 'absolute', top: '8px', right: '8px', color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
                                             
-                                            <div className="grid-2" style={{ marginBottom: '12px' }}>
+                                            <div className="grid-3" style={{ gap: '12px', marginBottom: '12px' }}>
                                                 <div className="form-group" style={{ marginBottom: 0 }}>
                                                     <label className="form-label">Variant Name *</label>
-                                                    <input type="text" className="form-control" required value={variant.name} onChange={(e) => {
+                                                    <input type="text" className="form-control" required placeholder="e.g. Filter (Large)" value={variant.name} onChange={(e) => {
                                                         const nv = [...formData.variants]; nv[idx].name = e.target.value; setFormData({ ...formData, variants: nv });
                                                     }} />
+                                                </div>
+                                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                                    <label className="form-label">Chinese Name</label>
+                                                    <input 
+                                                        type="text" 
+                                                        className="form-control" 
+                                                        placeholder="Auto-translating..." 
+                                                        value={variant.chinese_name || ''} 
+                                                        onChange={(e) => {
+                                                            const nv = [...formData.variants]; nv[idx].chinese_name = e.target.value; setFormData({ ...formData, variants: nv });
+                                                        }} 
+                                                    />
                                                 </div>
                                                 <div className="form-group" style={{ marginBottom: 0 }}>
                                                     <label className="form-label">Variant Part No. *</label>
@@ -409,8 +457,17 @@ export default function ProductFormModal({
                     <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Fields marked with <span style={{ color: 'red' }}>*</span> are required.</div>
                         <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
-                            <button id="submitProductBtn" type="submit" className="btn btn-primary">{submitLabel}</button>
+                            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={isSubmitting}>Cancel</button>
+                            <button id="submitProductBtn" type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                                {isSubmitting ? (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" style={{ width: '13px', height: '13px', borderWidth: '2px' }}></span>
+                                        {submitLabel}
+                                    </span>
+                                ) : (
+                                    submitLabel
+                                )}
+                            </button>
                         </div>
                     </div>
                 </form>

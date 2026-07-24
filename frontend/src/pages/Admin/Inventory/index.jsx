@@ -1,8 +1,8 @@
 import React from 'react';
 import { useInventory } from './hooks/useInventory';
-
 import InventoryTable from './views/InventoryTable';
 import ViewProductModal from './modals/ViewProductModal';
+import IOSSelect from '../../../shared/components/IOSSelect';
 
 export default function Inventory() {
     const {
@@ -27,20 +27,21 @@ export default function Inventory() {
 
                 <div className="top-bar">
                     <div>
-                        <h1 style={{ fontSize: '20px', marginBottom: '2px' }}>Inventory Management</h1>
-                        <div className="page-description" style={{ marginTop: 0, fontSize: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                            <h1 style={{ fontSize: '20px', margin: 0 }}>Inventory Management</h1>
+                            <span className="badge badge-success" style={{ fontSize: '11px', padding: '4px 10px', display: 'inline-block' }}>Read-Only View</span>
+                        </div>
+                        <div className="page-description" style={{ marginTop: '4px', fontSize: '12px' }}>
                             {totalItems} total items across {categoriesCount} categories · {outOfStockCount} out of stock · {lowStockCount} low stock
                         </div>
                     </div>
-                    <div className="top-bar-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span className="badge badge-success" style={{ fontSize: '11px', padding: '6px 12px' }}>Read-Only View</span>                    </div>
                 </div>
 
                 <div className="content-body">
 
                     <div className="card" style={{ marginBottom: '16px' }}>
-                        <div className="table-filters">
-                            <div className="table-search" style={{ flex: 1, maxWidth: '100%' }}>
+                        <div className="table-filters" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                            <div className="table-search" style={{ flex: 1, minWidth: '240px' }}>
                                 <svg viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                                 <input
                                     type="text"
@@ -49,25 +50,39 @@ export default function Inventory() {
                                     onChange={(e) => setSearch(e.target.value)}
                                 />
                             </div>
-                            <select className="table-select" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-                                <option value="">All Categories</option>
-                                {categories.map(cat => (
-                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                ))}
-                            </select>
-                            <select className="table-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                                <option value="">All Stock Levels</option>
-                                <option value="Active">Active / Healthy</option>
-                                <option value="Low Stock">Low Stock</option>
-                                <option value="No Stock">No Stock</option>
-                                <option value="Dead Stock">Dead Stock</option>
-                            </select>
-                            <select className="table-select" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}>
-                                <option value="today">Sold Today</option>
-                                <option value="this_week">Sold This Week</option>
-                                <option value="this_month">Sold This Month</option>
-                                <option value="this_year">Sold This Year</option>
-                            </select>
+                            <div style={{ width: '180px' }}>
+                                <IOSSelect
+                                    value={categoryId}
+                                    onChange={(e) => setCategoryId(e.target.value)}
+                                    options={[{ value: '', label: 'All Categories' }, ...categories.map(cat => ({ value: cat.id, label: cat.name }))]}
+                                />
+                            </div>
+                            <div style={{ width: '160px' }}>
+                                <IOSSelect
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    options={[
+                                        { value: '', label: 'All Stock Levels' },
+                                        { value: 'Active', label: 'Active / Healthy' },
+                                        { value: 'Low Stock', label: 'Low Stock' },
+                                        { value: 'No Stock', label: 'No Stock' },
+                                        { value: 'Dead Stock', label: 'Dead Stock' }
+                                    ]}
+                                />
+                            </div>
+                            <div style={{ width: '150px' }}>
+                                <IOSSelect
+                                    value={dateFilter}
+                                    onChange={(e) => setDateFilter(e.target.value)}
+                                    options={[
+                                        { value: 'today', label: 'Sold Today' },
+                                        { value: 'this_week', label: 'Sold This Week' },
+                                        { value: 'this_month', label: 'Sold This Month' },
+                                        { value: 'this_year', label: 'Sold This Year' },
+                                        { value: 'all', label: 'All Time' }
+                                    ]}
+                                />
+                            </div>
                         </div>
                     </div>
 

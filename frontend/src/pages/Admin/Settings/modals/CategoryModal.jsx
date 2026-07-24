@@ -4,9 +4,13 @@ export default function CategoryModal({
     showCategoryModal, setShowCategoryModal,
     selectedCategory, categoryName, setCategoryName,
     categoryVariants, setCategoryVariants, getOptionsForType,
-    handleCategorySubmit
+    handleCategorySubmit, categorySubmitting = false
 }) {
     if (!showCategoryModal) return null;
+
+    const submitLabel = categorySubmitting 
+        ? (selectedCategory ? 'Updating Category...' : 'Saving Category...') 
+        : (selectedCategory ? 'Update Category' : 'Save Category');
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -105,8 +109,17 @@ export default function CategoryModal({
                         </div>
                     </div>
                     <div className="modal-footer" style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', background: 'var(--bg-main)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                        <button type="button" onClick={() => setShowCategoryModal(false)} className="btn btn-secondary">Cancel</button>
-                        <button id="submitCategoryBtn" type="submit" className="btn btn-primary">Save Category</button>
+                        <button type="button" onClick={() => setShowCategoryModal(false)} className="btn btn-secondary" disabled={categorySubmitting}>Cancel</button>
+                        <button id="submitCategoryBtn" type="submit" className="btn btn-primary" disabled={categorySubmitting}>
+                            {categorySubmitting ? (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" style={{ width: '13px', height: '13px', borderWidth: '2px' }}></span>
+                                    {submitLabel}
+                                </span>
+                            ) : (
+                                submitLabel
+                            )}
+                        </button>
                     </div>
                 </form>
             </div>

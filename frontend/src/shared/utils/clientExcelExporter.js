@@ -42,6 +42,40 @@ const formatPaymentMethod = (pm) => {
   return raw.replace(/\s*\([^)]*\)/g, '').trim() || 'CASH';
 };
 
+export const getItemDiscountAmount = (item, txInput) => {
+  if (!item && !txInput) return 0;
+  const tx = txInput || item.tx || {};
+  
+  // 1. Direct item-level discount (per piece * qty)
+  const itemDiscVal = Number(item.discount || item.item_discount || 0);
+  const qty = Number(item.qty || 1);
+  if (itemDiscVal > 0) {
+    return itemDiscVal * qty;
+  }
+
+  // 2. Order-wide discount from transaction (discount_amount, discount_val, or discount)
+  const orderDisc = Number(tx.discount_amount || tx.discount || tx.discount_val || 0);
+  if (orderDisc > 0) {
+    const txItems = Array.isArray(tx.items) && tx.items.length > 0 ? tx.items : [];
+    if (txItems.length <= 1) {
+      return orderDisc;
+    }
+    // Calculate raw subtotal of all items in transaction
+    const txRawSubtotal = txItems.reduce((sum, it) => {
+      const uPrice = Number(it.original_price || it.price || 0);
+      return sum + (Number(it.qty || 1) * uPrice);
+    }, 0);
+    if (txRawSubtotal > 0) {
+      const uPrice = Number(item.original_price || item.price || 0);
+      const itemSubtotal = qty * uPrice;
+      return (itemSubtotal / txRawSubtotal) * orderDisc;
+    }
+    return orderDisc / txItems.length;
+  }
+
+  return 0;
+};
+
 /**
  * Primary Exporter: HTML Excel Spreadsheet (.xls)
  * Opens cleanly in Microsoft Excel matching the client's exact 11-column template.
@@ -60,10 +94,11 @@ export const exportSalesToExcel = (transactionsItems = [], options = {}) => {
     const resolvedName = item.product?.name || item.name || 'Unknown Product';
     const resolvedPartNo = item.product?.part_no || item.partNo || 'N/A';
     const qty = Number(item.qty || 1);
-    const unitPrice = Number(item.price || 0);
-    const rowSalesAmount = qty * unitPrice;
-    const finalSalesAmount = isDeduction ? -rowSalesAmount : rowSalesAmount;
-    const discountVal = Number(tx.discount || item.discount || 0);
+    const unitPrice = Number(item.original_price || item.price || 0);
+    const discountVal = getItemDiscountAmount(item, tx);
+    const grossSalesAmount = qty * unitPrice;
+    const netSalesAmount = Math.max(0, grossSalesAmount - discountVal);
+    const finalSalesAmount = isDeduction ? -netSalesAmount : netSalesAmount;
 
     const dateVal = formatDate(tx.date || tx.created_at);
     const customerVal = tx.customer_name || tx.customer?.name || (tx.customer_id ? `Customer #${tx.customer_id}` : 'WALK-IN');

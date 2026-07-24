@@ -1,4 +1,6 @@
 import React, { useEffect } from 'react';
+import IOSDatePicker from '../../../../shared/components/IOSDatePicker';
+import IOSTimePicker from '../../../../shared/components/IOSTimePicker';
 
 export default function AddReservationModal({
     isOpen, onClose, onSubmit,
@@ -9,8 +11,6 @@ export default function AddReservationModal({
     handleProductSearch, addToCart, removeFromCart, updateQty, updateCartItemPriceTier,
     subtotal, tax, total, depositAmt, balance, fmt
 }) {
-    if (!isOpen) return null;
-
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (isOpen && e.key === 'Enter') {
@@ -24,6 +24,8 @@ export default function AddReservationModal({
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen]);
+
+    if (!isOpen) return null;
 
     return (
         <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
@@ -70,11 +72,11 @@ export default function AddReservationModal({
                                 <h4 style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', marginBottom: '12px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Order Details</h4>
                                 <div className="form-group" style={{ marginBottom: '12px' }}>
                                     <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Pickup Date <span style={{ color: 'var(--danger)' }}>*</span></label>
-                                    <input type="date" className="form-control" required value={pickupDate} onChange={(e) => setPickupDate(e.target.value)} style={{ fontSize: '13px' }} />
+                                    <IOSDatePicker value={pickupDate} onChange={(e) => setPickupDate(e.target.value)} required placeholder="Select pickup date" />
                                 </div>
                                 <div className="form-group" style={{ marginBottom: '12px' }}>
                                     <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Expected Pickup Time</label>
-                                    <input type="time" className="form-control" value={pickupTime} onChange={(e) => setPickupTime(e.target.value)} style={{ fontSize: '13px' }} />
+                                    <IOSTimePicker value={pickupTime} onChange={(e) => setPickupTime(e.target.value)} placeholder="Select pickup time" />
                                 </div>
                                 <div className="form-group" style={{ marginBottom: 0 }}>
                                     <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Order Notes</label>
@@ -134,6 +136,7 @@ export default function AddReservationModal({
                                                 <tr key={c.product_id} style={{ borderBottom: '1px solid #F1F5F9' }}>
                                                     <td style={{ padding: '10px 16px' }}>
                                                         <strong style={{ display: 'block', fontSize: '12px' }}>{c.name}</strong>
+                                                        {c.chinese_name && <span style={{ fontSize: '11px', color: '#94A3B8', display: 'block' }}>{c.chinese_name}</span>}
                                                         <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{c.part_no}</span>
                                                     </td>
                                                     <td style={{ padding: '10px 16px', textAlign: 'center' }}>

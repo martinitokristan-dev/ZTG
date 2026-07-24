@@ -1,6 +1,7 @@
 import React from 'react';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import StatusBadge from '../../../shared/components/StatusBadge';
+import IOSSelect from '../../../shared/components/IOSSelect';
 
 export default function ReservationsTable({
     reservations, loading,
@@ -13,7 +14,7 @@ export default function ReservationsTable({
         <>
             {/* Filters */}
             <div className="card" style={{ marginBottom: '16px' }}>
-                <div className="table-filters" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <div className="table-filters" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
                     <div style={{ flex: 1, minWidth: '200px' }}>
                         <input
                             type="text"
@@ -24,21 +25,25 @@ export default function ReservationsTable({
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
-                    <div style={{ width: '180px' }}>
-                        <select className="form-control" style={{ padding: '8px 12px', fontSize: '13px' }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                            <option value="All">All Statuses</option>
-                            <option value="Pending">Pending Pickup</option>
-                            <option value="Completed">Completed Pickups</option>
-                            <option value="Cancelled">Cancelled</option>
-                        </select>
+                    <div style={{ flex: '1 1 180px', minWidth: '140px' }}>
+                        <IOSSelect
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            options={[
+                                { value: 'All', label: 'All Statuses' },
+                                { value: 'Pending', label: 'Pending Pickup' },
+                                { value: 'Completed', label: 'Completed Pickups' },
+                                { value: 'Cancelled', label: 'Cancelled' }
+                            ]}
+                        />
                     </div>
                 </div>
             </div>
 
             {/* Reservations Table */}
             <div className="card table-card">
-                <div style={{ overflowX: 'auto' }}>
-                    <table>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                    <table style={{ minWidth: '850px', width: '100%' }}>
                         <thead>
                             <tr>
                                 <th>Customer Name</th>

@@ -78,7 +78,9 @@ export const NotificationProvider = ({ children }) => {
                 return merged;
             });
         } catch (err) {
-            console.error("Failed to load notifications:", err);
+            if (err.response?.status !== 401) {
+                console.error("Failed to load notifications:", err);
+            }
         }
     }, [showBubble]);
 

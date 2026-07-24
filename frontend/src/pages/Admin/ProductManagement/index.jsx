@@ -32,7 +32,7 @@ function ProductManagement() {
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="top-bar-actions">
                         {pm.viewMode === 'list' ? (
                             <>
                                 <button onClick={pm.switchToRestock} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -52,7 +52,8 @@ function ProductManagement() {
                             <button onClick={pm.handleExitRestockAttempt} className="btn btn-secondary">
                                 ← Back to Products
                             </button>
-                        )}                    </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Content Body */}
@@ -121,6 +122,7 @@ function ProductManagement() {
                 handleAddressChange={pm.handleAddressChange}
                 handleImageUpload={pm.handleImageUpload}
                 errorMessage={pm.errorMessage}
+                isSubmitting={pm.isSubmitting}
             />
 
             {/* Edit Product */}
@@ -136,6 +138,7 @@ function ProductManagement() {
                 handleImageUpload={pm.handleImageUpload}
                 errorMessage={pm.errorMessage}
                 selectedProduct={pm.selectedProduct}
+                isSubmitting={pm.isSubmitting}
             />
 
             {/* View Product */}
@@ -155,6 +158,7 @@ function ProductManagement() {
                 damageQty={pm.damageQty} setDamageQty={pm.setDamageQty}
                 damageReason={pm.damageReason} setDamageReason={pm.setDamageReason}
                 errorMessage={pm.errorMessage}
+                isSubmitting={pm.isSubmitting}
             />
 
             {/* Review Restock */}
@@ -171,6 +175,7 @@ function ProductManagement() {
                 restockTime={pm.restockTime}
                 errorMessage={pm.errorMessage}
                 DEFAULT_PLACEHOLDER_IMAGE={pm.DEFAULT_PLACEHOLDER_IMAGE}
+                isSubmitting={pm.isSubmitting}
             />
 
             {/* Leave Restock Confirm */}

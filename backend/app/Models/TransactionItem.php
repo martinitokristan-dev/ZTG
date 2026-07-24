@@ -18,6 +18,8 @@ class TransactionItem extends Model
         'product_id',
         'qty',
         'price',
+        'original_price',
+        'discount',
         'price_tier',
         'unit',
     ];

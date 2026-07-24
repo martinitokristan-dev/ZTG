@@ -47,7 +47,9 @@ export function flattenToSellableSKUs(products) {
 
             sellableMap.set(p.id, {
                 ...p,
+                name: displayName,
                 displayName,
+                chinese_name: p.chinese_name || null,
                 sku: p.part_no || p.partNo || 'N/A'
             });
         }
@@ -62,12 +64,14 @@ export function flattenToSellableSKUs(products) {
                     : (Array.isArray(v.variantOptions) ? v.variantOptions.map(opt => opt.value).join(', ') : '');
 
                 const displayName = optionValues && !v.name.includes(`(${optionValues})`)
-                    ? `${v.name} (${optionValues})`
-                    : v.name;
+                    ? `${v.name || p.name} (${optionValues})`
+                    : (v.name || p.name);
 
                 sellableMap.set(v.id, {
                     ...v,
+                    name: displayName,
                     displayName,
+                    chinese_name: v.chinese_name || p.chinese_name || null,
                     sku: v.part_no || v.partNo || 'N/A'
                 });
             });

@@ -21,10 +21,11 @@ export default function Reservations() {
                             Track deposits, expected pickup dates, and fulfill client product holds.
                         </div>
                     </div>
-                    <div className="top-bar-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="top-bar-actions">
                         <button className="btn btn-primary" onClick={() => { res.resetAddForm(); res.setShowAddModal(true); }}>
                             + New Reservation
-                        </button>                    </div>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Content Body */}

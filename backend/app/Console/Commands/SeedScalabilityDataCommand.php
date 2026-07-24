@@ -32,9 +32,15 @@ class SeedScalabilityDataCommand extends Command
     {
         $this->info("🚀 Starting Scalability Data Seeding (250+ Products, 2,000+ Transactions)...");
 
-        // 1. Get or create Cashier / Admin User ID
+        // 1. Get or create Cashier / Admin User ID and Checker ID
         $cashier = User::first();
         $cashierId = $cashier ? $cashier->id : 1;
+
+        $checker = \App\Models\Checker::first();
+        if (!$checker) {
+            $checker = \App\Models\Checker::create(['name' => 'Default Checker', 'status' => 'Active']);
+        }
+        $checkerId = $checker->id;
 
         // 2. Create Categories & Products
         $categoriesData = [
@@ -70,7 +76,7 @@ class SeedScalabilityDataCommand extends Command
         foreach ($categoryMap as $catName => $meta) {
             foreach ($meta['parts'] as $basePart) {
                 for ($v = 1; $v <= 4; $v++) {
-                    $partNo = sprintf("%s-%s-%04d", $meta['prefix'], strtoupper(substr(str_replace(' ', '', $basePart), 0, 4)), $productCounter);
+                    $partNo = sprintf("%s-%s-%04d-%d", $meta['prefix'], strtoupper(substr(str_replace(' ', '', $basePart), 0, 4)), $productCounter, rand(1000, 9999));
                     $price1 = rand(50, 450) * 10; // Price range: ₱500 to ₱4,500
                     $price2 = round($price1 * 0.85, 2); // Wholesale price
                     $stock = rand(15, 250);
@@ -102,7 +108,7 @@ class SeedScalabilityDataCommand extends Command
         // Insert products in bulk
         DB::transaction(function () use ($productInserts) {
             foreach (array_chunk($productInserts, 100) as $chunk) {
-                DB::table('products')->insert($chunk);
+                DB::table('products')->insertOrIgnore($chunk);
             }
         });
 
@@ -139,14 +145,14 @@ class SeedScalabilityDataCommand extends Command
         $discountTypes = [null, null, null, 'CustomAmount', 'CustomPercent'];
 
         $totalTransactionsToSeed = 2050;
-        $startSiNo = 2000;
+        $startSiNo = rand(5000, 90000);
 
-        DB::transaction(function () use ($totalTransactionsToSeed, $startSiNo, $productIds, $customerIds, $cashierId, $statuses, $paymentMethods, $docTypes, $discountTypes) {
+        DB::transaction(function () use ($totalTransactionsToSeed, $startSiNo, $productIds, $customerIds, $cashierId, $checkerId, $statuses, $paymentMethods, $docTypes, $discountTypes) {
             $productRecords = DB::table('products')->whereIn('id', array_slice($productIds, 0, 150))->get()->keyBy('id');
             $pKeys = array_keys($productRecords->toArray());
 
             for ($i = 1; $i <= $totalTransactionsToSeed; $i++) {
-                $siNo = sprintf("SI-2026-%04d", $startSiNo + $i);
+                $siNo = sprintf("SI-2026-%05d-%d", $startSiNo + $i, rand(100, 999));
                 $date = Carbon::now()->subDays(rand(0, 180))->subMinutes(rand(0, 1440))->toDateTimeString();
                 $status = $statuses[array_rand($statuses)];
                 $pm = $paymentMethods[array_rand($paymentMethods)];
@@ -199,7 +205,7 @@ class SeedScalabilityDataCommand extends Command
                     'date'              => $date,
                     'customer_id'       => $cust,
                     'cashier_id'        => $cashierId,
-                    'checker_id'        => $cashierId,
+                    'checker_id'        => $checkerId,
                     'total_qty'         => array_sum(array_column($itemsForTx, 'qty')),
                     'amount'            => $finalAmount,
                     'discount_amount'   => $orderDisc,

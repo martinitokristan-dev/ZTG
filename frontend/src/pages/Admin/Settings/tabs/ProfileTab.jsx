@@ -1,4 +1,14 @@
-import React, { useRef } from 'react';
+// Helper function to replace legacy localhost image URLs with clean public paths
+const fixImageUrl = (url) => {
+    if (!url) return null;
+    if (typeof url !== 'string') return url;
+    if (url.includes('localhost') || url.includes('127.0.0.1')) {
+        if (url.includes('/storage/')) {
+            return '/storage/' + url.split('/storage/')[1];
+        }
+    }
+    return url;
+};
 
 export default function ProfileTab({
     profileData, setProfileData, handleProfileSubmit,
@@ -8,9 +18,15 @@ export default function ProfileTab({
     isEditing, onStartEdit, onCancelEdit
 }) {
     const fileInputRef = useRef(null);
+    const [imgError, setImgError] = React.useState(false);
+
+    React.useEffect(() => {
+        setImgError(false);
+    }, [profileData?.profile_photo]);
 
     // Compute display avatar — server URL or initials fallback
-    const hasPhoto = !!profileData.profile_photo;
+    const photoUrl = fixImageUrl(profileData.profile_photo);
+    const hasPhoto = !!photoUrl && !imgError;
     const initials = profileData.real_name
         ? profileData.real_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
         : (profileData.username ? profileData.username.slice(0, 2).toUpperCase() : (profileData.role === 'Cashier' ? 'CA' : 'AD'));
@@ -60,9 +76,10 @@ export default function ProfileTab({
                         <div className="profile-photo-preview-lg" style={{ position: 'relative' }}>
                             {hasPhoto ? (
                                 <img
-                                    src={profileData.profile_photo}
+                                    src={photoUrl}
                                     alt="Profile"
                                     style={{ width: '96px', height: '96px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--border)', display: 'block', margin: '0 auto' }}
+                                    onError={() => setImgError(true)}
                                 />
                             ) : (
                                 <div className="profile-photo-avatar-lg user-avatar-img">

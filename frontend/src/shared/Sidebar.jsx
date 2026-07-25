@@ -38,6 +38,7 @@ function Sidebar({ isOpen = false, onClose = () => {}, isMobile = false }) {
         const handleUpdate = () => {
             const userStr = localStorage.getItem('auth_user');
             setUser(userStr ? JSON.parse(userStr) : null);
+            setAvatarError(false);
         };
 
         const loadSettings = async () => {

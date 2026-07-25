@@ -1,5 +1,14 @@
-import React, { useRef, useState } from 'react';
-import LogoCropModal from '../modals/LogoCropModal';
+// Helper function to replace legacy localhost image URLs with clean public paths
+const fixImageUrl = (url) => {
+    if (!url) return null;
+    if (typeof url !== 'string') return url;
+    if (url.includes('localhost') || url.includes('127.0.0.1')) {
+        if (url.includes('/storage/')) {
+            return '/storage/' + url.split('/storage/')[1];
+        }
+    }
+    return url;
+};
 
 export default function GeneralTab({ 
     settings, 
@@ -20,6 +29,13 @@ export default function GeneralTab({
     const logoInputRef = useRef(null);
     const [pendingFile, setPendingFile] = useState(null);
     const [showCropModal, setShowCropModal] = useState(false);
+    const [logoError, setLogoError] = useState(false);
+
+    React.useEffect(() => {
+        setLogoError(false);
+    }, [logoUrl]);
+
+    const cleanLogoUrl = fixImageUrl(logoUrl);
 
     const handleFileSelect = (e) => {
         const file = e.target.files?.[0];
@@ -95,11 +111,12 @@ export default function GeneralTab({
                                 background: 'var(--bg-secondary)'
                             }}
                         >
-                            {logoUrl ? (
+                            {cleanLogoUrl && !logoError ? (
                                 <img
-                                    src={logoUrl}
+                                    src={cleanLogoUrl}
                                     alt="Business logo"
                                     style={{ maxWidth: '190px', maxHeight: '150px', objectFit: 'contain' }}
+                                    onError={() => setLogoError(true)}
                                 />
                             ) : (
                                 <span style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', padding: '12px', lineHeight: 1.5 }}>

@@ -61,25 +61,55 @@ function ProductManagement() {
 
                     {/* VIEW 1: Products List */}
                     {pm.viewMode === 'list' && (
-                        <ProductsTable
-                            products={pm.sortedProducts.filter(p => !p.parent_product_id)}
-                            loading={pm.loading}
-                            categories={pm.categories}
-                  variantOptions={pm.variantOptions}
-                            search={pm.search} setSearch={pm.setSearch}
-                            categoryId={pm.categoryId} setCategoryId={pm.setCategoryId}
-                            statusFilter={pm.statusFilter} setStatusFilter={pm.setStatusFilter}
-                            sortOption={pm.sortOption} setSortOption={pm.setSortOption}
-                            DEFAULT_PLACEHOLDER_IMAGE={pm.DEFAULT_PLACEHOLDER_IMAGE}
-                            onView={pm.openView}
-                            onEdit={pm.openEdit}
-                            onDamage={pm.openDamage}
-                            onDelete={pm.handleDeleteProduct}
-                            onRestock={(p) => { pm.switchToRestock(); pm.updateRestockQty(p.id, 1); }}
-                            onToggleStatus={pm.handleToggleStatus}
-                            successMessage={pm.successMessage}
-                            setSuccessMessage={pm.setSuccessMessage}
-                        />
+                        <>
+                            <ProductsTable
+                                products={pm.sortedProducts.filter(p => !p.parent_product_id)}
+                                pagination={pm.pagination}
+                                loading={pm.loading}
+                                categories={pm.categories}
+                                variantOptions={pm.variantOptions}
+                                search={pm.search} setSearch={pm.setSearch}
+                                categoryId={pm.categoryId} setCategoryId={pm.setCategoryId}
+                                statusFilter={pm.statusFilter} setStatusFilter={pm.setStatusFilter}
+                                sortOption={pm.sortOption} setSortOption={pm.setSortOption}
+                                DEFAULT_PLACEHOLDER_IMAGE={pm.DEFAULT_PLACEHOLDER_IMAGE}
+                                onView={pm.openView}
+                                onEdit={pm.openEdit}
+                                onDamage={pm.openDamage}
+                                onDelete={pm.handleDeleteProduct}
+                                onRestock={(p) => { pm.switchToRestock(); pm.updateRestockQty(p.id, 1); }}
+                                onToggleStatus={pm.handleToggleStatus}
+                                successMessage={pm.successMessage}
+                                setSuccessMessage={pm.setSuccessMessage}
+                            />
+
+                            {/* Standardized System Pagination Card */}
+                            {pm.pagination && pm.pagination.last_page > 1 && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', background: '#FFFFFF', padding: '12px 24px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                                        Showing page {pm.pagination.current_page} of {pm.pagination.last_page} ({pm.pagination.total} total items)
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <button 
+                                            className="btn btn-sm" 
+                                            style={{ border: '1px solid var(--border)', background: '#fff' }}
+                                            disabled={pm.pagination.current_page <= 1}
+                                            onClick={() => pm.pagination.onPageChange(pm.pagination.current_page - 1)}
+                                        >
+                                            Previous
+                                        </button>
+                                        <button 
+                                            className="btn btn-sm" 
+                                            style={{ border: '1px solid var(--border)', background: '#fff' }}
+                                            disabled={pm.pagination.current_page >= pm.pagination.last_page}
+                                            onClick={() => pm.pagination.onPageChange(pm.pagination.current_page + 1)}
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     )}
 
                     {/* VIEW 2: Batch Restock */}

@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->foreignId('checker_id')->nullable()->constrained('checkers')->nullOnDelete();
+        Schema::create('checkers', function (Blueprint $table) {
+            $table->id();
+            $table->string('name', 100);
+            $table->string('status', 20)->default('Active');
+            $table->timestamps();
         });
     }
 
@@ -21,9 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->dropForeign(['checker_id']);
-            $table->dropColumn('checker_id');
-        });
+        Schema::dropIfExists('checkers');
     }
 };

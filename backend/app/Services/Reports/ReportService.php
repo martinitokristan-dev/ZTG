@@ -22,25 +22,12 @@ class ReportService
         // Resolve date strings in local timezone
         if (!$startDate || !$endDate) {
             $nowLocal = now('Asia/Manila');
-            switch ($norm) {
-                case 'today':
-                    $startDate = $nowLocal->format('Y-m-d');
-                    $endDate = $nowLocal->format('Y-m-d');
-                    break;
-                case 'thismonth':
-                    $startDate = $nowLocal->startOfMonth()->format('Y-m-d');
-                    $endDate = now('Asia/Manila')->format('Y-m-d');
-                    break;
-                case 'thisyear':
-                    $startDate = $nowLocal->startOfYear()->format('Y-m-d');
-                    $endDate = now('Asia/Manila')->format('Y-m-d');
-                    break;
-                case 'thisweek':
-                default:
-                    $startDate = $nowLocal->startOfWeek(0)->format('Y-m-d'); // 0 is Sunday
-                    $endDate = now('Asia/Manila')->format('Y-m-d');
-                    break;
-            }
+            [$startDate, $endDate] = match ($norm) {
+                'today'     => [$nowLocal->format('Y-m-d'), $nowLocal->format('Y-m-d')],
+                'thismonth' => [$nowLocal->startOfMonth()->format('Y-m-d'), now('Asia/Manila')->format('Y-m-d')],
+                'thisyear'  => [$nowLocal->startOfYear()->format('Y-m-d'), now('Asia/Manila')->format('Y-m-d')],
+                default     => [$nowLocal->startOfWeek(0)->format('Y-m-d'), now('Asia/Manila')->format('Y-m-d')],
+            };
         }
 
         $startSuffix = ' 00:00:00';

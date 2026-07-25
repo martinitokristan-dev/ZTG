@@ -1,44 +1,23 @@
 import React from 'react';
 
+const STATUS_CONFIG = {
+    completed: { bg: '#F0FDF4', color: '#10B981', text: 'Completed' },
+    pending:   { bg: '#FFFBEB', color: '#D97706', text: 'Pending Order' },
+    deposit:   { bg: '#EFF6FF', color: '#2563EB', text: 'Deposit' },
+    refund:    { bg: '#FEF2F2', color: '#DC2626', text: 'Refund' },
+    return:    { bg: '#FFF7ED', color: '#EA580C', text: 'Returned' },
+    void:      { bg: '#F1F5F9', color: '#475569', text: 'Voided' },
+    cancelled: { bg: '#F1F5F9', color: '#475569', text: 'Cancelled' },
+};
+
 export default function StatusBadge({ status, style = {} }) {
     const raw = status || 'Unknown';
-    const norm = raw.toLowerCase();
-
-    let bg = '#F3F4F6';
-    let color = '#4B5563';
-    let text = raw;
-
-    switch (norm) {
-        case 'completed':
-            bg = '#F0FDF4'; color = '#10B981'; text = 'Completed';
-            break;
-        case 'pending':
-            bg = '#FFFBEB'; color = '#D97706'; text = 'Pending Order';
-            break;
-        case 'deposit':
-            bg = '#EFF6FF'; color = '#2563EB'; text = 'Deposit';
-            break;
-        case 'refund':
-            bg = '#FEF2F2'; color = '#DC2626'; text = 'Refund';
-            break;
-        case 'return':
-            bg = '#FFF7ED'; color = '#EA580C'; text = 'Returned';
-            break;
-        case 'void':
-            bg = '#F1F5F9'; color = '#475569'; text = 'Voided';
-            break;
-        case 'cancelled':
-            bg = '#F1F5F9'; color = '#475569'; text = 'Cancelled';
-            break;
-        default:
-            // Fallback uses the initial neutral gray settings and raw text
-            break;
-    }
+    const config = STATUS_CONFIG[raw.toLowerCase()] ?? { bg: '#F3F4F6', color: '#4B5563', text: raw };
 
     return (
         <span style={{ 
-            backgroundColor: bg, 
-            color: color, 
+            backgroundColor: config.bg, 
+            color: config.color, 
             padding: '2px 8px', 
             borderRadius: '4px', 
             fontWeight: '700',
@@ -50,7 +29,7 @@ export default function StatusBadge({ status, style = {} }) {
             textTransform: 'uppercase',
             ...style
         }}>
-            {text}
+            {config.text}
         </span>
     );
 }

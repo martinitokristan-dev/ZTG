@@ -99,14 +99,17 @@ export default function useProductManagement() {
                 if (restockSearch) queryParams.push(`search=${encodeURIComponent(restockSearch)}`);
                 if (restockCategory) queryParams.push(`category_id=${restockCategory}`);
             }
-            const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}&paginate=1&page=${page}` : `?paginate=1&page=${page}`;
+            queryParams.push(`paginate=1`);
+            queryParams.push(`per_page=20`);
+            queryParams.push(`page=${page}`);
+            const queryString = `?${queryParams.join('&')}`;
             const res = await api.get(`/products${queryString}`);
             const productsList = res.data.data || [];
             const freshPagination = {
-                current_page: res.data.current_page,
-                last_page: res.data.last_page,
-                total: res.data.total,
-                per_page: res.data.per_page,
+                current_page: res.data.current_page || 1,
+                last_page: res.data.last_page || 1,
+                total: res.data.total || productsList.length,
+                per_page: res.data.per_page || 20,
                 onPageChange: (newPage) => setPage(newPage)
             };
             // Update module cache for next visit

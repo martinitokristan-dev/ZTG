@@ -1,7 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-export default function IOSTimePicker({ value, onChange, placeholder = 'Select time', required = false, className = '', style = {} }) {
+export default function IOSTimePicker({ 
+    value, 
+    onChange, 
+    placeholder = 'Select time', 
+    required = false, 
+    className = '', 
+    style = {},
+    openUpward = false
+}) {
     const [isOpen, setIsOpen] = useState(false);
+    const [dropUp, setDropUp] = useState(openUpward);
     const containerRef = useRef(null);
 
     // Parse value (e.g. "14:30" or "09:15 AM")
@@ -39,6 +48,19 @@ export default function IOSTimePicker({ value, onChange, placeholder = 'Select t
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const handleToggleOpen = () => {
+        if (!isOpen && containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            if (spaceBelow < 280 || openUpward) {
+                setDropUp(true);
+            } else {
+                setDropUp(false);
+            }
+        }
+        setIsOpen(!isOpen);
+    };
+
     const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
     const minutes = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
 
@@ -60,14 +82,14 @@ export default function IOSTimePicker({ value, onChange, placeholder = 'Select t
         <div ref={containerRef} style={{ position: 'relative', display: 'inline-block', width: '100%', ...style }}>
             {/* Input Trigger */}
             <div
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={handleToggleOpen}
                 className={`ios-timepicker-trigger ${className}`}
                 style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justify: 'space-between',
+                    justifyContent: 'space-between',
                     padding: '8px 12px',
-                    border: '1px solid #CBD5E1',
+                    border: isOpen ? '1.5px solid #3B82F6' : '1px solid #CBD5E1',
                     borderRadius: '10px',
                     backgroundColor: '#FFFFFF',
                     cursor: 'pointer',
@@ -75,7 +97,7 @@ export default function IOSTimePicker({ value, onChange, placeholder = 'Select t
                     fontWeight: 500,
                     color: value ? '#0F172A' : '#94A3B8',
                     fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Outfit", sans-serif',
-                    boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+                    boxShadow: isOpen ? '0 0 0 3px rgba(59, 130, 246, 0.15)' : '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
                     transition: 'all 0.2s ease',
                     minHeight: '38px',
                     boxSizing: 'border-box',
@@ -97,13 +119,13 @@ export default function IOSTimePicker({ value, onChange, placeholder = 'Select t
                     className="ios-time-popover"
                     style={{
                         position: 'absolute',
-                        top: 'calc(100% + 6px)',
+                        ...(dropUp ? { bottom: 'calc(100% + 8px)' } : { top: 'calc(100% + 8px)' }),
                         left: 0,
-                        zIndex: 9999,
+                        zIndex: 99999,
                         backgroundColor: '#FFFFFF',
                         borderRadius: '16px',
                         border: '1px solid #E2E8F0',
-                        boxShadow: '0 12px 32px rgba(15, 23, 42, 0.18), 0 4px 12px rgba(0, 0, 0, 0.06)',
+                        boxShadow: '0 16px 36px -4px rgba(15, 23, 42, 0.18), 0 6px 16px rgba(0, 0, 0, 0.08)',
                         padding: '16px',
                         width: '260px',
                         fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Outfit", sans-serif',

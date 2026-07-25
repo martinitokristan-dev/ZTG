@@ -346,32 +346,6 @@ export default function ProductsTable({
                         </tbody>
                     </table>
                 </div>
-                
-                {pagination && pagination.last_page > 1 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderTop: '1px solid #E2E8F0' }}>
-                        <div style={{ fontSize: '13px', color: '#64748B' }}>
-                            Showing page {pagination.current_page} of {pagination.last_page} ({pagination.total} total items)
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button 
-                                className="btn btn-outline" 
-                                disabled={pagination.current_page === 1}
-                                onClick={() => pagination.onPageChange(pagination.current_page - 1)}
-                                style={{ padding: '6px 12px', fontSize: '13px' }}
-                            >
-                                Previous
-                            </button>
-                            <button 
-                                className="btn btn-outline" 
-                                disabled={pagination.current_page === pagination.last_page}
-                                onClick={() => pagination.onPageChange(pagination.current_page + 1)}
-                                style={{ padding: '6px 12px', fontSize: '13px' }}
-                            >
-                                Next
-                            </button>
-                        </div>
-                    </div>
-                )}
             </div>
         </>
     );

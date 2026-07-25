@@ -14,6 +14,9 @@ return new class extends Migration
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
             $table->string('name', 100)->unique();
+            $table->string('prefix', 10)->nullable();
+            $table->string('chinese_name', 100)->nullable();
+            $table->boolean('allow_variants')->default(false);
             $table->timestamps();
         });
     }

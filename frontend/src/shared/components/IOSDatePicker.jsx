@@ -1,19 +1,61 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-export default function IOSDatePicker({ value, onChange, placeholder = 'Select date', required = false, className = '', style = {}, alignRight = false }) {
+// Helper function to safely parse any date format without returning NaN
+function parseSafeDate(val) {
+    if (!val) return null;
+    if (val instanceof Date && !isNaN(val.getTime())) return val;
+
+    let str = String(val).trim();
+    
+    // Check YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+        const [y, m, d] = str.split('-').map(Number);
+        const parsed = new Date(y, m - 1, d);
+        if (!isNaN(parsed.getTime())) return parsed;
+    }
+
+    // Check DD/MM/YYYY or MM/DD/YYYY
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+        const parts = str.split('/').map(Number);
+        // Try DD/MM/YYYY
+        if (parts[0] > 12) {
+            const parsed = new Date(parts[2], parts[1] - 1, parts[0]);
+            if (!isNaN(parsed.getTime())) return parsed;
+        } else {
+            // Try MM/DD/YYYY
+            const parsed = new Date(parts[2], parts[0] - 1, parts[1]);
+            if (!isNaN(parsed.getTime())) return parsed;
+        }
+    }
+
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+}
+
+export default function IOSDatePicker({ 
+    value, 
+    onChange, 
+    placeholder = 'Select date', 
+    required = false, 
+    className = '', 
+    style = {}, 
+    alignRight = false,
+    openUpward = false
+}) {
     const [isOpen, setIsOpen] = useState(false);
+    const [dropUp, setDropUp] = useState(openUpward);
     const containerRef = useRef(null);
 
     // Selected date object
-    const selectedDate = value ? new Date(value + 'T00:00:00') : null;
+    const selectedDate = parseSafeDate(value);
 
     // View month & year state
     const [viewDate, setViewDate] = useState(() => selectedDate || new Date());
 
     useEffect(() => {
-        if (value) {
-            const d = new Date(value + 'T00:00:00');
-            if (!isNaN(d.getTime())) setViewDate(d);
+        const parsed = parseSafeDate(value);
+        if (parsed) {
+            setViewDate(parsed);
         }
     }, [value]);
 
@@ -27,10 +69,28 @@ export default function IOSDatePicker({ value, onChange, placeholder = 'Select d
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const viewYear = viewDate.getFullYear();
-    const viewMonth = viewDate.getMonth();
+    // Check bounds on open to decide whether to open upward or downward
+    const handleToggleOpen = () => {
+        if (!isOpen && containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            if (spaceBelow < 320 || openUpward) {
+                setDropUp(true);
+            } else {
+                setDropUp(false);
+            }
+        }
+        setIsOpen(!isOpen);
+    };
 
-    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const validViewDate = (viewDate && !isNaN(viewDate.getTime())) ? viewDate : new Date();
+    const viewYear = validViewDate.getFullYear();
+    const viewMonth = validViewDate.getMonth();
+
+    const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June', 
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
     const dayNames = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
 
     // Generate days for calendar grid
@@ -70,12 +130,11 @@ export default function IOSDatePicker({ value, onChange, placeholder = 'Select d
         setIsOpen(false);
     };
 
-    // Format display string
+    // Format display string safely
     const formatDisplay = (val) => {
-        if (!val) return '';
-        const d = new Date(val + 'T00:00:00');
-        if (isNaN(d.getTime())) return val;
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const parsed = parseSafeDate(val);
+        if (!parsed) return val || '';
+        return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
     const isToday = (day) => {
@@ -92,14 +151,14 @@ export default function IOSDatePicker({ value, onChange, placeholder = 'Select d
         <div ref={containerRef} style={{ position: 'relative', display: 'inline-block', width: '100%', ...style }}>
             {/* Input Trigger */}
             <div
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={handleToggleOpen}
                 className={`ios-datepicker-trigger ${className}`}
                 style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '8px 12px',
-                    border: '1px solid #CBD5E1',
+                    border: isOpen ? '1.5px solid #3B82F6' : '1px solid #CBD5E1',
                     borderRadius: '10px',
                     backgroundColor: '#FFFFFF',
                     cursor: 'pointer',
@@ -107,7 +166,7 @@ export default function IOSDatePicker({ value, onChange, placeholder = 'Select d
                     fontWeight: 500,
                     color: value ? '#0F172A' : '#94A3B8',
                     fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Outfit", sans-serif',
-                    boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+                    boxShadow: isOpen ? '0 0 0 3px rgba(59, 130, 246, 0.15)' : '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
                     transition: 'all 0.2s ease',
                     minHeight: '38px',
                     boxSizing: 'border-box',
@@ -131,20 +190,21 @@ export default function IOSDatePicker({ value, onChange, placeholder = 'Select d
                     className="ios-calendar-popover"
                     style={{
                         position: 'absolute',
-                        top: 'calc(100% + 6px)',
+                        ...(dropUp ? { bottom: 'calc(100% + 8px)' } : { top: 'calc(100% + 8px)' }),
                         left: alignRight ? 'auto' : 0,
                         right: alignRight ? 0 : 'auto',
-                        zIndex: 9999,
+                        zIndex: 99999,
                         backgroundColor: '#FFFFFF',
                         borderRadius: '16px',
                         border: '1px solid #E2E8F0',
-                        boxShadow: '0 12px 32px rgba(15, 23, 42, 0.18), 0 4px 12px rgba(0, 0, 0, 0.06)',
+                        boxShadow: '0 16px 36px -4px rgba(15, 23, 42, 0.18), 0 6px 16px rgba(0, 0, 0, 0.08)',
                         padding: '16px',
                         width: '280px',
                         maxWidth: 'calc(100vw - 32px)',
                         boxSizing: 'border-box',
                         fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Outfit", sans-serif',
                         userSelect: 'none',
+                        animation: 'ios-popover-appear 0.2s ease-out forwards',
                     }}
                 >
                     {/* Header: Month & Year + Nav Chevrons */}
@@ -156,14 +216,18 @@ export default function IOSDatePicker({ value, onChange, placeholder = 'Select d
                             <button
                                 type="button"
                                 onClick={prevMonth}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px 8px', borderRadius: '8px', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px 8px', borderRadius: '8px', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s' }}
+                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#F1F5F9'}
+                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                             >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                             </button>
                             <button
                                 type="button"
                                 onClick={nextMonth}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px 8px', borderRadius: '8px', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px 8px', borderRadius: '8px', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s' }}
+                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#F1F5F9'}
+                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                             >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                             </button>
@@ -207,6 +271,8 @@ export default function IOSDatePicker({ value, onChange, placeholder = 'Select d
                                         transition: 'all 0.15s ease',
                                         boxShadow: active ? '0 4px 10px rgba(59, 130, 246, 0.35)' : 'none',
                                     }}
+                                    onMouseOver={(e) => { if (!active) e.currentTarget.style.backgroundColor = '#F1F5F9'; }}
+                                    onMouseOut={(e) => { if (!active) e.currentTarget.style.backgroundColor = 'transparent'; }}
                                 >
                                     {d}
                                 </button>

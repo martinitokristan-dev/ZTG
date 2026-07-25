@@ -18,8 +18,12 @@ return new class extends Migration
             $table->dateTime('date');
             $table->foreignId('customer_id')->nullable()->constrained('customers')->onDelete('set null');
             $table->foreignId('cashier_id')->constrained('users')->onDelete('restrict');
+            $table->foreignId('checker_id')->nullable()->constrained('checkers')->onDelete('set null');
             $table->integer('total_qty')->default(0);
             $table->decimal('amount', 12, 2)->default(0);
+            $table->decimal('discount_amount', 12, 2)->default(0);
+            $table->string('discount_type', 50)->nullable();
+            $table->decimal('discount_rate', 5, 2)->default(0);
             $table->decimal('amount_tendered', 12, 2)->nullable();
             $table->string('payment_method', 255);
             $table->string('doc_type', 50)->nullable(); // PHP Enum: S.I., D.R., C.I.
@@ -32,8 +36,14 @@ return new class extends Migration
             $table->foreignId('approver_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('approval_code', 20)->nullable();
             $table->string('order_ref', 50)->nullable();
+            $table->text('business_snapshot')->nullable();
             $table->text('internal_notes')->nullable();
             $table->timestamps();
+
+            // Compound & single B-Tree indexes for high-speed reporting
+            $table->index(['date', 'status']);
+            $table->index(['customer_id', 'date']);
+            $table->index(['cashier_id', 'date']);
         });
     }
 

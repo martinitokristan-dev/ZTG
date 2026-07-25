@@ -23,7 +23,6 @@ return new class extends Migration
             $table->integer('alert_limit')->default(5);
             $table->decimal('price1', 12, 2)->default(0);
             $table->decimal('price2', 12, 2)->default(0);
-            $table->integer('sales_count')->default(0);
             $table->string('status', 50)->default('Active'); // PHP Enum: Active, Low Stock, No Stock, Disabled
             $table->boolean('is_dead_stock')->default(false);
             $table->integer('damaged')->default(0);

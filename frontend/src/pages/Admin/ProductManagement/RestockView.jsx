@@ -1,5 +1,8 @@
 import React from 'react';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
+import IOSDatePicker from '../../../shared/components/IOSDatePicker';
+import IOSSelect from '../../../shared/components/IOSSelect';
+import IOSTimePicker from '../../../shared/components/IOSTimePicker';
 
 export default function RestockView({
     products,
@@ -34,19 +37,22 @@ export default function RestockView({
                         />
                     </div>
                     <div style={{ width: '160px' }}>
-                        <select value={restockCategory} onChange={(e) => setRestockCategory(e.target.value)}
-                            style={{ width: '100%', background: 'white', border: '1px solid #E2E8F0', padding: '8px 12px', borderRadius: '10px', fontSize: '13px', outline: 'none', color: '#0F172A' }}>
-                            <option value="">All Categories</option>
-                            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
+                        <IOSSelect
+                            value={restockCategory}
+                            onChange={(e) => setRestockCategory(e.target.value)}
+                            options={[{ value: '', label: 'All Categories' }, ...categories.map(c => ({ value: c.id, label: c.name }))]}
+                        />
                     </div>
                     <div style={{ width: '160px' }}>
-                        <select value={restockStockLevel} onChange={(e) => setRestockStockLevel(e.target.value)}
-                            style={{ width: '100%', background: 'white', border: '1px solid #E2E8F0', padding: '8px 12px', borderRadius: '10px', fontSize: '13px', outline: 'none', color: '#0F172A' }}>
-                            <option value="All">All Stock Levels</option>
-                            <option value="Low Stock">Low Stock</option>
-                            <option value="No Stock">No Stock</option>
-                        </select>
+                        <IOSSelect
+                            value={restockStockLevel}
+                            onChange={(e) => setRestockStockLevel(e.target.value)}
+                            options={[
+                                { value: 'All', label: 'All Stock Levels' },
+                                { value: 'Low Stock', label: 'Low Stock' },
+                                { value: 'No Stock', label: 'No Stock' }
+                            ]}
+                        />
                     </div>
                     <button onClick={handleClearAllRestock}
                         style={{ padding: '8px 16px', border: '1px solid #FECACA', borderRadius: '8px', fontSize: '13px', fontWeight: 600, color: '#EF4444', background: '#FFFFFF', cursor: 'pointer' }}>
@@ -113,11 +119,11 @@ export default function RestockView({
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'flex-end', marginBottom: '12px' }}>
                     <div style={{ width: '160px' }}>
                         <label className="form-label" style={{ fontSize: '11px', marginBottom: '4px' }}>Restock Date</label>
-                        <input type="date" value={restockDate} onChange={(e) => setRestockDate(e.target.value)} className="input-modern" style={{ width: '100%' }} />
+                        <IOSDatePicker value={restockDate} onChange={(e) => setRestockDate(e.target.value)} placeholder="Restock Date" />
                     </div>
                     <div style={{ width: '140px' }}>
                         <label className="form-label" style={{ fontSize: '11px', marginBottom: '4px' }}>Restock Time</label>
-                        <input type="time" value={restockTime} onChange={(e) => setRestockTime(e.target.value)} className="input-modern" style={{ width: '100%' }} />
+                        <IOSTimePicker value={restockTime} onChange={(e) => setRestockTime(e.target.value)} placeholder="Restock Time" />
                     </div>
                     <div style={{ flex: 1, minWidth: '200px' }}>
                         <label className="form-label" style={{ fontSize: '11px', marginBottom: '4px' }}>Admin / Supervisor</label>

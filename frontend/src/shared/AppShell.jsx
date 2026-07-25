@@ -14,6 +14,18 @@ import NotificationsDropdown from './NotificationsDropdown';
  * The bell icon is positioned as a fixed top-right overlay so every page
  * gets the same consistent placement without needing to include it.
  */
+// Helper function to replace legacy localhost image URLs with clean public paths
+const fixImageUrl = (url) => {
+    if (!url) return null;
+    if (typeof url !== 'string') return url;
+    if (url.includes('localhost') || url.includes('127.0.0.1')) {
+        if (url.includes('/storage/')) {
+            return '/storage/' + url.split('/storage/')[1];
+        }
+    }
+    return url;
+};
+
 export default function AppShell() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const [isMobile, setIsMobile] = React.useState(() => window.innerWidth < 768);
@@ -30,7 +42,8 @@ export default function AppShell() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const cachedLogo = localStorage.getItem('cached_sidebar_logo') || localStorage.getItem('cached_business_logo') || "/ztg-icon.png";
+    const rawLogo = localStorage.getItem('cached_sidebar_logo') || localStorage.getItem('cached_business_logo');
+    const cachedLogo = fixImageUrl(rawLogo) || "/ztg-icon.png";
     const cachedName = localStorage.getItem('cached_business_name') || "ZTG Heavy Parts";
 
     return (
@@ -77,7 +90,12 @@ export default function AppShell() {
                             </svg>
                         </button>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                            <img src={cachedLogo} alt="Store Logo" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', backgroundColor: '#FFF', flexShrink: 0 }} />
+                            <img 
+                                src={cachedLogo} 
+                                alt="Store Logo" 
+                                style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', backgroundColor: '#FFF', flexShrink: 0 }} 
+                                onError={(e) => { e.currentTarget.src = "/ztg-icon.png"; }}
+                            />
                             <span style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {cachedName.length > 18 ? 'ZTG Heavy Parts' : cachedName}
                             </span>

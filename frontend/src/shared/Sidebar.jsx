@@ -3,18 +3,32 @@ import { NavLink as RouterNavLink, useNavigate as useRouterNavigate } from 'reac
 import api from './api';
 import { clearEntireCache } from './hooks/usePaginatedCache';
 
+// Helper function to replace legacy localhost image URLs with clean public paths
+const fixImageUrl = (url) => {
+    if (!url) return null;
+    if (typeof url !== 'string') return url;
+    if (url.includes('localhost') || url.includes('127.0.0.1')) {
+        // If relative storage path exists, convert to relative /storage/... path
+        if (url.includes('/storage/')) {
+            return '/storage/' + url.split('/storage/')[1];
+        }
+    }
+    return url;
+};
+
 function Sidebar({ isOpen = false, onClose = () => {}, isMobile = false }) {
     const navigate = useRouterNavigate();
+    const [avatarError, setAvatarError] = React.useState(false);
     const [user, setUser] = React.useState(() => {
         const userStr = localStorage.getItem('auth_user');
         return userStr ? JSON.parse(userStr) : null;
     });
 
     const [logoUrl, setLogoUrl] = React.useState(() => {
-        return localStorage.getItem('cached_business_logo') || null;
+        return fixImageUrl(localStorage.getItem('cached_business_logo')) || null;
     });
     const [sidebarLogoUrl, setSidebarLogoUrl] = React.useState(() => {
-        return localStorage.getItem('cached_sidebar_logo') || null;
+        return fixImageUrl(localStorage.getItem('cached_sidebar_logo')) || null;
     });
     const [businessName, setBusinessName] = React.useState(() => {
         return localStorage.getItem('cached_business_name') || '';
@@ -238,7 +252,12 @@ function Sidebar({ isOpen = false, onClose = () => {}, isMobile = false }) {
                 <div style={{ padding: isMobile ? '16px 20px' : 24, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                         <div style={{ width: isMobile ? 44 : 56, height: isMobile ? 44 : 56, borderRadius: '50%', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-                            <img src={sidebarLogoUrl || logoUrl || "/web-browser-logo.png"} alt="Logo" style={{ width: '100%', height: '100%', objectFit: (sidebarLogoUrl || logoUrl) ? 'cover' : 'contain', transform: (sidebarLogoUrl || logoUrl) ? 'none' : 'scale(1.45)' }} />
+                            <img 
+                                src={fixImageUrl(sidebarLogoUrl) || fixImageUrl(logoUrl) || "/web-browser-logo.png"} 
+                                alt="Logo" 
+                                style={{ width: '100%', height: '100%', objectFit: (sidebarLogoUrl || logoUrl) ? 'cover' : 'contain', transform: (sidebarLogoUrl || logoUrl) ? 'none' : 'scale(1.45)' }} 
+                                onError={(e) => { e.currentTarget.src = "/web-browser-logo.png"; }}
+                            />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <span style={{ color: '#FFFFFF', fontSize: isMobile ? 16 : 18, fontWeight: 800, letterSpacing: '0.5px', lineHeight: '1.2' }}>
@@ -351,7 +370,7 @@ function Sidebar({ isOpen = false, onClose = () => {}, isMobile = false }) {
                         width: 40,
                         height: 40,
                         borderRadius: '50%',
-                        backgroundColor: user?.profile_photo ? 'transparent' : '#3B82F6',
+                        backgroundColor: (user?.profile_photo && !avatarError) ? 'transparent' : '#3B82F6',
                         color: '#FFFFFF',
                         fontWeight: 700,
                         display: 'flex',
@@ -360,12 +379,12 @@ function Sidebar({ isOpen = false, onClose = () => {}, isMobile = false }) {
                         fontSize: 14,
                         flexShrink: 0,
                         overflow: 'hidden',
-                        border: user?.profile_photo ? '2px solid rgba(255,255,255,0.15)' : 'none',
+                        border: (user?.profile_photo && !avatarError) ? '2px solid rgba(255,255,255,0.15)' : 'none',
                         boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
                     }}>
-                        {user?.profile_photo ? (
+                        {(user?.profile_photo && !avatarError) ? (
                             <img
-                                src={user.profile_photo}
+                                src={fixImageUrl(user.profile_photo)}
                                 alt="User Profile"
                                 style={{
                                     width: '100%',
@@ -373,6 +392,7 @@ function Sidebar({ isOpen = false, onClose = () => {}, isMobile = false }) {
                                     objectFit: 'cover',
                                     display: 'block'
                                 }}
+                                onError={() => setAvatarError(true)}
                             />
                         ) : (
                             getInitials(name)

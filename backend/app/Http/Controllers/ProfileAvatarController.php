@@ -58,8 +58,8 @@ class ProfileAvatarController extends Controller
         $filename = 'avatar_' . $user->id . '_' . Str::random(16) . '.' . $ext;
         $path = $file->storeAs('avatars', $filename, 's3');
 
-        // Build the public URL served through Cloudflare R2
-        $url = Storage::disk('s3')->url($path);
+        // Build the public URL served through backend media proxy
+        $url = url('/api/media/' . $path);
 
         $user->update(['profile_photo' => $url]);
 

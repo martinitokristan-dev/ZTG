@@ -56,7 +56,7 @@ class SettingLogoController extends Controller
         $ext = $file->extension();
         $filename = 'logo_' . Str::random(20) . '.' . $ext;
         $path = $file->storeAs('logos', $filename, 's3');
-        $url = Storage::disk('s3')->url($path);
+        $url = url('/api/media/' . $path);
 
         Setting::updateOrCreate(
             ['key' => 'business_logo'],
@@ -85,7 +85,7 @@ class SettingLogoController extends Controller
             $sidebarExt = $sidebarFile->extension() ?: 'png';
             $sidebarFilename = 'sidebar_logo_' . Str::random(20) . '.' . $sidebarExt;
             $sidebarPath = $sidebarFile->storeAs('logos', $sidebarFilename, 's3');
-            $sidebarUrl = Storage::disk('s3')->url($sidebarPath);
+            $sidebarUrl = url('/api/media/' . $sidebarPath);
 
             Setting::updateOrCreate(
                 ['key' => 'sidebar_logo'],

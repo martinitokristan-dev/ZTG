@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 
-// Helper function to replace legacy localhost image URLs with clean public paths
+// Helper function to replace legacy localhost or blocked r2.dev image URLs with backend proxy paths
 const fixImageUrl = (url) => {
     if (!url) return null;
     if (typeof url !== 'string') return url;
@@ -8,6 +8,14 @@ const fixImageUrl = (url) => {
     if (cleanUrl.includes('localhost') || cleanUrl.includes('127.0.0.1')) {
         if (cleanUrl.includes('/storage/')) {
             cleanUrl = '/storage/' + cleanUrl.split('/storage/')[1];
+        }
+    }
+    if (cleanUrl.includes('r2.dev/') || cleanUrl.includes('cloudflarestorage.com/')) {
+        const match = cleanUrl.match(/(avatars|logos|products)\/.+$/);
+        if (match) {
+            const mediaPath = match[0];
+            const backendBase = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '') : '';
+            cleanUrl = `${backendBase}/api/media/${mediaPath}`;
         }
     }
     return cleanUrl;

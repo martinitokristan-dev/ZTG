@@ -4,12 +4,13 @@ import React, { useRef, useState, useEffect } from 'react';
 const fixImageUrl = (url) => {
     if (!url) return null;
     if (typeof url !== 'string') return url;
-    if (url.includes('localhost') || url.includes('127.0.0.1')) {
-        if (url.includes('/storage/')) {
-            return '/storage/' + url.split('/storage/')[1];
+    let cleanUrl = url.trim();
+    if (cleanUrl.includes('localhost') || cleanUrl.includes('127.0.0.1')) {
+        if (cleanUrl.includes('/storage/')) {
+            cleanUrl = '/storage/' + cleanUrl.split('/storage/')[1];
         }
     }
-    return url;
+    return cleanUrl;
 };
 
 export default function ProfileTab({

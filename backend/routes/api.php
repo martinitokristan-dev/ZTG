@@ -16,10 +16,12 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\CheckerController;
 use App\Http\Controllers\SettingLogoController;
+use App\Http\Controllers\MediaController;
 use Illuminate\Support\Facades\Route;
 
-// Public authentication routes
+// Public authentication & media routes
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/media/{path}', [MediaController::class, 'show'])->where('path', '.*');
 
 // Authenticated routes
 Route::middleware('auth:sanctum')->group(function () {

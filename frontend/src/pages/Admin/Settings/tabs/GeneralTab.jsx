@@ -1,3 +1,6 @@
+import React, { useRef, useState, useEffect } from 'react';
+import LogoCropModal from '../modals/LogoCropModal';
+
 // Helper function to replace legacy localhost image URLs with clean public paths
 const fixImageUrl = (url) => {
     if (!url) return null;

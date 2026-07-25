@@ -338,15 +338,14 @@ export default function useSettings() {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
-        if (!allowedTypes.includes(file.type)) {
-            showToast('Invalid file type. Please upload a JPG, PNG, GIF, or WebP image.', 'error');
+        if (!file.type.startsWith('image/') && !file.name.match(/\.(heic|heif|jpg|jpeg|png|webp|gif|bmp|avif)$/i)) {
+            showToast('Invalid file type. Please upload an image file.', 'error');
             e.target.value = '';
             return;
         }
 
-        if (file.size > 5 * 1024 * 1024) {
-            showToast('File size exceeds 5MB limit.', 'error');
+        if (file.size > 12 * 1024 * 1024) {
+            showToast('File size exceeds 12MB limit.', 'error');
             e.target.value = '';
             return;
         }

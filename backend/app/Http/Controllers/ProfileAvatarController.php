@@ -26,9 +26,9 @@ class ProfileAvatarController extends Controller
         $request->validate([
             'avatar' => [
                 'required',
-                'image',                              // PHP GD/Exif content sniff — not just extension
-                'mimes:jpeg,jpg,png,gif,webp',        // MIME whitelist (server-side sniff)
-                'max:5120',                           // 5 MB limit
+                'file',
+                'mimes:jpeg,jpg,png,gif,webp,heic,heif,avif,bmp',
+                'max:12288',                          // 12 MB limit (supports high-res mobile photos)
             ],
         ]);
 
@@ -111,6 +111,15 @@ class ProfileAvatarController extends Controller
     private function urlToStoragePath(?string $url): ?string
     {
         if (!$url) return null;
+
+        if (str_starts_with($url, '/api/media/')) {
+            return substr($url, 11);
+        }
+
+        $mediaBase = rtrim(config('app.url'), '/') . '/api/media/';
+        if (str_starts_with($url, $mediaBase)) {
+            return substr($url, strlen($mediaBase));
+        }
 
         // Try relative storage path (for testing and local environment compatibility)
         if (str_starts_with($url, '/storage/')) {

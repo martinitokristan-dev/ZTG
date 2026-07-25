@@ -71,6 +71,15 @@ class ProfileAvatarTest extends TestCase
     /** Extract relative storage path from a full avatar URL. */
     private function pathFromUrl(string $url): string
     {
+        $mediaUrl = rtrim(config('app.url'), '/') . '/api/media/';
+        if (str_starts_with($url, $mediaUrl)) {
+            return ltrim(str_replace($mediaUrl, '', $url), '/');
+        }
+
+        if (str_starts_with($url, '/api/media/')) {
+            return ltrim(substr($url, 11), '/');
+        }
+
         $r2Url = rtrim(config('filesystems.disks.s3.url'), '/');
         if ($r2Url && str_starts_with($url, $r2Url)) {
             return ltrim(str_replace($r2Url, '', $url), '/');
@@ -136,8 +145,8 @@ class ProfileAvatarTest extends TestCase
 
     public function test_upload_rejects_oversized_file(): void
     {
-        // 6 000 KB (6 MB) — exceeds the 5 120 KB cap
-        $file = UploadedFile::fake()->create('huge.jpg', 6000, 'image/jpeg');
+        // 13 000 KB (13 MB) — exceeds the 12 288 KB cap
+        $file = UploadedFile::fake()->create('huge.jpg', 13000, 'image/jpeg');
 
         $this->actingAs($this->user)
             ->postJson('/api/profile/avatar', ['avatar' => $file])

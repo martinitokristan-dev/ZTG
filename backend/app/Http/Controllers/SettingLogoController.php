@@ -23,15 +23,15 @@ class SettingLogoController extends Controller
         $request->validate([
             'logo' => [
                 'required',
-                'image',
-                'mimes:jpeg,jpg,png,gif,webp',
-                'max:5120',
+                'file',
+                'mimes:jpeg,jpg,png,gif,webp,heic,heif,avif,bmp',
+                'max:12288',
             ],
             'sidebar_logo' => [
                 'nullable',
-                'image',
-                'mimes:jpeg,jpg,png,gif,webp',
-                'max:5120',
+                'file',
+                'mimes:jpeg,jpg,png,gif,webp,heic,heif,avif,bmp',
+                'max:12288',
             ],
         ]);
 

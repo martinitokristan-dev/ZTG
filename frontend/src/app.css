@@ -549,32 +549,34 @@ tr:hover td {
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 4px 8px;
+  padding: 4px 10px;
   border-radius: 9999px;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
+  line-height: 1;
 }
 
 .badge-success {
-  background-color: var(--success-light);
-  color: var(--success);
+  background-color: #DCFCE7;
+  color: #15803D;
 }
 
 .badge-danger {
-  background-color: var(--danger-light);
-  color: var(--danger);
+  background-color: #FEE2E2;
+  color: #B91C1C;
 }
 
 .badge-warning {
-  background-color: var(--warning-light);
-  color: var(--warning);
+  background-color: #FEF3C7;
+  color: #B45309;
 }
 
 .badge-secondary {
   background-color: #F1F5F9;
-  color: var(--text-secondary);
+  color: #475569;
 }
 
 /* Modals */
@@ -653,6 +655,15 @@ tr:hover td {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  /* Sticky at bottom of the sheet on mobile */
+  flex-shrink: 0;
+}
+
+/* ─── Refund Modal 2-column grid (desktop) / 1-column stack (mobile) ─── */
+.refund-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 32px;
 }
 
 .modal-section-title {
@@ -966,15 +977,42 @@ body {
     width: 40px;
     height: 40px;
     transition: background-color 0.2s, transform 0.2s;
+    /* Prevent iOS tap highlight flash */
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
 }
 
-.notif-btn:hover {
-    background-color: #F1F5F9;
-    transform: scale(1.05);
+/* Desktop hover — only when device supports hover (not touch) */
+@media (hover: hover) {
+    .notif-btn:hover {
+        background-color: #F1F5F9;
+        transform: scale(1.05);
+    }
 }
 
 .notif-btn:active {
     transform: scale(0.95);
+}
+
+/* Open state — explicit class driven by React isOpen state, reliable on all devices */
+.notif-btn--open {
+    background-color: #EFF6FF;
+    /* No transform — stays in normal visual size, just tinted */
+}
+
+/* On touch devices: never apply :hover stuck state, only rely on :active + JS class */
+@media (hover: none) {
+    .notif-btn:hover {
+        background-color: transparent !important;
+        transform: none !important;
+    }
+    .notif-btn--open {
+        background-color: #EFF6FF !important;
+    }
+    .notif-btn:active {
+        background-color: #EFF6FF;
+        transform: scale(0.97);
+    }
 }
 
 .notif-badge {
@@ -2203,18 +2241,118 @@ body {
   .grid-2, .grid-3, .grid-4 {
     grid-template-columns: 1fr !important;
   }
+
+  /* ── 1. Modals Mobile — scroll both axes like a data table ── */
+  .modal-overlay {
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 12px !important;
+  }
   .modal-card {
-    width: 95% !important;
-    max-width: 95% !important;
+    width: 95vw !important;
+    max-width: 95vw !important;
     max-height: 90vh !important;
-    margin: 10px auto !important;
+    min-height: auto !important;
+    margin: 0 auto !important;
+    border-radius: 14px !important;
     display: flex !important;
     flex-direction: column !important;
+    transform: none !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    /* Remove the ::before drag handle pill */
+  }
+  .modal-card::before {
+    display: none !important;
   }
   .modal-body {
-    max-height: 70vh !important;
+    /* ✅ Scroll RIGHT to see hidden columns (same as tables) */
+    overflow-x: auto !important;
     overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    max-height: calc(90vh - 130px) !important;
+    padding: 16px !important;
+    box-sizing: border-box !important;
+    /* Keep natural layout — don't force single column */
+    display: block !important;
   }
+  /* Modal footer sticks to bottom so Cancel/Submit always visible */
+  .modal-footer {
+    position: sticky !important;
+    bottom: 0 !important;
+    background: #F8FAFC !important;
+    z-index: 2 !important;
+    padding: 14px 16px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* ── 2. Settings Sub-Tabs: exact same style as top-level tabs-header on mobile ── */
+  .prod-tabs-layout {
+    flex-direction: column !important;
+    min-height: auto !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+  .prod-vtab-sidebar {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid var(--border) !important;
+    margin-bottom: 16px !important;
+    box-sizing: border-box !important;
+    -webkit-overflow-scrolling: touch !important;
+    white-space: nowrap !important;
+  }
+  .prod-vtab-btn {
+    /* Critical: auto-width so each tab only takes its content width */
+    width: auto !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    border-bottom: 2px solid transparent !important;
+    background: transparent !important;
+    color: var(--text-secondary) !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0 !important;
+    margin-bottom: -1px !important;
+    min-width: 0 !important;
+  }
+  .prod-vtab-btn svg {
+    display: none !important;
+  }
+  .prod-vtab-btn.active {
+    color: var(--primary) !important;
+    border-bottom-color: var(--primary) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  /* Strip desktop padding from the content wrapper — targets the prod-panel-content class */
+  .prod-tabs-layout > div:last-child {
+    padding: 0 !important;
+    flex: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .prod-panel-content {
+    padding: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
   .top-bar {
     height: auto !important;
     min-height: 56px !important;
@@ -2254,10 +2392,6 @@ body {
   .btn, .action-trigger-btn {
     min-height: 40px !important;
   }
-  .prod-tabs-layout {
-    flex-direction: column !important;
-    min-height: auto !important;
-  }
   .table-filters > div,
   .table-filters .ios-select-trigger,
   .table-filters .ios-datepicker-trigger {
@@ -2267,28 +2401,6 @@ body {
   }
   .dashboard-time-pills {
     justify-content: flex-start !important;
-  }
-  .prod-vtab-sidebar {
-    width: 100% !important;
-    min-width: 100% !important;
-    flex-direction: row !important;
-    overflow-x: auto !important;
-    white-space: nowrap !important;
-    border-right: none !important;
-    border-bottom: 1px solid var(--border) !important;
-    padding: 6px !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-  .prod-vtab-btn {
-    flex-shrink: 0 !important;
-    white-space: nowrap !important;
-    padding: 8px 14px !important;
-    font-size: 12px !important;
-    border-left: none !important;
-    border-bottom: 3px solid transparent !important;
-  }
-  .prod-vtab-btn.active {
-    border-bottom-color: var(--primary) !important;
   }
   .table-filters {
     flex-wrap: wrap !important;
@@ -2315,4 +2427,45 @@ body {
     border-radius: 10px !important;
   }
 }
+
+/* Smooth Toast Animations */
+@keyframes toast-slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Dashboard Responsive Grid Rules */
+@media (max-width: 1024px) {
+  .stat-cards-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .dashboard-charts-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .sales-trend-span, .alerts-span {
+    grid-column: span 1 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .stat-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Copyable Text Component Styles */
+.copyable-text-btn:hover code {
+  color: #2563EB !important;
+  text-decoration: underline;
+}
+.copyable-text-btn:hover svg {
+  color: #2563EB !important;
+}
+
 

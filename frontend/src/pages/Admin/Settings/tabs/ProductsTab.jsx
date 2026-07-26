@@ -31,7 +31,7 @@ export default function ProductsTab({
             </div>
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ flex: 1, padding: '24px 32px' }}>
+                <div className="prod-panel-content" style={{ flex: 1, padding: '24px 32px' }}>
                     {/* PANEL: Product Info */}
                     {activeSubTab === 'info' && (
                         <div className="prod-vtab-panel active">

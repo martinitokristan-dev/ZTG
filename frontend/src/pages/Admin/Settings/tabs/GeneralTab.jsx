@@ -69,7 +69,7 @@ export default function GeneralTab({
         <div className="card" style={{ marginBottom: '16px', paddingBottom: '24px' }}>
             <div className="settings-section">
                 {/* Header with inline Card Edit / Save / Cancel Button */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '10px', marginBottom: '20px' }}>
+                <div className="settings-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '10px', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
                     <div>
                         <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
                             Business Identity & Compliance

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import IOSSelect from '../../../../shared/components/IOSSelect';
 
 export default function PayModal({ isOpen, onClose, onSubmit, transaction, fmtDate, fmt }) {
     const [paymentMethod, setPaymentMethod] = useState('Cash');
@@ -90,17 +91,15 @@ export default function PayModal({ isOpen, onClose, onSubmit, transaction, fmtDa
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             <div className="form-group" style={{ marginBottom: 0 }}>
                                 <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>Payment Method <span style={{ color: '#EF4444' }}>*</span></label>
-                                <select 
-                                    className="form-control" 
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '14px' }}
+                                <IOSSelect
                                     value={paymentMethod}
                                     onChange={(e) => setPaymentMethod(e.target.value)}
-                                    required
-                                >
-                                    <option value="Cash">Cash</option>
-                                    <option value="GCash">GCash</option>
-                                    <option value="Bank">Bank Transfer</option>
-                                </select>
+                                    options={[
+                                        { value: 'Cash', label: 'Cash' },
+                                        { value: 'GCash', label: 'GCash' },
+                                        { value: 'Bank', label: 'Bank Transfer' }
+                                    ]}
+                                />
                             </div>
 
                             <div className="form-group" style={{ marginBottom: 0 }}>

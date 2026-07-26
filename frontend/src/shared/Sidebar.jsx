@@ -51,8 +51,23 @@ function Sidebar({ isOpen = false, onClose = () => {}, isMobile = false }) {
 
         const loadSettings = async () => {
             try {
-                const res = await api.get('/settings');
-                if (res.data) {
+                const [res, userRes] = await Promise.all([
+                    api.get('/settings').catch(() => null),
+                    api.get('/user').catch(() => null)
+                ]);
+
+                if (userRes?.data?.user) {
+                    const freshUser = userRes.data.user;
+                    setUser(freshUser);
+                    setAvatarError(false);
+                    const stored = localStorage.getItem('auth_user');
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        localStorage.setItem('auth_user', JSON.stringify({ ...parsed, ...freshUser }));
+                    }
+                }
+
+                if (res?.data) {
                     const newLogo = res.data.business_logo || null;
                     const newSidebarLogo = res.data.sidebar_logo || null;
                     const newName = res.data.business_name || '';
@@ -243,19 +258,20 @@ function Sidebar({ isOpen = false, onClose = () => {}, isMobile = false }) {
                 backgroundColor: '#1E293B',
                 display: 'flex',
                 flexDirection: 'column',
-                height: isMobile ? '100dvh' : '100%',
-                maxHeight: isMobile ? '100dvh' : 'none',
+                height: isMobile ? 'auto' : '100%',
+                minHeight: isMobile ? '100%' : 'auto',
                 position: isMobile ? 'fixed' : 'relative',
                 top: 0,
-                bottom: 0,
+                bottom: isMobile ? 0 : 'auto',
                 left: isMobile ? 0 : 'auto',
-                zIndex: isMobile ? 1000 : 'auto',
+                zIndex: isMobile ? 99999 : 'auto',
                 transform: isMobile ? (isOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none',
                 transition: isMobile ? 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)' : 'none',
                 borderRight: '1px solid rgba(255,255,255,0.05)',
                 boxShadow: isMobile && isOpen ? '4px 0 24px rgba(0,0,0,0.3)' : 'none',
                 userSelect: 'none',
                 boxSizing: 'border-box',
+                overflowY: isMobile ? 'auto' : 'visible',
             }}>
                 {/* Brand Header */}
                 <div style={{ padding: isMobile ? '16px 20px' : 24, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

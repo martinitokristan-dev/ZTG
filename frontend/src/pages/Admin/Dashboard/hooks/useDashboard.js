@@ -16,6 +16,8 @@ export function useDashboard() {
     const [stats, setStats] = useState({
         totalStock: 0,
         todayRevenue: 0,
+        productCount: 0,
+        variantCount: 0,
         employeeCount: 0,
         topProduct: { name: '-', qty: 0 }
     });
@@ -33,13 +35,17 @@ export function useDashboard() {
                 setLoading(true);
                 const cachedStats = await fetchDashboardData(products, currentTimeRange);
 
-                // Calculate total items on hand (sum of all stocks)
+                // Calculate total items on hand (sum of all stocks) and product/variant counts
                 const sellableSKUs = flattenToSellableSKUs(products);
                 const totalStock = sellableSKUs.reduce((sum, item) => sum + (item.stock || 0), 0);
+                const productCount = products.length;
+                const variantCount = sellableSKUs.length;
 
                 setStats({
                     totalStock: totalStock,
                     todayRevenue: cachedStats.todayRevenue,
+                    productCount: productCount,
+                    variantCount: variantCount,
                     employeeCount: cachedStats.employeeCount,
                     topProduct: cachedStats.topProduct,
                     last7Days: cachedStats.last7Days || []

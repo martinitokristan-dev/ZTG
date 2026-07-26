@@ -1,4 +1,5 @@
 import React from 'react';
+import IOSSelect from '../../../../shared/components/IOSSelect';
 
 export default function FulfillOrderModal({
     isOpen, onClose, onSubmit, selected,
@@ -109,11 +110,15 @@ export default function FulfillOrderModal({
                                 <h4 style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', marginBottom: '12px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Collect Balance Payment</h4>
                                 <div className="form-group" style={{ marginBottom: '12px' }}>
                                     <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Payment Method <span style={{ color: 'var(--danger)' }}>*</span></label>
-                                    <select className="form-control" value={ffPaymentMethod} onChange={(e) => setFfPaymentMethod(e.target.value)} style={{ fontSize: '13px' }}>
-                                        <option value="Cash">Cash</option>
-                                        <option value="GCash">GCash</option>
-                                        <option value="Bank">Bank Transfer</option>
-                                    </select>
+                                    <IOSSelect
+                                        value={ffPaymentMethod}
+                                        onChange={(e) => setFfPaymentMethod(e.target.value)}
+                                        options={[
+                                            { value: 'Cash', label: 'Cash' },
+                                            { value: 'GCash', label: 'GCash' },
+                                            { value: 'Bank', label: 'Bank Transfer' }
+                                        ]}
+                                    />
                                 </div>
                                 <div className="form-group" style={{ marginBottom: '12px' }}>
                                     <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Amount Received <span style={{ color: 'var(--danger)' }}>*</span></label>
@@ -129,11 +134,15 @@ export default function FulfillOrderModal({
                                 <h4 style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', marginBottom: '12px', letterSpacing: '0.5px', textTransform: 'uppercase', marginTop: '8px' }}>Transaction Details</h4>
                                 <div className="form-group" style={{ marginBottom: '12px' }}>
                                     <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Document Type <span style={{ color: 'var(--danger)' }}>*</span></label>
-                                    <select className="form-control" value={ffDocType} onChange={(e) => setFfDocType(e.target.value)} style={{ fontSize: '13px' }}>
-                                        <option value="S.I.">S.I. (Sales Invoice)</option>
-                                        <option value="C.I.">C.I. (Cash Invoice)</option>
-                                        <option value="D.R.">D.R. (Delivery Receipt)</option>
-                                    </select>
+                                    <IOSSelect
+                                        value={ffDocType}
+                                        onChange={(e) => setFfDocType(e.target.value)}
+                                        options={[
+                                            { value: 'S.I.', label: 'S.I. (Sales Invoice)' },
+                                            { value: 'C.I.', label: 'C.I. (Cash Invoice)' },
+                                            { value: 'D.R.', label: 'D.R. (Delivery Receipt)' }
+                                        ]}
+                                    />
                                 </div>
                                 <div className="form-group" style={{ marginBottom: '12px' }}>
                                     <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Served By</label>

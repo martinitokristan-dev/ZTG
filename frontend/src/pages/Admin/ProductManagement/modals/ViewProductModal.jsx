@@ -1,4 +1,5 @@
 import React from 'react';
+import CopyableText from '../../../../shared/components/CopyableText';
 
 export default function ViewProductModal({ isOpen, onClose, product }) {
     if (!isOpen || !product) return null;
@@ -46,7 +47,7 @@ export default function ViewProductModal({ isOpen, onClose, product }) {
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                             <span style={{ color: '#2563EB', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Part No. (Base)</span>
-                            <span style={{ fontWeight: '700', color: '#1E293B', fontFamily: 'monospace', fontSize: '15px', minHeight: '20px', display: 'inline-block' }}>{product.part_no}</span>
+                            <CopyableText text={product.part_no} label="Part No." codeStyle={{ fontSize: '15px' }} />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                             <span style={{ color: '#2563EB', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status</span>
@@ -98,7 +99,9 @@ export default function ViewProductModal({ isOpen, onClose, product }) {
                                         
                                         return (
                                             <tr key={v.id} style={{ borderBottom: '1px solid #F1F5F9', background: rowBg }}>
-                                                <td style={{ padding: '10px 12px', fontWeight: '700', color: '#1E293B', fontFamily: 'monospace', fontSize: '12px' }}>{v.part_no}</td>
+                                                <td style={{ padding: '10px 12px' }}>
+                                                    <CopyableText text={v.part_no} label="Part No." />
+                                                </td>
                                                 <td style={{ padding: '10px 12px', color: '#475569', fontWeight: '500' }}>
                                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                         <span style={{ fontWeight: '600', color: '#0F172A' }}>{v.name || product.name} {varLabel && `(${varLabel})`}</span>

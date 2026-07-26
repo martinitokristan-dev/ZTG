@@ -1,4 +1,5 @@
 import React from 'react';
+import CopyableText from '../../../../shared/components/CopyableText';
 
 export default function TransactionDetailsModal({ isOpen, onClose, transaction, fmtDate, fmt }) {
     if (!isOpen || !transaction) return null;
@@ -92,7 +93,9 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction, 
 
                                 return (
                                     <tr key={index} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                                        <td style={{ padding: '10px 12px', color: '#0F172A', fontWeight: '700', fontFamily: 'monospace' }}>{partNo}</td>
+                                        <td style={{ padding: '10px 12px' }}>
+                                            <CopyableText text={partNo} label="Part No." />
+                                        </td>
                                         <td style={{ padding: '10px 12px', color: '#334155' }}>
                                             <div style={{ fontWeight: '600' }}>{name}</div>
                                             {chineseName && <div style={{ fontSize: '11px', color: '#94A3B8' }}>{chineseName}</div>}
@@ -117,12 +120,17 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction, 
         );
     }
 
-    const auditDetailRow = (label, value, customStyle = {}) => (
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #F1F5F9', fontSize: '13px' }}>
-            <span style={{ color: '#64748B', fontWeight: '500', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '0.5px' }}>{label}</span>
-            <span style={{ color: '#0F172A', textAlign: 'right', fontWeight: '600', ...customStyle }}>{value}</span>
-        </div>
-    );
+    const auditDetailRow = (label, value, customStyle = {}) => {
+        const isCopyable = ['Invoice No.', 'Reference No.', 'OR Number'].includes(label) && value && value !== '—' && value !== 'N/A';
+        return (
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #F1F5F9', fontSize: '13px', alignItems: 'center' }}>
+                <span style={{ color: '#64748B', fontWeight: '500', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '0.5px' }}>{label}</span>
+                <span style={{ color: '#0F172A', textAlign: 'right', fontWeight: '600', ...customStyle }}>
+                    {isCopyable ? <CopyableText text={value} label={label} /> : value}
+                </span>
+            </div>
+        );
+    };
 
     const resolvedCustomer = tx.customer_name || tx.customer?.name || (tx.customer_id ? `Customer #${tx.customer_id}` : null);
 
@@ -157,11 +165,11 @@ export default function TransactionDetailsModal({ isOpen, onClose, transaction, 
                                 {auditDetailRow('Invoice No.', tx.si_no || '—')}
                                 {auditDetailRow('Date & Time', fmtDate(tx.date || tx.created_at))}
                                 {auditDetailRow('Customer', tx.customer_name || tx.customer?.name || 'Walk-in')}
-                                {auditDetailRow('Cashier', tx.cashier?.name || '—')}
+                                {auditDetailRow('Served By', tx.checker?.name || tx.cashier?.name || '—')}
                                 {auditDetailRow('Subtotal (Gross)', fmt(grossSubtotal > 0 ? grossSubtotal : (tx.amount || tx.total)))}
                                 {totalDiscounts > 0 && auditDetailRow(`Total Discounts${discountTypeLabel}`, `-${fmt(totalDiscounts)}`, { color: '#2563EB', fontWeight: '700' })}
                                 {auditDetailRow('Amount', fmt(tx.amount || tx.total))}
-                                {auditDetailRow('Voided By', tx.approver_name || tx.cashier?.name || '—')}
+                                {auditDetailRow('Processed By', tx.approver?.real_name || tx.approver?.name || '—')}
                                 {auditDetailRow('Reason', tx.void_reason || '—')}
                                 {auditDetailRow('OR Number', tx.or_no || 'N/A')}
                             </>

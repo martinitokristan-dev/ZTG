@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../../../shared/api'; // Or pass search via props, but we need search logic.
+import api from '../../../../shared/api';
+import useMobileSheet from '../../../../shared/useMobileSheet';
+import IOSSelect from '../../../../shared/components/IOSSelect';
 
 export default function RefundModal({ isOpen, onClose, onSubmit, transaction, fmtDate, fmt, onSearchTransaction }) {
+    // Read the actual logged-in user from localStorage
+    const currentUser = (() => { try { return JSON.parse(localStorage.getItem('auth_user')); } catch { return null; } })();
+    const currentUserName = currentUser?.real_name || currentUser?.name || 'Current User';
+    const { sheetRef, dragHandleProps } = useMobileSheet({ onClose });
     const [actionType, setActionType] = useState('Refund');
     const [reason, setReason] = useState('Defective / Damaged Item');
     const [notes, setNotes] = useState('');
@@ -116,8 +122,7 @@ export default function RefundModal({ isOpen, onClose, onSubmit, transaction, fm
                 qty: selectedItems[id].qty
             }));
 
-        const user = (() => { try { return JSON.parse(localStorage.getItem('auth_user')); } catch { return null; } })();
-        const approverId = user?.id || 1;
+        const approverId = currentUser?.id || 1;
 
         const payload = {
             transaction_id: txToUse.id,
@@ -138,16 +143,16 @@ export default function RefundModal({ isOpen, onClose, onSubmit, transaction, fm
 
     return (
         <div className="modal-overlay" style={{ zIndex: 999 }}>
-            <div className="modal-card modal-card-lg" style={{ maxWidth: '1000px', width: '95%', backgroundColor: '#FFFFFF', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)' }}>
+            <div ref={sheetRef} className="modal-card modal-card-lg" style={{ maxWidth: '1000px', width: '95%', backgroundColor: '#FFFFFF', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)' }}>
                 <form onSubmit={handleSubmit}>
-                    <div className="modal-header" style={{ backgroundColor: '#FEE2E2', borderBottom: 'none', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div {...dragHandleProps} className="modal-header" style={{ backgroundColor: '#FEE2E2', borderBottom: 'none', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', touchAction: 'none' }}>
                         <h3 className="modal-title" style={{ color: '#DC2626', fontSize: '16px', fontWeight: '700', margin: 0 }}>Process Refund / Return</h3>
                         <button type="button" onClick={onClose} style={{ color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
                             <svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'none', stroke: 'currentColor', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' }}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
                     </div>
 
-                    <div className="modal-body" style={{ padding: '24px', maxHeight: '80vh', overflowY: 'auto' }}>
+                    <div className="modal-body">
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: '32px' }}>
                             {/* Left Column */}
                             <div className="refund-column" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -181,7 +186,7 @@ export default function RefundModal({ isOpen, onClose, onSubmit, transaction, fm
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid #F3F4F6', fontSize: '13px' }}>
                                             <span style={{ color: '#6B7280' }}>Served By</span>
-                                            <span style={{ fontWeight: '600', color: '#111827' }}>{txToUse ? (txToUse.cashier?.name || '—') : '-'}</span>
+                                            <span style={{ fontWeight: '600', color: '#111827' }}>{txToUse ? (txToUse.checker?.name || txToUse.cashier?.name || '—') : '-'}</span>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid #F3F4F6', fontSize: '13px' }}>
                                             <span style={{ color: '#6B7280' }}>Original Amount</span>
@@ -250,7 +255,7 @@ export default function RefundModal({ isOpen, onClose, onSubmit, transaction, fm
                                             {txItems.length === 0 ? (
                                                 <tr><td colSpan="5" style={{ textAlign: 'center', padding: '24px', color: '#6B7280', fontSize: '13px' }}>Enter a transaction number to load items</td></tr>
                                             ) : txItems.map((item, index) => {
-                                                const partNo = item.product?.part_number || '—';
+                                                const partNo = item.product?.part_no || item.part_no || item.partNo || item.product?.partNo || item.sku || '—';
                                                 const name = item.product?.name || item.name || 'Unknown Part';
                                                 const price = item.price || 0;
                                                 const sel = selectedItems[item.id] || { selected: false, qty: 0 };
@@ -315,20 +320,28 @@ export default function RefundModal({ isOpen, onClose, onSubmit, transaction, fm
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                     <div>
                                         <label style={{ fontSize: '12px', color: '#4B5563', marginBottom: '4px', display: 'block' }}>Refund Method</label>
-                                        <select className="form-control" value={refundMethod} onChange={(e) => setRefundMethod(e.target.value)} style={{ border: '1px solid #E5E7EB', borderRadius: '6px', padding: '10px 12px', fontSize: '13px', width: '100%', background: '#FFFFFF' }}>
-                                            <option value="Cash Return">Cash Return</option>
-                                            <option value="GCash">GCash</option>
-                                            <option value="Bank Transfer">Bank Transfer</option>
-                                            <option value="Store Credit">Store Credit</option>
-                                        </select>
+                                        <IOSSelect
+                                            value={refundMethod}
+                                            onChange={(e) => setRefundMethod(e.target.value)}
+                                            options={[
+                                                { value: 'Cash Return', label: 'Cash Return' },
+                                                { value: 'GCash', label: 'GCash' },
+                                                { value: 'Bank Transfer', label: 'Bank Transfer' },
+                                                { value: 'Store Credit', label: 'Store Credit' }
+                                            ]}
+                                        />
                                     </div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                         <div>
                                             <label style={{ fontSize: '12px', color: '#4B5563', marginBottom: '4px', display: 'block' }}>Processed By</label>
-                                            <select className="form-control" value={approver} onChange={(e) => setApprover(e.target.value)} style={{ border: '1px solid #E5E7EB', borderRadius: '6px', padding: '10px 12px', fontSize: '13px', width: '100%', background: '#FFFFFF' }}>
-                                                <option value="Manager">Carlos Dizon (Current User)</option>
-                                                <option value="Supervisor">Supervisor</option>
-                                            </select>
+                                            <IOSSelect
+                                                value={approver}
+                                                onChange={(e) => setApprover(e.target.value)}
+                                                options={[
+                                                    { value: 'Manager', label: `${currentUserName} (Current User)` },
+                                                    { value: 'Supervisor', label: 'Supervisor' }
+                                                ]}
+                                            />
                                         </div>
                                         <div>
                                             <label style={{ fontSize: '12px', color: '#4B5563', marginBottom: '4px', display: 'block' }}>Approval Code (Optional)</label>

@@ -174,4 +174,33 @@ This system is configured for **TiDB Cloud Serverless** with a **5 GiB (5,120 MB
 
 > **Documentation Note:** For audit, backup, and system capability documentation, the 5 GiB database limitation provides **over 50 to 80 years of continuous retail operations** at 150 sales/day before hitting capacity.
 
+---
+
+### 9. 🛡️ System Security & Data Protection Architecture
+
+This application incorporates multi-layered enterprise security controls to protect business data, safeguard user accounts, and prevent unauthorized actions:
+
+1. **Authentication & Token Authorization (JWT / Bearer Tokens):**
+   - All backend API endpoints (`/api/*`) require a valid **JSON Web Token (JWT)** in the HTTP request header (`Authorization: Bearer <token>`).
+   - Unauthenticated or expired requests are automatically rejected with `401 Unauthorized` responses.
+
+2. **Password Hashing (Bcrypt Hashing):**
+   - User and admin credentials are encrypted using one-way **Bcrypt** hashing (`Hash::make()`). Plaintext passwords are never stored in the database or logged.
+
+3. **Role-Based Access Control (RBAC) & Admin PIN Enforcement:**
+   - Strict role middleware segregates Admin, Cashier, and Manager capabilities.
+   - Financial adjustments, refunds, voids, and stock write-offs require an explicit Admin Security Code / Approval PIN (`approval_pin`).
+
+4. **Cross-Origin Resource Sharing (CORS) Isolation:**
+   - Backend CORS configuration explicitly restricts API requests to authorized frontend origin domains (`.pages.dev`), preventing cross-domain hijacking attempts.
+
+5. **Transport Layer Security (HTTPS / TLS 1.3):**
+   - All network communication between client browser, Cloudflare Pages, and Render containers is encrypted via **HTTPS / TLS 1.3**.
+
+6. **SQL Injection Protection (Laravel Eloquent ORM):**
+   - Database operations execute via Laravel Eloquent ORM with **PDO Parameter Binding**, completely preventing SQL Injection vectors.
+
+7. **Sanitized File Uploads & Media Proxying:**
+   - Image uploads (avatars, product photos) validate strict MIME types (`jpeg`, `png`, `webp`, `heic`), enforce 12MB size caps, and generate cryptographically randomized filenames (`avatar_1_JAjllNuCgWXw8yrE.jpg`).
+
 

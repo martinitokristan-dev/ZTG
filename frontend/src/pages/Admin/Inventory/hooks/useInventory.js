@@ -178,8 +178,8 @@ export function useInventory() {
     };
 
     const filteredSKUs = useMemo(() => {
-        return flattenToSellableSKUs(filteredProductsForStats);
-    }, [filteredProductsForStats]);
+        return flattenToSellableSKUs(filteredProductsForStats, statusFilter);
+    }, [filteredProductsForStats, statusFilter]);
 
     const totalItems = filteredSKUs.length;
     const categoriesCount = new Set(filteredSKUs.map(p => p.category_id)).size;

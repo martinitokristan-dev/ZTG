@@ -48,7 +48,7 @@ export default function CriticalStockAlerts() {
             boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
             display: 'flex',
             flexDirection: 'column',
-            height: '380px',
+            height: 320,
             boxSizing: 'border-box'
         }}>
             <style>
@@ -79,7 +79,7 @@ export default function CriticalStockAlerts() {
                 )}
             </div>
 
-            <div className="critical-alerts-scroll" style={{ display: 'flex', flexDirection: 'column', gap: 0, overflowY: 'auto', flex: 1, paddingRight: 6 }}>
+            <div className="critical-alerts-scroll" style={{ display: 'flex', flexDirection: 'column', gap: 0, overflowY: 'auto', flex: 1, minHeight: 0, paddingRight: 6 }}>
                 {criticalItems.length === 0 ? (
                     <div style={{ padding: '40px 0', textAlign: 'center', color: '#94A3B8', fontSize: 13, fontWeight: 500 }}>
                         ✓ All stock levels healthy

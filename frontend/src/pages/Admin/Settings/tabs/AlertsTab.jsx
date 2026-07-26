@@ -25,7 +25,7 @@ export default function AlertsTab({
             </div>
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <div style={{ flex: 1, padding: '24px 32px' }}>
+                <div className="prod-panel-content" style={{ flex: 1, padding: '24px 32px' }}>
                     {/* PANEL: Inventory Alerts */}
                     {activeAlertsSubTab === 'inventory' && (
                         <div className="prod-vtab-panel active">

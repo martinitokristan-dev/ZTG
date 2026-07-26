@@ -28,29 +28,74 @@ export default function SalesTrendChart({ last7Days = [], timeRange = 'Today' })
     const width = 600;
     const height = 220;
     const paddingY = 24;
-    const startX = 0;
-    const endX = width;
+    const startX = 36; // Pushed further left to give max width to chart
+    const endX = width - 6;
 
-    // Calculate SVG coordinates based on revenue
-    let points = [];
-    const maxRevenue = hasData ? Math.max(...last7Days.map(d => d.revenue), 100) : 100;
-    const stepX = numPoints > 1 ? (endX - startX) / (numPoints - 1) : (endX - startX);
+    // Format Y-axis count without ₱ symbol (20k, 40k, 60k, 80k, 100k)
+    const formatYAxisLabel = (val) => {
+        if (val === 0) return '0';
+        if (val >= 1000000) return `${(val / 1000000).toFixed(val % 1000000 === 0 ? 0 : 1)}M`;
+        if (val >= 1000) return `${Math.round(val / 1000)}k`;
+        return `${val}`;
+    };
 
-    if (hasData) {
-        points = last7Days.map((d, index) => {
-            const cx = startX + (index * stepX);
-            const cy = (height - paddingY) - ((d.revenue / maxRevenue) * (height - 2 * paddingY));
-            return { x: cx, y: cy, label: d.day, revenue: d.revenue, date: d.date };
-        });
+    // Scale ceiling (defaults to 100k scale: 20k, 40k, 60k, 80k, 100k)
+    const getCleanUpperBound = (maxVal) => {
+        if (!maxVal || maxVal <= 100000) return 100000;
+        return Math.ceil(maxVal / 100000) * 100000;
+    };
+
+    const todayLabels = ['8AM', '9AM', '10AM', '11AM', '12PM', '1PM', '2PM', '3PM', '4PM', '5PM'];
+    const isToday = timeRange === 'Today';
+
+    let chartDataset = [];
+    if (isToday) {
+        // Strictly use 10 hourly points for Today (8AM to 5PM)
+        if (hasData && last7Days.length === 10) {
+            chartDataset = last7Days.map((d, i) => ({
+                label: todayLabels[i] || d.day,
+                revenue: d.revenue || 0,
+                date: d.date || ''
+            }));
+        } else {
+            chartDataset = todayLabels.map((lbl) => {
+                const match = hasData ? last7Days.find(d => String(d.day || '').replace(/\s+/g, '').toUpperCase() === lbl) : null;
+                return {
+                    label: lbl,
+                    revenue: match ? match.revenue : 0,
+                    date: match ? match.date : ''
+                };
+            });
+        }
+    } else if (hasData) {
+        chartDataset = last7Days.map(d => ({
+            label: d.day,
+            revenue: d.revenue || 0,
+            date: d.date || ''
+        }));
     } else {
-        // Fallback preview
         const dummy = [20, 40, 15, 60, 30, 85, 45];
-        points = dummy.map((val, index) => {
-            const cx = startX + (index * stepX);
-            const cy = (height - paddingY) - ((val / 100) * (height - 2 * paddingY));
-            return { x: cx, y: cy, label: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][index], revenue: val * 100, date: '' };
-        });
+        const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        chartDataset = dummy.map((val, i) => ({
+            label: dayLabels[i],
+            revenue: val * 1000,
+            date: ''
+        }));
     }
+
+    const actualNumPoints = chartDataset.length;
+    const rawMax = Math.max(...chartDataset.map(d => d.revenue), 0);
+    const upperBound = getCleanUpperBound(rawMax);
+    const yTicks = [1.0, 0.8, 0.6, 0.4, 0.2, 0].map(ratio => ratio * upperBound);
+
+    // Calculate SVG coordinates based on chartDataset
+    const stepX = actualNumPoints > 1 ? (endX - startX) / (actualNumPoints - 1) : (endX - startX);
+
+    const points = chartDataset.map((d, index) => {
+        const cx = startX + (index * stepX);
+        const cy = (height - paddingY) - ((d.revenue / upperBound) * (height - 2 * paddingY));
+        return { x: cx, y: cy, label: d.label, revenue: d.revenue, date: d.date };
+    });
 
     // Helper to generate a smooth Catmull-Rom spline path
     const getBezierCurvePath = (pts) => {
@@ -89,7 +134,9 @@ export default function SalesTrendChart({ last7Days = [], timeRange = 'Today' })
             borderRadius: 12, 
             padding: 24, 
             boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05), 0 1px 2px 0 rgba(0,0,0,0.06)',
-            position: 'relative'
+            position: 'relative',
+            height: 320,
+            boxSizing: 'border-box'
         }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', margin: 0, fontFamily: 'Outfit, sans-serif' }}>
@@ -113,10 +160,37 @@ export default function SalesTrendChart({ last7Days = [], timeRange = 'Today' })
                         </linearGradient>
                     </defs>
 
-                    {/* Grid lines */}
-                    <line x1={0} y1={paddingY} x2={width} y2={paddingY} stroke="#F1F5F9" strokeWidth="1" strokeDasharray="3 3" />
-                    <line x1={0} y1={(height - 2 * paddingY) / 2 + paddingY} x2={width} y2={(height - 2 * paddingY) / 2 + paddingY} stroke="#F1F5F9" strokeWidth="1" strokeDasharray="3 3" />
-                    <line x1={0} y1={height - paddingY} x2={width} y2={height - paddingY} stroke="#E2E8F0" strokeWidth="1.5" />
+                    {/* Y-Axis labels & Grid lines for each level (100k, 80k, 60k, 40k, 20k, 0) */}
+                    {yTicks.map((tickVal, i) => {
+                        const yTick = (height - paddingY) - ((tickVal / upperBound) * (height - 2 * paddingY));
+                        const isBaseline = i === yTicks.length - 1;
+
+                        return (
+                            <g key={i}>
+                                {/* Crisp, clear horizontal line across the entire chart width */}
+                                <line 
+                                    x1={startX} 
+                                    y1={yTick} 
+                                    x2={endX} 
+                                    y2={yTick} 
+                                    stroke={isBaseline ? "#94A3B8" : "#E2E8F0"} 
+                                    strokeWidth={isBaseline ? "1.5" : "1"} 
+                                    strokeDasharray={isBaseline ? "none" : "6 4"} 
+                                />
+                                <text 
+                                    x={startX - 6} 
+                                    y={yTick + 3} 
+                                    textAnchor="end" 
+                                    fill="#64748B" 
+                                    fontSize="10" 
+                                    fontWeight="600" 
+                                    fontFamily="Inter, -apple-system, BlinkMacSystemFont, sans-serif"
+                                >
+                                    {formatYAxisLabel(tickVal)}
+                                </text>
+                            </g>
+                        );
+                    })}
 
                     {/* Filled Area */}
                     <path d={areaPath} fill="url(#chartAreaGradient)" />
@@ -200,9 +274,9 @@ export default function SalesTrendChart({ last7Days = [], timeRange = 'Today' })
                 {points.map((p, idx) => {
                     let showLabel = false;
                     if (timeRange === 'Today') {
-                        showLabel = idx % 4 === 0;
+                        showLabel = idx % 2 === 0 && idx <= 8; // Shows 8AM, 10AM, 12PM, 2PM, 4PM
                     } else if (timeRange === 'This Month') {
-                        showLabel = idx === 0 || idx === 9 || idx === 19 || idx === numPoints - 1;
+                        showLabel = idx === 0 || idx === 9 || idx === 19 || idx === actualNumPoints - 1;
                     } else if (timeRange === 'This Year') {
                         showLabel = idx % 2 === 0;
                     } else {
@@ -211,10 +285,12 @@ export default function SalesTrendChart({ last7Days = [], timeRange = 'Today' })
 
                     if (!showLabel) return null;
 
+                    const displayLabel = String(p.label || '').replace(/\s+/g, '');
+
                     const pctX = (p.x / width) * 100;
                     let transformStr = 'translateX(-50%)';
                     if (idx === 0) transformStr = 'translateX(0)';
-                    if (idx === numPoints - 1) transformStr = 'translateX(-100%)';
+                    if (idx === actualNumPoints - 1) transformStr = 'translateX(-100%)';
 
                     return (
                         <span 
@@ -223,14 +299,14 @@ export default function SalesTrendChart({ last7Days = [], timeRange = 'Today' })
                                 position: 'absolute',
                                 left: `${pctX}%`,
                                 transform: transformStr,
-                                fontSize: 11, 
-                                color: '#64748B', 
-                                fontWeight: 600,
-                                fontFamily: 'Inter, sans-serif',
+                                fontSize: 10, 
+                                color: '#94A3B8', 
+                                fontWeight: 500,
+                                fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
                                 whiteSpace: 'nowrap'
                             }}
                         >
-                            {p.label}
+                            {displayLabel}
                         </span>
                     );
                 })}

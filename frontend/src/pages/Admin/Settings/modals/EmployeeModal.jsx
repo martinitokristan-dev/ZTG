@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import IOSSelect from '../../../../shared/components/IOSSelect';
 
 export default function EmployeeModal({
     showEmployeeModal, setShowEmployeeModal,
@@ -81,16 +82,15 @@ export default function EmployeeModal({
                         </div>
                         <div className="form-group">
                             <label className="form-label">Assigned Role</label>
-                            <select 
-                                className="form-control" 
-                                required
+                            <IOSSelect
                                 value={employeeForm.role}
                                 onChange={(e) => setEmployeeForm({...employeeForm, role: e.target.value})}
-                            >
-                                <option value="Cashier">Cashier</option>
-                                <option value="Supervisor">Supervisor</option>
-                                <option value="Admin">Administrator</option>
-                            </select>
+                                options={[
+                                    { value: 'Cashier', label: 'Cashier' },
+                                    { value: 'Supervisor', label: 'Supervisor' },
+                                    { value: 'Admin', label: 'Administrator' }
+                                ]}
+                            />
                         </div>
                         {employeeForm.role !== 'Cashier' && (
                             <div className="form-group" style={{ marginTop: '10px' }}>

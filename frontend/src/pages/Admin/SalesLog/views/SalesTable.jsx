@@ -1,6 +1,7 @@
 import React from 'react';
 import LoadingSpinner from '../../../../shared/components/LoadingSpinner';
 import StatusBadge from '../../../../shared/components/StatusBadge';
+import CopyableText from '../../../../shared/components/CopyableText';
 
 export default function SalesTable({ loading, items, fmt, fmtDate }) {
     if (loading) return <LoadingSpinner text="Loading sales data..." minHeight="200px" />;
@@ -50,7 +51,9 @@ export default function SalesTable({ loading, items, fmt, fmtDate }) {
                             return (
                                 <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
                                     <td style={{ padding: '16px', color: '#64748B' }}>{fmtDate(item._txDate)}</td>
-                                    <td style={{ padding: '16px', fontWeight: '700', color: 'var(--text-primary)' }}>{item._txReceipt || '-'}</td>
+                                    <td style={{ padding: '16px' }}>
+                                        <CopyableText text={item._txReceipt} label="S.I./C.I./D.R." codeStyle={{ fontSize: '13px', color: 'var(--text-primary)' }} />
+                                    </td>
                                     <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{item.part_no || item.partNo || 'N/A'}</td>
                                     <td style={{ padding: '16px' }}>
                                         <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{item.name}</span>

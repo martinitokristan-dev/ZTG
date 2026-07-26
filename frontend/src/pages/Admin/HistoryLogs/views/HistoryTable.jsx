@@ -3,6 +3,7 @@ import LoadingSpinner from '../../../../shared/components/LoadingSpinner';
 import { printUnifiedReceipt } from '../../../../utils/printReceipt';
 import StatusBadge from '../../../../shared/components/StatusBadge';
 import api from '../../../../shared/api';
+import CopyableText from '../../../../shared/components/CopyableText';
 
 export default function HistoryTable({ 
     loading, transactions, fmt, fmtDate, 
@@ -61,7 +62,7 @@ export default function HistoryTable({
             splitDetails: splitDetails,
             reason: tx.notes || '',
             originalInvoice: tx.original_receipt_number || '',
-            approver: tx.voided_by || tx.refunded_by || '',
+            approver: tx.approver?.real_name || tx.approver?.name || '',
             // BIR compliance: use frozen snapshot; null for legacy (falls back to empty object)
             businessInfo: tx.business_snapshot || {},
             // Logo is always the current live logo — never frozen per spec
@@ -121,8 +122,12 @@ export default function HistoryTable({
                                         <span style={{ display: 'block', color: 'var(--text-primary)', fontSize: '13px' }}>{displayDate}</span>
                                         {displayTime && <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)' }}>{displayTime}</span>}
                                     </td>
-                                    <td style={{ padding: '16px', fontWeight: '700', color: 'var(--text-primary)' }}>
-                                        {tx.si_no || tx.receipt_number || 'N/A'}
+                                    <td style={{ padding: '16px' }}>
+                                        <CopyableText 
+                                            text={tx.si_no || tx.receipt_number || 'N/A'} 
+                                            label="Receipt/Invoice No." 
+                                            codeStyle={{ fontSize: '13px', color: 'var(--text-primary)' }} 
+                                        />
                                         {reservationDisplay}
                                     </td>
                                     <td style={{ padding: '16px', color: 'var(--text-secondary)' }}>{tx.customer?.name || 'Walk-in'}</td>

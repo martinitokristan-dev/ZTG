@@ -89,14 +89,18 @@ export default function Dashboard() {
                     <>
                         <StatCards stats={stats} currentTimeRange={currentTimeRange} />
 
-                        <div style={{
+                        <div className="dashboard-charts-grid" style={{
                             display: 'grid',
-                            gridTemplateColumns: window.innerWidth < 900 ? '1fr' : '1fr 320px',
+                            gridTemplateColumns: 'repeat(4, 1fr)',
                             gap: 24,
-                            alignItems: 'start'
+                            alignItems: 'stretch'
                         }}>
-                            <SalesTrendChart last7Days={stats.last7Days || []} timeRange={currentTimeRange} />
-                            <CriticalStockAlerts />
+                            <div className="sales-trend-span" style={{ gridColumn: 'span 3', minWidth: 0 }}>
+                                <SalesTrendChart last7Days={stats.last7Days || []} timeRange={currentTimeRange} />
+                            </div>
+                            <div className="alerts-span" style={{ gridColumn: 'span 1', minWidth: 0 }}>
+                                <CriticalStockAlerts />
+                            </div>
                         </div>
 
                         <TopSellingTable topProducts={topProducts} />

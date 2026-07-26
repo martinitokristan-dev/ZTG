@@ -1320,6 +1320,36 @@ The company logo works differently from text details:
 
 ---
 
+## 16. System Security & Data Protection Architecture
+
+The ZTG Heavy Parts POS & Inventory system incorporates multi-layered enterprise security controls across all application layers to protect business data, safeguard user accounts, and maintain system integrity:
+
+### 1. Authentication & Token Authorization (JWT / Bearer Tokens)
+- All protected API endpoints (`/api/*`) require a valid **JSON Web Token (JWT)** passed in the HTTP Authorization header (`Authorization: Bearer <token>`).
+- Requests missing a valid token or carrying an expired session are automatically rejected by Laravel middleware with a `401 Unauthorized` response.
+
+### 2. Password Encryption (Bcrypt Hashing)
+- User and administrator passwords are encrypted using one-way **Bcrypt** hashing (`Hash::make()`).
+- Plaintext passwords are never stored in the database or written to application log files.
+
+### 3. Role-Based Access Control (RBAC) & Admin PIN Enforcement
+- Middleware enforces role segregation between **Admin**, **Manager**, and **Cashier** accounts.
+- Sensitive financial operations—including refunds, returns, voids, and manual stock write-offs—require explicit **Admin Security Approval PINs** (`approval_pin`).
+
+### 4. Cross-Origin Resource Sharing (CORS) Isolation
+- Backend CORS configuration explicitly restricts API calls to authorized frontend origin domains (`.pages.dev`), preventing cross-domain request hijacking.
+
+### 5. Transport Layer Security (HTTPS / TLS 1.3)
+- All network communication between the web browser, Cloudflare CDN, and Render API containers is encrypted in transit using **HTTPS / TLS 1.3**.
+
+### 6. SQL Injection Protection (Laravel Eloquent ORM)
+- All database queries execute via Laravel Eloquent ORM utilizing **PDO Parameter Binding**, completely neutralizing SQL Injection vectors.
+
+### 7. Sanitized Media Uploads & Image Security
+- Uploaded media files (user avatars and product photos) undergo strict MIME-type validation (`jpeg`, `png`, `webp`, `heic`), enforce a 12 MB size ceiling, and are assigned cryptographically random unique filenames (`avatar_1_JAjllNuCgWXw8yrE.jpg`).
+
+---
+
 *End of ZTG Heavy Parts Capstone Project Documentation v1.0*
 
 *Document generated: July 2026*

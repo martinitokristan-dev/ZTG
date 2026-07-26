@@ -176,7 +176,7 @@ export default function ProfileTab({
                 {/* Personal Details Panel */}
                 <section className="profile-fields-block">
                     <div className="profile-section-card profile-personal-section" style={{ marginBottom: '24px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid var(--border)' }}>
+                        <div className="profile-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap', gap: '12px' }}>
                             <div>
                                 <h2 className="profile-section-title" style={{ marginBottom: '4px' }}>Personal Information</h2>
                                 <p className="profile-section-desc" style={{ margin: 0 }}>Your name is shown on the dashboard greeting and reservation records.</p>

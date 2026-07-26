@@ -90,6 +90,7 @@ export default function Inventory() {
                         products={products}
                         loading={loading}
                         handleViewProduct={handleViewProduct}
+                        statusFilter={statusFilter}
                     />
 
                 </div>

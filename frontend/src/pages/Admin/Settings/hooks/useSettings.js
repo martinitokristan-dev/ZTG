@@ -205,6 +205,13 @@ export default function useSettings() {
                 };
                 setProfileData(loadedProfile);
                 setInitialProfileData(loadedProfile);
+
+                const stored = localStorage.getItem('auth_user');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    localStorage.setItem('auth_user', JSON.stringify({ ...parsed, profile_photo: u.profile_photo || null }));
+                    window.dispatchEvent(new Event('auth_user_updated'));
+                }
             }
 
             // Load bulk system settings

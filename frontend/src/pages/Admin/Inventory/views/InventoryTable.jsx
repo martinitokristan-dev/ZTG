@@ -1,8 +1,10 @@
 import React from 'react';
 import LoadingSpinner from '../../../../shared/components/LoadingSpinner';
 import useDisplayChineseNames from '../../../../shared/hooks/useDisplayChineseNames';
+import { matchesStatusFilter } from '../../../../shared/utils/skuHelpers';
+import CopyableText from '../../../../shared/components/CopyableText';
 
-export default function InventoryTable({ products, loading, handleViewProduct, pagination }) {
+export default function InventoryTable({ products, loading, handleViewProduct, pagination, statusFilter }) {
     const showChineseNames = useDisplayChineseNames();
     const renderRow = (item, isVariant, baseIndex, parentProduct) => {
         const alertLevel = item.alert_limit || 5;
@@ -66,7 +68,9 @@ export default function InventoryTable({ products, loading, handleViewProduct, p
                         </>
                     )}
                 </td>
-                <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '12px' }}>{item.part_no}</td>
+                <td>
+                    <CopyableText text={item.part_no} label="Part No." />
+                </td>
                 <td>{item.category?.name || parentProduct?.category?.name || 'Unassigned'}</td>
                 <td><code style={{ background: '#F1F5F9', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' }}>{item.address || '—'}</code></td>
                 <td>
@@ -79,12 +83,12 @@ export default function InventoryTable({ products, loading, handleViewProduct, p
                 <td style={{ fontWeight: 700, color: 'var(--primary)' }}>₱{Number(item.price2 || 0).toLocaleString('en-US')}</td>
                 <td style={{ whiteSpace: 'nowrap' }}>{item.sales_count || 0} sold</td>
                 <td>
-                    <div style={{ display: 'inline-flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                        <span className={`badge ${stockBadgeClass}`} style={customStatusStyle}>
+                    <div style={{ display: 'inline-flex', gap: '6px', flexWrap: 'nowrap', alignItems: 'center' }}>
+                        <span className={`badge ${stockBadgeClass}`} style={{ whiteSpace: 'nowrap', ...customStatusStyle }}>
                             {stockStatusText}
                         </span>
                         {item.is_dead_stock && (
-                            <span className="badge" style={{ backgroundColor: '#FEE2E2', color: '#DC2626', border: 'none', padding: '4px 10px', borderRadius: '9999px', fontSize: '11px', fontWeight: '600' }}>
+                            <span className="badge" style={{ backgroundColor: '#FFE4E6', color: '#BE123C', border: 'none', padding: '4px 10px', borderRadius: '9999px', fontSize: '11px', fontWeight: '700', whiteSpace: 'nowrap' }}>
                                 Dead Stock
                             </span>
                         )}
@@ -143,12 +147,19 @@ export default function InventoryTable({ products, loading, handleViewProduct, p
                                 </td>
                             </tr>
                         ) : (
-                            products.map((p, index) => (
-                                <React.Fragment key={`group-${p.id}`}>
-                                    {renderRow(p, false, index, p)}
-                                    {p.variants && p.variants.map(v => renderRow(v, true, index, p))}
-                                </React.Fragment>
-                            ))
+                            products.map((p, index) => {
+                                const showParent = matchesStatusFilter(p, statusFilter);
+                                const matchingVariants = p.variants ? p.variants.filter(v => matchesStatusFilter(v, statusFilter)) : [];
+                                
+                                if (!showParent && matchingVariants.length === 0) return null;
+
+                                return (
+                                    <React.Fragment key={`group-${p.id}`}>
+                                        {showParent && renderRow(p, false, index, p)}
+                                        {matchingVariants.map(v => renderRow(v, true, index, p))}
+                                    </React.Fragment>
+                                );
+                            })
                         )}
                     </tbody>
                     {!loading && products.length > 0 && (() => {
@@ -157,14 +168,18 @@ export default function InventoryTable({ products, loading, handleViewProduct, p
                         let totalDamaged = 0;
 
                         products.forEach(p => {
-                            totalStock += Number(p.stock || 0);
-                            totalSold += Number(p.sales_count || 0);
-                            totalDamaged += Number(p.damaged || 0);
+                            if (matchesStatusFilter(p, statusFilter)) {
+                                totalStock += Number(p.stock || 0);
+                                totalSold += Number(p.sales_count || 0);
+                                totalDamaged += Number(p.damaged || 0);
+                            }
                             if (p.variants && p.variants.length > 0) {
                                 p.variants.forEach(v => {
-                                    totalStock += Number(v.stock || 0);
-                                    totalSold += Number(v.sales_count || 0);
-                                    totalDamaged += Number(v.damaged || 0);
+                                    if (matchesStatusFilter(v, statusFilter)) {
+                                        totalStock += Number(v.stock || 0);
+                                        totalSold += Number(v.sales_count || 0);
+                                        totalDamaged += Number(v.damaged || 0);
+                                    }
                                 });
                             }
                         });

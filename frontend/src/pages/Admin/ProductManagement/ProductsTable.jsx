@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import IOSSelect from '../../../shared/components/IOSSelect';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import useDisplayChineseNames from '../../../shared/hooks/useDisplayChineseNames';
+import { matchesStatusFilter } from '../../../shared/utils/skuHelpers';
+import CopyableText from '../../../shared/components/CopyableText';
 
 export default function ProductsTable({
     products,
@@ -42,19 +44,19 @@ export default function ProductsTable({
 
         let stockStatusText = 'Active';
         let statusBg = '#DCFCE7';
-        let statusText = '#22C55E';
+        let statusText = '#15803D';
         let stockColor = '#1F2937';
 
         if (isOutOfStock) {
             stockStatusText = 'No Stock';
             statusBg = '#FEE2E2';
-            statusText = '#EF4444';
+            statusText = '#B91C1C';
             stockColor = '#EF4444';
         } else if (isLowStock) {
             stockStatusText = 'Low Stock';
             statusBg = '#FEF3C7';
-            statusText = '#F59E0B';
-            stockColor = '#F59E0B';
+            statusText = '#B45309';
+            stockColor = '#D97706';
         }
 
         let stockBadgeBg = '#F0FDF4';
@@ -112,7 +114,9 @@ export default function ProductsTable({
                         </div>
                     </div>
                 </td>
-                <td style={{ padding: '12px 16px', borderBottom: '1px solid #F1F5F9', color: '#334155', fontWeight: '600', fontSize: '12px' }}>{product.part_no}</td>
+                <td style={{ padding: '12px 16px', borderBottom: '1px solid #F1F5F9' }}>
+                    <CopyableText text={product.part_no} label="Part No." />
+                </td>
                 <td style={{ padding: '12px 16px', borderBottom: '1px solid #F1F5F9', color: '#334155', fontSize: '12px' }}>{catName}</td>
                 <td style={{ padding: '12px 16px', borderBottom: '1px solid #F1F5F9', color: '#475569', fontSize: '12px' }}>{product.address || '—'}</td>
                 <td style={{ padding: '12px 16px', borderBottom: '1px solid #F1F5F9' }}>
@@ -124,7 +128,7 @@ export default function ProductsTable({
                 <td style={{ padding: '12px 16px', borderBottom: '1px solid #F1F5F9', color: '#334155', fontWeight: '500', fontSize: '12px' }}>₱{Number(product.price1).toLocaleString('en-US')}</td>
                 <td style={{ padding: '12px 16px', borderBottom: '1px solid #F1F5F9', fontWeight: '500', fontSize: '12px', color: '#2563EB' }}>₱{Number(product.price2).toLocaleString('en-US')}</td>
                 <td style={{ padding: '12px 16px', borderBottom: '1px solid #F1F5F9' }}>
-                    <div style={{ display: 'inline-flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <div style={{ display: 'inline-flex', gap: '6px', flexWrap: 'nowrap', alignItems: 'center' }}>
                         <span 
                             style={{ 
                                 backgroundColor: statusBg, 
@@ -132,8 +136,12 @@ export default function ProductsTable({
                                 padding: '4px 10px', 
                                 borderRadius: '9999px', 
                                 fontSize: '11px', 
-                                fontWeight: '600',
-                                display: 'inline-block'
+                                fontWeight: '700',
+                                letterSpacing: '0.3px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                whiteSpace: 'nowrap',
+                                lineHeight: 1
                             }}
                         >
                             {finalStatusText}
@@ -141,13 +149,17 @@ export default function ProductsTable({
                         {product.is_dead_stock && (
                             <span 
                                 style={{ 
-                                    backgroundColor: '#FEE2E2', 
-                                    color: '#DC2626', 
+                                    backgroundColor: '#FFE4E6', 
+                                    color: '#BE123C', 
                                     padding: '4px 10px', 
                                     borderRadius: '9999px', 
                                     fontSize: '11px', 
-                                    fontWeight: '600',
-                                    display: 'inline-block'
+                                    fontWeight: '700',
+                                    letterSpacing: '0.3px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    whiteSpace: 'nowrap',
+                                    lineHeight: 1
                                 }}
                             >
                                 Dead Stock
@@ -235,20 +247,21 @@ export default function ProductsTable({
 
     return (
         <>
-            {/* Success Toast (Reference Style) */}
+            {/* Success Toast (Modern Clean Style - No Icon) */}
             {successMessage && (
                 <div style={{
-                    position: 'fixed', bottom: '20px', right: '20px', zIndex: 99999,
-                    display: 'flex', alignItems: 'center', gap: '12px',
-                    background: '#10B981', color: 'white',
-                    padding: '12px 20px', borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    fontSize: '14px', fontWeight: 500, pointerEvents: 'auto',
-                    animation: 'toast-slide-up 0.3s ease-out forwards'
+                    position: 'fixed', bottom: '24px', right: '24px', zIndex: 99999,
+                    display: 'flex', alignItems: 'center',
+                    background: '#0F172A', color: '#F8FAFC',
+                    padding: '11px 20px', borderRadius: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.15)',
+                    fontSize: '13.5px', fontWeight: 600,
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Outfit", sans-serif',
+                    letterSpacing: '-0.1px',
+                    pointerEvents: 'auto',
+                    animation: 'toast-slide-up 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards'
                 }}>
-                    <svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }}>
-                        <path d="M5 13l4 4L19 7" />
-                    </svg>
                     <span>{successMessage}</span>
                 </div>
             )}
@@ -330,13 +343,17 @@ export default function ProductsTable({
                             ) : (
                                 products.map((p, parentIndex) => {
                                     const rows = [];
-                                    // 1. Parent product row
-                                    rows.push(renderRow(p, false, parentIndex > 0));
+                                    // 1. Parent product row — only render if parent itself matches status filter
+                                    if (matchesStatusFilter(p, statusFilter)) {
+                                        rows.push(renderRow(p, false, parentIndex > 0));
+                                    }
 
-                                    // 2. Child variant rows
+                                    // 2. Child variant rows — only render variants that match status filter
                                     if (p.variants && p.variants.length > 0) {
                                         p.variants.forEach((v) => {
-                                            rows.push(renderRow(v, true, false, p));
+                                            if (matchesStatusFilter(v, statusFilter)) {
+                                                rows.push(renderRow(v, true, false, p));
+                                            }
                                         });
                                     }
 

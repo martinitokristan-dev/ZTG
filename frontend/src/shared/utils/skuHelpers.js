@@ -1,4 +1,45 @@
 /**
+ * Checks if a specific item (parent or variant) matches the status filter.
+ * Compares actual stock levels against alert_limit to compute true status.
+ */
+export function matchesStatusFilter(item, statusFilter) {
+    if (!item) return false;
+    if (!statusFilter || statusFilter === 'All') return true;
+
+    const alertLevel = item.alert_limit || 5;
+    const isOutOfStock = Number(item.stock) === 0;
+    const isLowStock = Number(item.stock) > 0 && Number(item.stock) <= alertLevel;
+
+    let computedStatus = 'Active';
+    if (item.status === 'Disabled') {
+        computedStatus = 'Disabled';
+    } else if (isOutOfStock) {
+        computedStatus = 'No Stock';
+    } else if (isLowStock) {
+        computedStatus = 'Low Stock';
+    } else {
+        computedStatus = 'Active';
+    }
+
+    if (statusFilter === 'Dead Stock') {
+        return Boolean(item.is_dead_stock);
+    }
+
+    const filterLower = statusFilter.toLowerCase().trim();
+    const computedLower = computedStatus.toLowerCase();
+    const rawLower = (item.status || '').toLowerCase().trim();
+
+    if (filterLower === 'low stock') {
+        return computedLower === 'low stock' || rawLower === 'low stock';
+    }
+    if (filterLower === 'no stock' || filterLower === 'out of stock') {
+        return computedLower === 'no stock' || rawLower === 'no stock' || rawLower === 'out of stock';
+    }
+
+    return computedLower === filterLower || rawLower === filterLower;
+}
+
+/**
  * Flattens a list of products (which contains parent products and nested variants)
  * into a flat list of sellable SKUs.
  *
@@ -7,11 +48,13 @@
  *    OR if it has variants and its own stock is > 0.
  * 2. All variant products (either present flat at the root level or nested inside a parent product)
  *    are included.
+ * 3. If a statusFilter is provided, filters the resulting SKUs so only matching items are returned.
  *
  * @param {Array} products - List of parent products (possibly with nested variants)
+ * @param {string} [statusFilter=null] - Optional status filter to apply
  * @returns {Array} - List of sellable SKUs (flat)
  */
-export function flattenToSellableSKUs(products) {
+export function flattenToSellableSKUs(products, statusFilter = null) {
     if (!Array.isArray(products)) return [];
     
     const sellableMap = new Map();
@@ -28,7 +71,6 @@ export function flattenToSellableSKUs(products) {
             // - OR it has variants but parent itself has stock > 0
             const hasVariants = Array.isArray(p.variants) && p.variants.length > 0;
             if (!hasVariants || p.stock > 0) {
-                // To avoid duplicate entries if a product has both parent and variant models in the list
                 sellableMap.set(p.id, {
                     ...p,
                     displayName: p.name,
@@ -78,5 +120,12 @@ export function flattenToSellableSKUs(products) {
         }
     });
 
-    return Array.from(sellableMap.values());
+    let result = Array.from(sellableMap.values());
+
+    if (statusFilter && statusFilter !== 'All') {
+        result = result.filter(item => matchesStatusFilter(item, statusFilter));
+    }
+
+    return result;
 }
+

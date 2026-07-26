@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import IOSSelect from '../../../../shared/components/IOSSelect';
 
 export default function VoidModal({ isOpen, onClose, onSubmit, transaction, fmtDate, fmt }) {
     const [reason, setReason] = useState('Wrong Transaction / Input Error');
@@ -89,8 +90,8 @@ export default function VoidModal({ isOpen, onClose, onSubmit, transaction, fmtD
                                     <span style={{ fontWeight: '600', color: '#0F172A', fontSize: '13.5px' }}>{transaction.customer?.name || 'Walk-in'}</span>
                                 </div>
                                 <div>
-                                    <span style={{ fontSize: '11px', color: '#64748B', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '2px' }}>Cashier</span>
-                                    <span style={{ fontWeight: '600', color: '#0F172A', fontSize: '13.5px' }}>{transaction.cashier?.name || '—'}</span>
+                                    <span style={{ fontSize: '11px', color: '#64748B', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '2px' }}>Served By</span>
+                                    <span style={{ fontWeight: '600', color: '#0F172A', fontSize: '13.5px' }}>{transaction.checker?.name || transaction.cashier?.name || '—'}</span>
                                 </div>
                                 <div style={{ gridColumn: 'span 2', borderTop: '1px dashed #E2E8F0', paddingTop: '12px', marginTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontSize: '11px', color: '#64748B', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Amount to Void</span>
@@ -102,13 +103,17 @@ export default function VoidModal({ isOpen, onClose, onSubmit, transaction, fmtD
                         {/* Void Reason */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             <label style={{ fontSize: '12px', fontWeight: '600', color: '#334155' }}>Void Reason <span style={{ color: '#EF4444' }}>*</span></label>
-                            <select className="form-control" value={reason} onChange={(e) => setReason(e.target.value)} required style={{ border: '1px solid #E2E8F0', borderRadius: '8px', padding: '10px 12px', fontSize: '13px', width: '100%', backgroundColor: '#FFFFFF', outline: 'none' }}>
-                                <option value="Wrong Transaction / Input Error">Wrong Transaction / Input Error</option>
-                                <option value="Duplicate Entry">Duplicate Entry</option>
-                                <option value="System Error">System Error</option>
-                                <option value="Price Discrepancy">Price Discrepancy</option>
-                                <option value="Other">Other</option>
-                            </select>
+                            <IOSSelect
+                                value={reason}
+                                onChange={(e) => setReason(e.target.value)}
+                                options={[
+                                    { value: 'Wrong Transaction / Input Error', label: 'Wrong Transaction / Input Error' },
+                                    { value: 'Duplicate Entry', label: 'Duplicate Entry' },
+                                    { value: 'System Error', label: 'System Error' },
+                                    { value: 'Price Discrepancy', label: 'Price Discrepancy' },
+                                    { value: 'Other', label: 'Other' }
+                                ]}
+                            />
                         </div>
     
                         {/* Stock Restoration */}
@@ -127,10 +132,14 @@ export default function VoidModal({ isOpen, onClose, onSubmit, transaction, fmtD
                             
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                 <label style={{ fontSize: '12px', fontWeight: '600', color: '#92400E' }}>Admin Name <span style={{ color: '#EF4444' }}>*</span></label>
-                                <select className="form-control" value={adminName} onChange={(e) => setAdminName(e.target.value)} required style={{ border: '1px solid #FCD34D', borderRadius: '8px', padding: '10px 12px', fontSize: '13px', width: '100%', background: '#FFFFFF', outline: 'none' }}>
-                                    <option value="Administrator">Administrator (Default)</option>
-                                    <option value="Manager">Manager</option>
-                                </select>
+                                <IOSSelect
+                                    value={adminName}
+                                    onChange={(e) => setAdminName(e.target.value)}
+                                    options={[
+                                        { value: 'Administrator', label: 'Administrator (Default)' },
+                                        { value: 'Manager', label: 'Manager' }
+                                    ]}
+                                />
                             </div>
                             
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>

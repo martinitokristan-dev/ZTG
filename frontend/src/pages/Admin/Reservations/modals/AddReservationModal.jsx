@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import IOSDatePicker from '../../../../shared/components/IOSDatePicker';
 import IOSTimePicker from '../../../../shared/components/IOSTimePicker';
+import IOSSelect from '../../../../shared/components/IOSSelect';
 
 export default function AddReservationModal({
     isOpen, onClose, onSubmit,
@@ -186,10 +187,14 @@ export default function AddReservationModal({
                                 <h4 style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', marginBottom: '12px', letterSpacing: '0.5px', textTransform: 'uppercase', marginTop: '8px' }}>Payment Details</h4>
                                 <div className="form-group" style={{ marginBottom: '12px' }}>
                                     <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Payment Type</label>
-                                    <select className="form-control" value={paymentType} onChange={(e) => setPaymentType(e.target.value)} style={{ fontSize: '13px' }}>
-                                        <option value="deposit50">50% Deposit (Balance on Pickup)</option>
-                                        <option value="full">Full Payment (100%)</option>
-                                    </select>
+                                    <IOSSelect
+                                        value={paymentType}
+                                        onChange={(e) => setPaymentType(e.target.value)}
+                                        options={[
+                                            { value: 'deposit50', label: '50% Deposit (Balance on Pickup)' },
+                                            { value: 'full', label: 'Full Payment (100%)' }
+                                        ]}
+                                    />
                                 </div>
                                 <div className="form-group" style={{ marginBottom: '12px' }}>
                                     <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>
@@ -206,11 +211,15 @@ export default function AddReservationModal({
                                 </div>
                                 <div className="form-group" style={{ marginBottom: '12px' }}>
                                     <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Payment Method</label>
-                                    <select className="form-control" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} style={{ fontSize: '13px' }}>
-                                        <option value="Cash">Cash</option>
-                                        <option value="GCash">GCash</option>
-                                        <option value="Bank">Bank Transfer</option>
-                                    </select>
+                                    <IOSSelect
+                                        value={paymentMethod}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                        options={[
+                                            { value: 'Cash', label: 'Cash' },
+                                            { value: 'GCash', label: 'GCash' },
+                                            { value: 'Bank', label: 'Bank Transfer' }
+                                        ]}
+                                    />
                                 </div>
                                 <div className="form-group" style={{ marginBottom: 0 }}>
                                     <label className="form-label" style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>Balance Due</label>

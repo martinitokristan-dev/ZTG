@@ -50,21 +50,22 @@ export default function EmployeesTab({
                                         </span>
                                     </td>
                                     <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                                        <button 
-                                            onClick={() => openEditEmployee(emp)}
-                                            className="btn btn-secondary btn-sm"
-                                            style={{ marginRight: '8px' }}
-                                        >
-                                            Edit
-                                        </button>
-                                        <button 
-                                            onClick={() => handleToggleEmployee(emp)}
-                                            disabled={emp.employee_id === 'EMP-000'}
-                                            className="btn btn-danger btn-sm"
-                                            style={emp.employee_id === 'EMP-000' ? { opacity: 0.5, cursor: 'not-allowed' } : { background: 'transparent', color: '#dc2626', borderColor: '#fca5a5' }}
-                                        >
-                                            {emp.status === 'Active' ? 'Deactivate' : 'Activate'}
-                                        </button>
+                                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                                            <button 
+                                                onClick={() => openEditEmployee(emp)}
+                                                className="btn btn-secondary btn-sm"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button 
+                                                onClick={() => handleToggleEmployee(emp)}
+                                                disabled={emp.employee_id === 'EMP-000'}
+                                                className="btn btn-danger btn-sm"
+                                                style={emp.employee_id === 'EMP-000' ? { opacity: 0.5, cursor: 'not-allowed' } : { background: 'transparent', color: '#dc2626', borderColor: '#fca5a5' }}
+                                            >
+                                                {emp.status === 'Active' ? 'Deactivate' : 'Activate'}
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

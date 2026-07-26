@@ -160,8 +160,13 @@ export default function NotificationsDropdown() {
                 setIsOpen(false);
             }
         }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        // Both mousedown (desktop) and touchstart (iOS/Android) to close on outside tap
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside, { passive: true });
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+        };
     }, []);
 
     const handleMarkAllRead = async (e) => {
@@ -178,13 +183,21 @@ export default function NotificationsDropdown() {
         <>
             {/* ── Bell Button + Dropdown ── */}
             <div className="notif-wrapper" ref={dropdownRef} style={{ position: 'relative' }}>
-                <button id="notifBellBtn" className="notif-btn" onClick={() => setIsOpen(!isOpen)} aria-label="Notifications" data-tooltip="Notifications">
-                    <svg viewBox="0 0 24 24" style={{ width: '22px', height: '22px', fill: 'none', stroke: 'var(--text-secondary, #64748B)', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
+                <button
+                    id="notifBellBtn"
+                    className={`notif-btn${isOpen ? ' notif-btn--open' : ''}`}
+                    onClick={() => setIsOpen(!isOpen)}
+                    // Blur the button immediately on touch so iOS releases :hover/:active right away
+                    onTouchEnd={(e) => { e.currentTarget.blur(); }}
+                    aria-label="Notifications"
+                    data-tooltip="Notifications"
+                >
+                    <svg viewBox="0 0 24 24" style={{ width: '22px', height: '22px', fill: 'none', stroke: isOpen ? 'var(--primary, #3B82F6)' : 'var(--text-secondary, #64748B)', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                         <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                     </svg>
                     {unreadCount > 0 && (
-                        <span className="notif-badge pulse">{unreadCount}</span>
+                        <span className={`notif-badge${isOpen ? '' : ' pulse'}`}>{unreadCount}</span>
                     )}
                 </button>
 

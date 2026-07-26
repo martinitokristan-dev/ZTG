@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useProducts } from '../../../../contexts/ProductContext';
 import { invalidateCachePage } from '../../../../shared/hooks/usePaginatedCache';
 import useCustomerCache, { resetCustomerCache } from '../../../../shared/hooks/useCustomerCache';
@@ -10,8 +10,15 @@ import api from '../../../../shared/api';
 const fmt = (n) => `₱${Number(n || 0).toLocaleString('en-US')}`;
 
 export default function usePOS() {
-    const { products, categories: backendCategories } = useProducts();
-    const loadingProducts = products.length === 0;
+    const { products: contextProducts, categories: backendCategories, searchPosProducts } = useProducts();
+    
+    // Explicit loading state — NOT tied to products.length which caused infinite spinner
+    const [loadingProducts, setLoadingProducts] = useState(true);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [posProducts, setPosProducts] = useState([]);
+    const searchTimerRef = useRef(null);
+    const isInitialLoad = useRef(true);
+    
     const [searchQuery, setSearchQuery] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('All');
 
@@ -52,10 +59,44 @@ export default function usePOS() {
 
     // Modals
 
-    // Flat products including variants
+    // When context boots with initial 25 products, adopt them
+    useEffect(() => {
+        if (contextProducts.length > 0 && isInitialLoad.current) {
+            isInitialLoad.current = false;
+            setPosProducts(contextProducts);
+            setLoadingProducts(false);
+        }
+    }, [contextProducts]);
+
+    // Debounced server search — fires 250ms after the cashier stops typing
+    useEffect(() => {
+        if (isInitialLoad.current) return;
+        if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+
+        // If query is empty and no category filter — show initial 25 from context
+        if (!searchQuery.trim() && categoryFilter === 'All') {
+            setPosProducts(contextProducts);
+            setSearchLoading(false);
+            return;
+        }
+
+        setSearchLoading(true);
+        searchTimerRef.current = setTimeout(async () => {
+            const catId = categoryFilter !== 'All'
+                ? backendCategories?.find(c => c.name === categoryFilter)?.id || null
+                : null;
+            const results = await searchPosProducts(searchQuery, catId);
+            setPosProducts(results);
+            setSearchLoading(false);
+        }, 250);
+
+        return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+    }, [searchQuery, categoryFilter, contextProducts, backendCategories, searchPosProducts]);
+
+    // Flat products including variants from posProducts
     const flatProducts = useMemo(() => {
         const flat = [];
-        products.forEach(p => {
+        posProducts.forEach(p => {
             if (!p.variants || p.variants.length === 0) {
                 flat.push(p);
             } else {
@@ -80,9 +121,9 @@ export default function usePOS() {
             }
         });
         return flat;
-    }, [products]);
+    }, [posProducts]);
 
-    // Filtered Products
+    // Filtered Products — category filter (client-side for server-search results)
     const filteredProducts = useMemo(() => {
         let list = flatProducts.filter(p => 
             !p.parent_product_id ? (!p.variants || p.variants.length === 0 || p.stock > 0) : true
@@ -90,37 +131,37 @@ export default function usePOS() {
         if (categoryFilter !== 'All') {
             list = list.filter(p => p.category === categoryFilter || p.category?.name === categoryFilter);
         }
-        if (searchQuery.trim() !== '') {
-            const q = searchQuery.toLowerCase();
-            list = list.filter(p => 
-                (p.name || '').toLowerCase().includes(q) ||
-                (p.chinese_name || '').toLowerCase().includes(q) ||
-                (p.parent_product_name || '').toLowerCase().includes(q) ||
-                (p.part_no || p.partNo || '').toLowerCase().includes(q)
-            );
-        }
         return list;
-    }, [flatProducts, categoryFilter, searchQuery]);
-
-    // Unique categories for pills (Top 5 popular categories + 'All')
-    const categories = useMemo(() => {
-        const counts = {};
-        flatProducts.forEach(p => {
-            const cat = p.category?.name || p.category;
-            if (cat) {
-                counts[cat] = (counts[cat] || 0) + 1;
-            }
-        });
-        const sortedCats = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
-        const top5 = sortedCats.slice(0, 5);
-
-        // If a category filter is selected that isn't in top 5, append it so the active pill is visible
-        if (categoryFilter && categoryFilter !== 'All' && !top5.includes(categoryFilter)) {
-            top5.push(categoryFilter);
-        }
-
-        return ['All', ...top5];
     }, [flatProducts, categoryFilter]);
+
+    // Top-selling category pills — fetched from API on POS boot (sorted by total units sold)
+    const [topCategories, setTopCategories] = useState([]);
+    useEffect(() => {
+        const loadTopCategories = async () => {
+            try {
+                const res = await api.get('/categories?top_selling=5');
+                setTopCategories(res.data || []);
+            } catch (err) {
+                console.error('Failed to load top categories:', err);
+                // Fallback: use backendCategories slice
+                setTopCategories((backendCategories || []).slice(0, 5));
+            }
+        };
+        loadTopCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Build the pill list: 'All' + top 5 selling categories (stable, never disappears on filter)
+    const categories = useMemo(() => {
+        if (topCategories.length > 0) {
+            return ['All', ...topCategories.map(c => c.name).filter(Boolean)];
+        }
+        // Fallback while loading
+        if (backendCategories && backendCategories.length > 0) {
+            return ['All', ...backendCategories.slice(0, 5).map(c => c.name).filter(Boolean)];
+        }
+        return ['All'];
+    }, [topCategories, backendCategories]);
 
     // Error Banner State
     const [posError, setPosError] = useState(null);
@@ -370,6 +411,7 @@ export default function usePOS() {
     return {
         products: filteredProducts,
         loadingProducts,
+        searchLoading,
         categories,
         searchQuery, setSearchQuery,
         categoryFilter, setCategoryFilter,

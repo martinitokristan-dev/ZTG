@@ -98,6 +98,7 @@ export default function POS() {
                                 <ProductGrid 
                                     products={pos.products}
                                     loading={pos.loadingProducts}
+                                    searchLoading={pos.searchLoading}
                                     categories={pos.categories}
                                     searchQuery={pos.searchQuery}
                                     setSearchQuery={pos.setSearchQuery}

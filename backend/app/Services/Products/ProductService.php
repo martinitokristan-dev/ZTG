@@ -99,6 +99,11 @@ class ProductService
             return $query->orderBy('name')->paginate($filters['per_page'] ?? 20);
         }
 
+        // Lightweight limit for POS fast boot (e.g. limit=25)
+        if (!empty($filters['limit'])) {
+            return $query->orderBy('name')->limit((int) $filters['limit'])->get();
+        }
+
         return $query->orderBy('name')->get();
     }
 

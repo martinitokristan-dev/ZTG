@@ -6,7 +6,8 @@ const DEFAULT_PLACEHOLDER_IMAGE = "/ztg-icon.png";
 
 export default function ProductGrid({ 
     products, 
-    loading, 
+    loading,
+    searchLoading,
     categories, 
     searchQuery, setSearchQuery, 
     categoryFilter, setCategoryFilter,
@@ -41,6 +42,12 @@ export default function ProductGrid({
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
+                    {searchLoading && (
+                        <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div style={{ width: '14px', height: '14px', border: '2px solid #CBD5E1', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Searching...</span>
+                        </div>
+                    )}
                 </div>
                 <div className="filter-pills" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                     {categories.map(cat => (
@@ -81,6 +88,8 @@ export default function ProductGrid({
                         <tbody>
                             {loading ? (
                                 <tr><td colSpan="7" style={{ padding: '20px' }}><LoadingSpinner text="Loading products..." minHeight="100px" /></td></tr>
+                            ) : searchLoading ? (
+                                <tr><td colSpan="7" style={{ padding: '20px' }}><LoadingSpinner text="Searching..." minHeight="60px" /></td></tr>
                             ) : products.length === 0 ? (
                                 <tr><td colSpan="7" style={{ textAlign: 'center', padding: '40px 20px', color: '#64748B' }}>No products found.</td></tr>
                             ) : products.map(p => {

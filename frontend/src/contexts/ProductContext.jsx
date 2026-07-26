@@ -22,7 +22,7 @@ export const ProductProvider = ({ children }) => {
         const fetchStart = Date.now();
         try {
             const [prodRes, catRes] = await Promise.all([
-                api.get('/products'),
+                api.get('/products?limit=25'),
                 api.get('/categories')
             ]);
             
@@ -150,6 +150,31 @@ export const ProductProvider = ({ children }) => {
         schedulePoll(5000);
     };
 
+    /**
+     * Search products from server for POS instant search.
+     * Returns flat product + variant list matching the query.
+     */
+    const searchPosProducts = useCallback(async (searchQuery, categoryId = null) => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return [];
+        try {
+            const params = new URLSearchParams();
+            if (searchQuery && searchQuery.trim()) params.set('search', searchQuery.trim());
+            if (categoryId) params.set('category_id', categoryId);
+            params.set('limit', '25');
+            const res = await api.get(`/products?${params.toString()}`);
+            const raw = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+            return raw.map(p => ({
+                ...p,
+                price: parseFloat(p.price1 || 0),
+                retail_price: parseFloat(p.price1 || 0)
+            }));
+        } catch (err) {
+            console.error('POS product search failed:', err);
+            return [];
+        }
+    }, []);
+
     const optimisticUpdateProduct = (id, newProductData) => {
         const now = Date.now();
         optimisticTimestamps.current[id] = { time: now, action: 'update' };
@@ -272,7 +297,8 @@ export const ProductProvider = ({ children }) => {
             optimisticDeleteProduct, 
             optimisticUpdateCategory,
             optimisticDeleteCategory,
-            refetch: fetchData 
+            refetch: fetchData,
+            searchPosProducts
         }}>
             {children}
         </ProductContext.Provider>
